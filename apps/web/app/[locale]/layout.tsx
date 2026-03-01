@@ -6,6 +6,8 @@ import { InstallPrompt } from '../../src/components/InstallPrompt';
 import { resolveLocale } from '../../src/i18n/config';
 import { QueryProvider } from '../../src/providers/query-provider';
 
+export const runtime = 'edge';
+
 async function getMessages(locale: string) {
   const resolved = resolveLocale(locale);
   if (resolved === 'de') {
