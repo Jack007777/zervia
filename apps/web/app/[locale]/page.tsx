@@ -4,6 +4,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { CategoryIcon } from '../../src/components/CategoryIcon';
+import { useCountry } from '../../src/hooks/useCountry';
+import { toApiCountry } from '../../src/lib/country';
 
 type MainCategory =
   | 'friseur'
@@ -75,6 +77,7 @@ const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
 export default function HomePage() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
+  const country = useCountry();
   const [city, setCity] = useState('');
   const [query, setQuery] = useState('');
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
@@ -95,6 +98,7 @@ export default function HomePage() {
 
   function onSearch() {
     const search = new URLSearchParams();
+    search.set('country', toApiCountry(country));
     search.set('category', mainCategory);
     if (subCategory) {
       search.set('q', subCategory);

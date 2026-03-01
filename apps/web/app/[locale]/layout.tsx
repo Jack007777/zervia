@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { BottomNav } from '../../src/components/BottomNav';
+import { CountrySwitcher } from '../../src/components/CountrySwitcher';
 import { InstallPrompt } from '../../src/components/InstallPrompt';
 import { resolveLocale } from '../../src/i18n/config';
 import { QueryProvider } from '../../src/providers/query-provider';
@@ -33,6 +34,7 @@ export default async function LocaleLayout({
               >
                 Login
               </Link>
+              <CountrySwitcher />
               <div className="flex items-center gap-1 rounded-lg border bg-white p-1 text-xs">
               <Link
                 href="/de"

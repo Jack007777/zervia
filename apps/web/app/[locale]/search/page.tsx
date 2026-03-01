@@ -6,23 +6,30 @@ import { useMemo, useState } from 'react';
 import { BusinessCard } from '../../../src/components/BusinessCard';
 import { MapPlaceholder } from '../../../src/components/MapPlaceholder';
 import { SearchFilters } from '../../../src/components/SearchFilters';
+import { useCountry } from '../../../src/hooks/useCountry';
 import { useSearchBusinesses } from '../../../src/lib/api/hooks';
 import type { SearchParams } from '../../../src/lib/api/types';
+import { toApiCountry } from '../../../src/lib/country';
 
 export default function SearchPage() {
   const { locale } = useParams<{ locale: string }>();
   const q = useSearchParams();
+  const selectedCountry = useCountry();
 
   const initial = useMemo<SearchParams>(
     () => ({
       q: q.get('q') ?? undefined,
       category: q.get('category') ?? undefined,
-      country: 'DE'
+      country: toApiCountry((q.get('country') ?? selectedCountry) as string)
     }),
-    [q]
+    [q, selectedCountry]
   );
   const [filters, setFilters] = useState<SearchParams>(initial);
-  const { data, isLoading } = useSearchBusinesses(filters);
+  const apiFilters = useMemo(
+    () => ({ ...filters, country: toApiCountry(filters.country ?? selectedCountry) }),
+    [filters, selectedCountry]
+  );
+  const { data, isLoading } = useSearchBusinesses(apiFilters);
 
   return (
     <div className="space-y-3">

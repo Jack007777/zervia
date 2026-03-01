@@ -4,14 +4,18 @@ import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { SlotPicker } from '../../../../../src/components/SlotPicker';
+import { useCountry } from '../../../../../src/hooks/useCountry';
 import { useBusinessServices, useCreateBooking, useSlots } from '../../../../../src/lib/api/hooks';
+import { toApiCountry } from '../../../../../src/lib/country';
 
 export default function BookingPage() {
   const { id } = useParams<{ id: string }>();
+  const country = useCountry();
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState('');
   const [slot, setSlot] = useState('');
-  const servicesQuery = useBusinessServices(id);
+  const apiCountry = toApiCountry(country);
+  const servicesQuery = useBusinessServices(id, apiCountry);
   const slotsQuery = useSlots(id, serviceId, date);
   const createBooking = useCreateBooking();
 
@@ -35,7 +39,7 @@ export default function BookingPage() {
       businessId: id,
       serviceId,
       startTime: slot,
-      country: 'DE'
+      country: apiCountry
     });
   }
 

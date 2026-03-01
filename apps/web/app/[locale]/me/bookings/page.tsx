@@ -3,11 +3,14 @@
 import { useParams } from 'next/navigation';
 
 import { AuthGuard } from '../../../../src/components/AuthGuard';
+import { useCountry } from '../../../../src/hooks/useCountry';
 import { useMyBookings } from '../../../../src/lib/api/hooks';
+import { toApiCountry } from '../../../../src/lib/country';
 
 export default function MyBookingsPage() {
   const { locale } = useParams<{ locale: string }>();
-  const { data, isLoading } = useMyBookings();
+  const country = useCountry();
+  const { data, isLoading } = useMyBookings(toApiCountry(country));
 
   return (
     <AuthGuard locale={locale}>

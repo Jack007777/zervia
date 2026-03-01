@@ -1,8 +1,11 @@
 'use client';
 
+'use client';
+
 import { useState } from 'react';
 
 import type { SearchParams } from '../lib/api/types';
+import { COUNTRY_OPTIONS } from '../lib/country';
 
 type Props = {
   initial?: SearchParams;
@@ -19,6 +22,17 @@ export function SearchFilters({ initial, onChange }: Props) {
 
   return (
     <section className="grid grid-cols-2 gap-2 rounded-2xl bg-white p-3 shadow-sm">
+      <select
+        className="col-span-2 rounded-xl border p-2"
+        value={state.country ?? 'DE'}
+        onChange={(e) => update({ ...state, country: e.target.value })}
+      >
+        {COUNTRY_OPTIONS.map((item) => (
+          <option key={item} value={item}>
+            {item}
+          </option>
+        ))}
+      </select>
       <input
         className="col-span-2 rounded-xl border p-2"
         placeholder="Category"
