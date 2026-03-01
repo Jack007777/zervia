@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "search": "Search",
+    "bookings": "My bookings",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "register": "Register"
+  },
+  "home": {
+    "title": "Book local services in minutes",
+    "subtitle": "Germany-first booking platform for beauty, wellness and more.",
+    "cityPlaceholder": "City or postal code",
+    "searchPlaceholder": "Search business or service",
+    "searchAction": "Search now"
+  },
+  "search": {
+    "title": "Find businesses",
+    "empty": "No results found for current filters."
+  },
+  "booking": {
+    "selectService": "Select service",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "confirm": "Confirm booking"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Zervia",
+  "short_name": "Zervia",
+  "description": "PWA booking platform for DE-first rollout",
+  "lang": "de",
+  "start_url": "/de",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

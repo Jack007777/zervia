@@ -1,0 +1,48 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+import { useLogin } from '../../../../src/lib/api/hooks';
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8)
+});
+
+type LoginInput = z.infer<typeof loginSchema>;
+
+export default function LoginPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params);
+  const router = useRouter();
+  const mutation = useLogin();
+  const form = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' }
+  });
+
+  async function onSubmit(values: LoginInput) {
+    await mutation.mutateAsync(values);
+    router.push(`/${locale}/search`);
+  }
+
+  return (
+    <main className="mx-auto max-w-md space-y-4 py-10">
+      <h1 className="text-2xl font-semibold">Sign in</h1>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-3 rounded-2xl bg-white p-5 shadow-sm">
+        <input className="rounded-xl border p-3" placeholder="Email" {...form.register('email')} />
+        <input className="rounded-xl border p-3" placeholder="Password" type="password" {...form.register('password')} />
+        <button className="rounded-xl bg-brand-500 p-3 font-medium text-white" type="submit" disabled={mutation.isPending}>
+          Login
+        </button>
+      </form>
+      <Link href={`/${locale}/auth/register`} className="text-sm text-brand-700">
+        Create account
+      </Link>
+    </main>
+  );
+}
