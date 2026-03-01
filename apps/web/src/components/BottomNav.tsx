@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { getAccessToken } from '../lib/api/token-storage';
+import { AUTH_CHANGED_EVENT, getAccessToken } from '../lib/api/token-storage';
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.split('.');
@@ -42,9 +42,19 @@ export function BottomNav({ locale }: { locale: string }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const token = getAccessToken();
-    const payload = token ? decodeJwtPayload(token) : null;
-    setVisible(isTokenActive(payload) && isBusinessRole(payload));
+    const update = () => {
+      const token = getAccessToken();
+      const payload = token ? decodeJwtPayload(token) : null;
+      setVisible(isTokenActive(payload) && isBusinessRole(payload));
+    };
+
+    update();
+    window.addEventListener(AUTH_CHANGED_EVENT, update);
+    window.addEventListener('storage', update);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, update);
+      window.removeEventListener('storage', update);
+    };
   }, [pathname]);
 
   if (!visible) {
