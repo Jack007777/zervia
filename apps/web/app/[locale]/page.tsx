@@ -79,9 +79,18 @@ export default function HomePage() {
   const router = useRouter();
   const country = useCountry();
   const [city, setCity] = useState('');
-  const [query, setQuery] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [locationError, setLocationError] = useState('');
+  const [serviceError, setServiceError] = useState('');
+  const [radiusKm, setRadiusKm] = useState('');
+  const [ratingMin, setRatingMin] = useState('');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsStatus, setGpsStatus] = useState('');
+  const [gpsRequested, setGpsRequested] = useState(false);
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
-  const [subCategory, setSubCategory] = useState<string>('Entspannungsmassage');
+  const [subCategory, setSubCategory] = useState<string>('');
   const [subMenuOpen, setSubMenuOpen] = useState(false);
 
   const current = useMemo(() => CATEGORY_MAP[mainCategory], [mainCategory]);
@@ -92,24 +101,87 @@ export default function HomePage() {
       return;
     }
     setMainCategory(next);
-    setSubCategory(CATEGORY_MAP[next].sub[0]);
+    setSubCategory('');
+    setServiceError('');
     setSubMenuOpen(true);
   }
 
   function onSearch() {
+    if (!subCategory) {
+      setServiceError('Bitte zuerst eine konkrete Behandlung auswaehlen.');
+      return;
+    }
+    setServiceError('');
+
+    const hasTextLocation = city.trim() || postalCode.trim();
+    if (!hasTextLocation && !gps) {
+      setLocationError('Bitte Stadt/PLZ eingeben oder GPS-Standort erlauben.');
+      return;
+    }
+    setLocationError('');
+
+    const cityText = city.trim();
+    const postalCodeText = postalCode.trim();
+
     const search = new URLSearchParams();
     search.set('country', toApiCountry(country));
     search.set('category', mainCategory);
-    if (subCategory) {
-      search.set('q', subCategory);
+    const fullQuery = [subCategory, cityText, postalCodeText].filter(Boolean).join(' ');
+    if (fullQuery) {
+      search.set('q', fullQuery);
     }
-    if (query) {
-      search.set('q', `${query} ${subCategory}`.trim());
+    if (cityText) {
+      search.set('city', cityText);
     }
-    if (city) {
-      search.set('q', `${search.get('q') ?? ''} ${city}`.trim());
+    if (postalCodeText) {
+      search.set('postalCode', postalCodeText);
+    }
+    if (gps) {
+      search.set('lat', gps.lat.toString());
+      search.set('lng', gps.lng.toString());
+      search.set('radiusKm', '8');
+    }
+    if (radiusKm) {
+      search.set('radiusKm', radiusKm);
+    }
+    if (ratingMin) {
+      search.set('ratingMin', ratingMin);
+    }
+    if (priceMin) {
+      search.set('priceMin', priceMin);
+    }
+    if (priceMax) {
+      search.set('priceMax', priceMax);
     }
     router.push(`/${locale}/search?${search.toString()}`);
+  }
+
+  function requestGpsLocation() {
+    if (gpsRequested || !navigator.geolocation) {
+      if (!navigator.geolocation) {
+        setGpsStatus('GPS wird von diesem Geraet/Browser nicht unterstuetzt.');
+      }
+      return;
+    }
+
+    setGpsRequested(true);
+    setGpsStatus('Standort wird abgefragt ...');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextGps = {
+          lat: Number(position.coords.latitude.toFixed(6)),
+          lng: Number(position.coords.longitude.toFixed(6))
+        };
+        setGps(nextGps);
+        setLocationError('');
+        setGpsStatus('GPS-Standort aktiv.');
+      },
+      () => {
+        setGpsStatus('Standortzugriff abgelehnt. Bitte Stadt/PLZ manuell eingeben.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 }
+    );
   }
 
   return (
@@ -146,7 +218,10 @@ export default function HomePage() {
                 <li key={item}>
                   <button
                     type="button"
-                    onClick={() => setSubCategory(item)}
+                    onClick={() => {
+                      setSubCategory(item);
+                      setServiceError('');
+                    }}
                     className={`w-full rounded-lg px-2 py-1 text-left ${
                       subCategory === item ? 'bg-white font-semibold text-brand-700' : 'text-slate-700'
                     }`}
@@ -166,21 +241,69 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm">
-        <input
-          className="rounded-xl border p-3"
-          placeholder="City or postal code"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
-        <input
-          className="rounded-xl border p-3"
-          placeholder="Search business or service"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <label className="grid gap-1 text-sm text-slate-600">
+          Stadt
+          <input
+            className="rounded-xl border p-3"
+            placeholder="z. B. Berlin (oder tippen fuer GPS)"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            onFocus={requestGpsLocation}
+            onClick={requestGpsLocation}
+          />
+        </label>
+        <label className="grid gap-1 text-sm text-slate-600">
+          PLZ
+          <input
+            className="rounded-xl border p-3"
+            placeholder="z. B. 10115"
+            inputMode="numeric"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            className="rounded-xl border p-3"
+            type="number"
+            min="1"
+            placeholder="Distanz (km)"
+            value={radiusKm}
+            onChange={(e) => setRadiusKm(e.target.value)}
+          />
+          <input
+            className="rounded-xl border p-3"
+            type="number"
+            min="1"
+            max="5"
+            step="0.1"
+            placeholder="Min Bewertung"
+            value={ratingMin}
+            onChange={(e) => setRatingMin(e.target.value)}
+          />
+          <input
+            className="rounded-xl border p-3"
+            type="number"
+            min="0"
+            placeholder="Preis min"
+            value={priceMin}
+            onChange={(e) => setPriceMin(e.target.value)}
+          />
+          <input
+            className="rounded-xl border p-3"
+            type="number"
+            min="0"
+            placeholder="Preis max"
+            value={priceMax}
+            onChange={(e) => setPriceMax(e.target.value)}
+          />
+        </div>
         <button type="button" className="rounded-xl bg-brand-500 p-3 font-medium text-white" onClick={onSearch}>
-          Search now
+          Jetzt suchen
         </button>
+        {serviceError ? <p className="text-xs text-rose-600">{serviceError}</p> : null}
+        {gpsStatus ? <p className="text-xs text-slate-600">{gpsStatus}</p> : null}
+        {locationError ? <p className="text-xs text-rose-600">{locationError}</p> : null}
       </section>
     </div>
   );

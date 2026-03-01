@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 import { SUPPORTED_COUNTRIES } from '@zervia/shared';
 
@@ -25,6 +25,18 @@ export class CreateBookingDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ example: 'Anna Mueller' })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  guestName?: string;
+
+  @ApiPropertyOptional({ example: '+4915112345678' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+?[1-9]\d{6,14}$/)
+  guestPhone?: string;
 
   @ApiPropertyOptional({ enum: SUPPORTED_COUNTRIES, example: 'DE' })
   @IsOptional()

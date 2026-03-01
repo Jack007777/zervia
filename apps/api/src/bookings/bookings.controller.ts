@@ -10,6 +10,7 @@ import {
 
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 
 import { BookingsService } from './bookings.service';
@@ -26,12 +27,10 @@ export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Post('bookings')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth('bearer')
-  @Roles('customer', 'admin')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiBody({ type: CreateBookingDto })
-  create(@Req() req: { user: { sub: string } }, @Body() body: CreateBookingDto) {
-    return this.bookingsService.createBooking(req.user.sub, body);
+  create(@Req() req: { user?: { sub: string } }, @Body() body: CreateBookingDto) {
+    return this.bookingsService.createBooking(req.user?.sub, body);
   }
 
   @Get('bookings/me')

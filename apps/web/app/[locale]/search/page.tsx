@@ -15,14 +15,20 @@ export default function SearchPage() {
   const { locale } = useParams<{ locale: string }>();
   const q = useSearchParams();
   const selectedCountry = useCountry();
+  const city = q.get('city') ?? '';
+  const postalCode = q.get('postalCode') ?? '';
+  const combinedLocation = [city, postalCode].filter(Boolean).join(' ');
 
   const initial = useMemo<SearchParams>(
     () => ({
-      q: q.get('q') ?? undefined,
+      q: q.get('q') ?? (combinedLocation || undefined),
       category: q.get('category') ?? undefined,
-      country: toApiCountry((q.get('country') ?? selectedCountry) as string)
+      country: toApiCountry((q.get('country') ?? selectedCountry) as string),
+      lat: q.get('lat') ? Number(q.get('lat')) : undefined,
+      lng: q.get('lng') ? Number(q.get('lng')) : undefined,
+      radiusKm: q.get('radiusKm') ? Number(q.get('radiusKm')) : undefined
     }),
-    [q, selectedCountry]
+    [q, selectedCountry, combinedLocation]
   );
   const [filters, setFilters] = useState<SearchParams>(initial);
   const apiFilters = useMemo(
@@ -34,6 +40,7 @@ export default function SearchPage() {
   return (
     <div className="space-y-3">
       <h1 className="text-xl font-semibold">Find businesses</h1>
+      {combinedLocation ? <p className="text-sm text-slate-600">Region: {combinedLocation}</p> : null}
       <SearchFilters initial={initial} onChange={setFilters} />
       <MapPlaceholder />
       <div className="space-y-3">

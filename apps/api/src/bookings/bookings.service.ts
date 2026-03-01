@@ -1,9 +1,10 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { DateTime, Interval } from 'luxon';
 import { Connection, Model } from 'mongoose';
 
 import { AvailabilityEntity, type AvailabilityDocument } from '../availability/availability.schema';
+import { SmsService } from '../notifications/sms.service';
 import { ServiceEntity, type ServiceDocument } from '../services/service.schema';
 import { BookingEntity, type BookingDocument } from './booking.schema';
 import type {
@@ -18,10 +19,19 @@ export class BookingsService {
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(BookingEntity.name) private readonly bookingModel: Model<BookingDocument>,
     @InjectModel(ServiceEntity.name) private readonly serviceModel: Model<ServiceDocument>,
-    @InjectModel(AvailabilityEntity.name) private readonly availabilityModel: Model<AvailabilityDocument>
+    @InjectModel(AvailabilityEntity.name) private readonly availabilityModel: Model<AvailabilityDocument>,
+    private readonly smsService: SmsService
   ) {}
 
-  async createBooking(customerUserId: string, input: CreateBookingDto) {
+  async createBooking(customerUserId: string | undefined, input: CreateBookingDto) {
+    const isGuest = !customerUserId;
+    if (isGuest && !input.guestPhone) {
+      throw new BadRequestException({
+        errorCode: 'GUEST_PHONE_REQUIRED',
+        message: 'guestPhone is required for guest bookings'
+      });
+    }
+
     const session = await this.connection.startSession();
     try {
       let createdBooking: BookingDocument | null = null;
@@ -99,6 +109,9 @@ export class BookingsService {
           [
             {
               customerUserId,
+              isGuest,
+              guestName: input.guestName,
+              guestPhone: input.guestPhone,
               businessId: input.businessId,
               serviceId: input.serviceId,
               staffId: resolvedStaffId,
@@ -116,6 +129,15 @@ export class BookingsService {
         );
         createdBooking = created[0] ?? null;
       });
+
+      if (createdBooking?.guestPhone) {
+        await this.smsService.sendBookingUpdate({
+          toPhone: createdBooking.guestPhone,
+          event: 'created',
+          bookingId: String(createdBooking._id),
+          startTime: createdBooking.startTime.toISOString()
+        });
+      }
       return createdBooking;
     } catch (error: unknown) {
       if (
@@ -143,8 +165,8 @@ export class BookingsService {
     return this.bookingModel.find({ businessId, country }).sort({ startTime: 1 }).exec();
   }
 
-  cancel(id: string, dto: CancelBookingDto) {
-    return this.bookingModel
+  async cancel(id: string, dto: CancelBookingDto) {
+    const booking = await this.bookingModel
       .findByIdAndUpdate(
         id,
         {
@@ -154,10 +176,20 @@ export class BookingsService {
         { new: true }
       )
       .exec();
+
+    if (booking?.guestPhone) {
+      await this.smsService.sendBookingUpdate({
+        toPhone: booking.guestPhone,
+        event: 'cancelled',
+        bookingId: String(booking._id),
+        startTime: booking.startTime.toISOString()
+      });
+    }
+    return booking;
   }
 
-  confirm(id: string, dto: ConfirmBookingDto) {
-    return this.bookingModel
+  async confirm(id: string, dto: ConfirmBookingDto) {
+    const booking = await this.bookingModel
       .findByIdAndUpdate(
         id,
         {
@@ -168,6 +200,16 @@ export class BookingsService {
         { new: true }
       )
       .exec();
+
+    if (booking?.guestPhone) {
+      await this.smsService.sendBookingUpdate({
+        toPhone: booking.guestPhone,
+        event: 'confirmed',
+        bookingId: String(booking._id),
+        startTime: booking.startTime.toISOString()
+      });
+    }
+    return booking;
   }
 
   private resolveWindowsForDate(
@@ -208,3 +250,4 @@ export class BookingsService {
     return dayStart.set({ hour: Number(h), minute: Number(m), second: 0, millisecond: 0 });
   }
 }
+

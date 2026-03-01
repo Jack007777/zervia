@@ -13,8 +13,17 @@ export type BookingDocument = HydratedDocument<BookingEntity>;
 
 @Schema({ timestamps: true, collection: 'bookings' })
 export class BookingEntity {
-  @Prop({ required: true })
-  customerUserId!: string;
+  @Prop()
+  customerUserId?: string;
+
+  @Prop({ default: false })
+  isGuest!: boolean;
+
+  @Prop()
+  guestName?: string;
+
+  @Prop()
+  guestPhone?: string;
 
   @Prop({ required: true })
   businessId!: string;
