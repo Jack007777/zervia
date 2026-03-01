@@ -26,7 +26,14 @@ export default async function LocaleLayout({
             <Link href={`/${resolvedLocale}`} className="text-xl font-bold text-brand-700">
               Zervia
             </Link>
-            <div className="flex items-center gap-1 rounded-lg border bg-white p-1 text-xs">
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/${resolvedLocale}/auth/login`}
+                className="rounded-lg border px-2 py-1 text-xs text-slate-700"
+              >
+                Login
+              </Link>
+              <div className="flex items-center gap-1 rounded-lg border bg-white p-1 text-xs">
               <Link
                 href="/de"
                 className={`rounded px-2 py-1 ${resolvedLocale === 'de' ? 'bg-brand-500 text-white' : 'text-slate-600'}`}
@@ -39,6 +46,7 @@ export default async function LocaleLayout({
               >
                 EN
               </Link>
+              </div>
             </div>
           </div>
         </header>
