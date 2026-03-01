@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { BottomNav } from '../../src/components/BottomNav';
 import { InstallPrompt } from '../../src/components/InstallPrompt';
 import { resolveLocale } from '../../src/i18n/config';
 import { QueryProvider } from '../../src/providers/query-provider';
@@ -43,20 +44,7 @@ export default async function LocaleLayout({
         </header>
         <main className="px-4 py-4">{children}</main>
         <InstallPrompt />
-        <nav className="sticky bottom-0 grid grid-cols-4 border-t bg-white px-2 py-2 text-xs">
-          <Link className="text-center" href={`/${resolvedLocale}/search`}>
-            Search
-          </Link>
-          <Link className="text-center" href={`/${resolvedLocale}/me/bookings`}>
-            Bookings
-          </Link>
-          <Link className="text-center" href={`/${resolvedLocale}/dashboard`}>
-            Dashboard
-          </Link>
-          <Link className="text-center" href={`/${resolvedLocale}/auth/login`}>
-            Login
-          </Link>
-        </nav>
+        <BottomNav locale={resolvedLocale} />
       </div>
     </QueryProvider>
   );

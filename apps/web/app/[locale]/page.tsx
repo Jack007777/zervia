@@ -79,12 +79,18 @@ export default function HomePage() {
   const [query, setQuery] = useState('');
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
   const [subCategory, setSubCategory] = useState<string>('Entspannungsmassage');
+  const [subMenuOpen, setSubMenuOpen] = useState(false);
 
   const current = useMemo(() => CATEGORY_MAP[mainCategory], [mainCategory]);
 
   function onSelectMain(next: MainCategory) {
+    if (next === mainCategory) {
+      setSubMenuOpen((prev) => !prev);
+      return;
+    }
     setMainCategory(next);
     setSubCategory(CATEGORY_MAP[next].sub[0]);
+    setSubMenuOpen(true);
   }
 
   function onSearch() {
@@ -129,24 +135,30 @@ export default function HomePage() {
           })}
         </div>
 
-        <div className="rounded-xl bg-slate-50 p-3">
-          <ul className="space-y-2 text-sm">
-            {current.sub.map((item) => (
-              <li key={item}>
-                <button
-                  type="button"
-                  onClick={() => setSubCategory(item)}
-                  className={`w-full rounded-lg px-2 py-1 text-left ${
-                    subCategory === item ? 'bg-white font-semibold text-brand-700' : 'text-slate-700'
-                  }`}
-                >
-                  {item}
-                </button>
-              </li>
-            ))}
-            <li className="pt-1 font-semibold text-slate-900">{current.allLabel}</li>
-          </ul>
-        </div>
+        {subMenuOpen ? (
+          <div className="rounded-xl bg-slate-50 p-3">
+            <ul className="space-y-2 text-sm">
+              {current.sub.map((item) => (
+                <li key={item}>
+                  <button
+                    type="button"
+                    onClick={() => setSubCategory(item)}
+                    className={`w-full rounded-lg px-2 py-1 text-left ${
+                      subCategory === item ? 'bg-white font-semibold text-brand-700' : 'text-slate-700'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                </li>
+              ))}
+              <li className="pt-1 font-semibold text-slate-900">{current.allLabel}</li>
+            </ul>
+          </div>
+        ) : (
+          <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">
+            Klicke auf eine Kategorie, um Unterkategorien zu sehen.
+          </p>
+        )}
       </section>
 
       <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm">
@@ -169,4 +181,3 @@ export default function HomePage() {
     </div>
   );
 }
-
