@@ -1,17 +1,14 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { use, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { SlotPicker } from '../../../../../src/components/SlotPicker';
 import { useBusinessServices, useCreateBooking, useSlots } from '../../../../../src/lib/api/hooks';
 
-export default function BookingPage({
-  params
-}: {
-  params: Promise<{ locale: string; id: string }>;
-}) {
-  const { id } = use(params);
+export default function BookingPage() {
+  const { id } = useParams<{ id: string }>();
   const t = useTranslations('booking');
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState('');

@@ -1,8 +1,8 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { use, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { BusinessCard } from '../../../src/components/BusinessCard';
 import { MapPlaceholder } from '../../../src/components/MapPlaceholder';
@@ -10,8 +10,8 @@ import { SearchFilters } from '../../../src/components/SearchFilters';
 import { useSearchBusinesses } from '../../../src/lib/api/hooks';
 import type { SearchParams } from '../../../src/lib/api/types';
 
-export default function SearchPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = use(params);
+export default function SearchPage() {
+  const { locale } = useParams<{ locale: string }>();
   const q = useSearchParams();
   const t = useTranslations('search');
 

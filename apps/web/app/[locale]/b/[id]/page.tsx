@@ -1,16 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { use } from 'react';
+import { useParams } from 'next/navigation';
 
 import { useBusiness, useBusinessServices } from '../../../../src/lib/api/hooks';
 
-export default function BusinessDetailPage({
-  params
-}: {
-  params: Promise<{ locale: string; id: string }>;
-}) {
-  const { locale, id } = use(params);
+export default function BusinessDetailPage() {
+  const { locale, id } = useParams<{ locale: string; id: string }>();
   const { data: business } = useBusiness(id);
   const { data: services, isLoading } = useBusinessServices(id);
 

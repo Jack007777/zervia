@@ -2,8 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { use } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -17,8 +16,8 @@ const registerSchema = z.object({
 
 type RegisterInput = z.infer<typeof registerSchema>;
 
-export default function RegisterPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = use(params);
+export default function RegisterPage() {
+  const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const mutation = useRegister();
   const form = useForm<RegisterInput>({

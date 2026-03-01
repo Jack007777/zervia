@@ -1,11 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { use, useState } from 'react';
+import { useState } from 'react';
 
-export default function HomePage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = use(params);
+export default function HomePage() {
+  const { locale } = useParams<{ locale: string }>();
   const [city, setCity] = useState('');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('beauty');

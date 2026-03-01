@@ -1,12 +1,12 @@
 'use client';
 
-import { use } from 'react';
+import { useParams } from 'next/navigation';
 
 import { AuthGuard } from '../../../../src/components/AuthGuard';
 import { useMyBookings } from '../../../../src/lib/api/hooks';
 
-export default function MyBookingsPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = use(params);
+export default function MyBookingsPage() {
+  const { locale } = useParams<{ locale: string }>();
   const { data, isLoading } = useMyBookings();
 
   return (

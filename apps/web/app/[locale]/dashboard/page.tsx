@@ -1,11 +1,11 @@
 'use client';
 
-import { use } from 'react';
+import { useParams } from 'next/navigation';
 
 import { AuthGuard } from '../../../src/components/AuthGuard';
 
-export default function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = use(params);
+export default function DashboardPage() {
+  const { locale } = useParams<{ locale: string }>();
   return (
     <AuthGuard locale={locale}>
       <div className="space-y-3">
