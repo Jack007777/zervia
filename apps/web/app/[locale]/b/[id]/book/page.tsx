@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { SlotPicker } from '../../../../../src/components/SlotPicker';
@@ -9,7 +8,6 @@ import { useBusinessServices, useCreateBooking, useSlots } from '../../../../../
 
 export default function BookingPage() {
   const { id } = useParams<{ id: string }>();
-  const t = useTranslations('booking');
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState('');
   const [slot, setSlot] = useState('');
@@ -44,7 +42,7 @@ export default function BookingPage() {
   return (
     <div className="space-y-4">
       <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <h1 className="font-semibold">{t('selectService')}</h1>
+        <h1 className="font-semibold">Select service</h1>
         <div className="mt-2 grid gap-2">
           {services.map((service) => (
             <button
@@ -61,7 +59,7 @@ export default function BookingPage() {
       </section>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">{t('selectDate')}</h2>
+        <h2 className="font-semibold">Select date</h2>
         <input
           type="date"
           className="mt-2 w-full rounded-xl border p-3"
@@ -71,7 +69,7 @@ export default function BookingPage() {
       </section>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">{t('selectTime')}</h2>
+        <h2 className="font-semibold">Select time</h2>
         <div className="mt-3">
           <SlotPicker slots={slots} selected={slot} onSelect={setSlot} />
         </div>
@@ -82,7 +80,7 @@ export default function BookingPage() {
         onClick={onConfirm}
         disabled={!serviceId || !slot || createBooking.isPending}
       >
-        {t('confirm')}
+        Confirm booking
       </button>
     </div>
   );

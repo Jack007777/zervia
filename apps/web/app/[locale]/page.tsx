@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 export default function HomePage() {
@@ -9,7 +8,6 @@ export default function HomePage() {
   const [city, setCity] = useState('');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('beauty');
-  const t = useTranslations('home');
   const router = useRouter();
 
   function onSearch() {
@@ -29,14 +27,14 @@ export default function HomePage() {
   return (
     <div className="space-y-4">
       <section className="rounded-3xl bg-gradient-to-br from-brand-700 to-brand-500 p-5 text-white">
-        <h1 className="text-2xl font-semibold leading-tight">{t('title')}</h1>
-        <p className="mt-2 text-sm text-blue-100">{t('subtitle')}</p>
+        <h1 className="text-2xl font-semibold leading-tight">Book local services in minutes</h1>
+        <p className="mt-2 text-sm text-blue-100">Germany-first booking platform for beauty, wellness and more.</p>
       </section>
 
       <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm">
         <input
           className="rounded-xl border p-3"
-          placeholder={t('cityPlaceholder')}
+          placeholder="City or postal code"
           value={city}
           onChange={(e) => setCity(e.target.value)}
         />
@@ -56,12 +54,12 @@ export default function HomePage() {
         </div>
         <input
           className="rounded-xl border p-3"
-          placeholder={t('searchPlaceholder')}
+          placeholder="Search business or service"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <button type="button" className="rounded-xl bg-brand-500 p-3 font-medium text-white" onClick={onSearch}>
-          {t('searchAction')}
+          Search now
         </button>
       </section>
     </div>
