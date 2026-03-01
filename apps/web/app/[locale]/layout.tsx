@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 
 import { InstallPrompt } from '../../src/components/InstallPrompt';
 import { resolveLocale } from '../../src/i18n/config';
+import deMessages from '../../src/i18n/messages/de.json';
+import enMessages from '../../src/i18n/messages/en.json';
 import { QueryProvider } from '../../src/providers/query-provider';
 
 export const runtime = 'edge';
@@ -11,9 +13,9 @@ export const runtime = 'edge';
 async function getMessages(locale: string) {
   const resolved = resolveLocale(locale);
   if (resolved === 'de') {
-    return (await import('../../src/i18n/messages/de.json')).default;
+    return deMessages;
   }
-  return (await import('../../src/i18n/messages/en.json')).default;
+  return enMessages;
 }
 
 export default async function LocaleLayout({
