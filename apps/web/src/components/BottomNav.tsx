@@ -29,6 +29,14 @@ function isBusinessRole(payload: Record<string, unknown> | null): boolean {
   return roles.includes('business') || roles.includes('admin');
 }
 
+function isTokenActive(payload: Record<string, unknown> | null): boolean {
+  const exp = payload?.exp;
+  if (typeof exp !== 'number') {
+    return false;
+  }
+  return exp * 1000 > Date.now();
+}
+
 export function BottomNav({ locale }: { locale: string }) {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
@@ -36,7 +44,7 @@ export function BottomNav({ locale }: { locale: string }) {
   useEffect(() => {
     const token = getAccessToken();
     const payload = token ? decodeJwtPayload(token) : null;
-    setVisible(isBusinessRole(payload));
+    setVisible(isTokenActive(payload) && isBusinessRole(payload));
   }, [pathname]);
 
   if (!visible) {
@@ -57,4 +65,3 @@ export function BottomNav({ locale }: { locale: string }) {
     </nav>
   );
 }
-
