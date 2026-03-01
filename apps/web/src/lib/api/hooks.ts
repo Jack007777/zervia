@@ -17,10 +17,11 @@ function toSearchQuery(params: SearchParams) {
   return text ? `?${text}` : '';
 }
 
-export function useSearchBusinesses(params: SearchParams) {
+export function useSearchBusinesses(params: SearchParams, enabled = true) {
   return useQuery({
     queryKey: ['business-search', params],
-    queryFn: () => apiClient<Business[]>(`/search${toSearchQuery(params)}`)
+    queryFn: () => apiClient<Business[]>(`/search${toSearchQuery(params)}`),
+    enabled
   });
 }
 

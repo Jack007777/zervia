@@ -1,10 +1,14 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
+import { BusinessCard } from '../../src/components/BusinessCard';
 import { CategoryIcon } from '../../src/components/CategoryIcon';
+import { LiveMap } from '../../src/components/LiveMap';
 import { useCountry } from '../../src/hooks/useCountry';
+import { useSearchBusinesses } from '../../src/lib/api/hooks';
+import type { SearchParams } from '../../src/lib/api/types';
 import { toApiCountry } from '../../src/lib/country';
 
 type MainCategory =
@@ -76,7 +80,6 @@ const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
 
 export default function HomePage() {
   const { locale } = useParams<{ locale: string }>();
-  const router = useRouter();
   const country = useCountry();
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
@@ -92,8 +95,21 @@ export default function HomePage() {
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
   const [subCategory, setSubCategory] = useState<string>('');
   const [subMenuOpen, setSubMenuOpen] = useState(false);
+  const [submittedFilters, setSubmittedFilters] = useState<SearchParams | null>(null);
 
   const current = useMemo(() => CATEGORY_MAP[mainCategory], [mainCategory]);
+  const { data, isLoading } = useSearchBusinesses(submittedFilters ?? {}, Boolean(submittedFilters));
+
+  const mapCenter = useMemo(() => {
+    if (gps) {
+      return gps;
+    }
+    const firstWithGeo = (data ?? []).find((item) => typeof item.lat === 'number' && typeof item.lng === 'number');
+    if (firstWithGeo && typeof firstWithGeo.lat === 'number' && typeof firstWithGeo.lng === 'number') {
+      return { lat: firstWithGeo.lat, lng: firstWithGeo.lng };
+    }
+    return { lat: 52.52, lng: 13.405 };
+  }, [data, gps]);
 
   function onSelectMain(next: MainCategory) {
     if (next === mainCategory) {
@@ -153,7 +169,35 @@ export default function HomePage() {
     if (priceMax) {
       search.set('priceMax', priceMax);
     }
-    router.push(`/${locale}/search?${search.toString()}`);
+
+    const params: SearchParams = {
+      country: toApiCountry(country),
+      category: mainCategory,
+      q: search.get('q') ?? undefined,
+      city: cityText,
+      postalCode: postalCodeText,
+      lat: gps?.lat,
+      lng: gps?.lng,
+      radiusKm: Number(search.get('radiusKm') ?? undefined),
+      ratingMin: Number(search.get('ratingMin') ?? undefined),
+      priceMin: Number(search.get('priceMin') ?? undefined),
+      priceMax: Number(search.get('priceMax') ?? undefined)
+    };
+
+    if (!search.get('radiusKm')) {
+      delete params.radiusKm;
+    }
+    if (!search.get('ratingMin')) {
+      delete params.ratingMin;
+    }
+    if (!search.get('priceMin')) {
+      delete params.priceMin;
+    }
+    if (!search.get('priceMax')) {
+      delete params.priceMax;
+    }
+
+    setSubmittedFilters(params);
   }
 
   function requestGpsLocation() {
@@ -305,6 +349,21 @@ export default function HomePage() {
         {gpsStatus ? <p className="text-xs text-slate-600">{gpsStatus}</p> : null}
         {locationError ? <p className="text-xs text-rose-600">{locationError}</p> : null}
       </section>
+
+      {submittedFilters ? (
+        <section className="space-y-3">
+          <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} />
+          <div className="space-y-3">
+            {isLoading ? <p className="text-sm text-slate-600">Suche laeuft ...</p> : null}
+            {!isLoading && (!data || data.length === 0) ? (
+              <p className="text-sm text-slate-600">Keine Ergebnisse mit den aktuellen Filtern.</p>
+            ) : null}
+            {(data ?? []).map((business) => (
+              <BusinessCard key={business._id} locale={locale} business={business} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -2,6 +2,8 @@ export type SearchParams = {
   country?: string;
   lat?: number;
   lng?: number;
+  city?: string;
+  postalCode?: string;
   radiusKm?: number;
   category?: string;
   q?: string;
@@ -17,6 +19,8 @@ export type Business = {
   category?: string;
   addressLine?: string;
   rating?: number;
+  lat?: number;
+  lng?: number;
   priceMin?: number;
   country?: string;
   defaultCurrency?: string;
