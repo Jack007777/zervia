@@ -55,8 +55,46 @@ export class BusinessesService {
     if (query.ratingMin !== undefined) {
       mongoQuery.rating = { $gte: query.ratingMin };
     }
+    mongoQuery.isActive = true;
 
     // Lat/lng/radiusKm are accepted by API contract and can later map to geospatial index query.
     return this.businessModel.find(mongoQuery).limit(50).exec();
+  }
+
+  listForAdmin(limit = 100) {
+    return this.businessModel
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select('name category country city addressLine rating priceMin priceMax isActive ownerUserId createdAt')
+      .lean()
+      .exec();
+  }
+
+  updateForAdmin(
+    businessId: string,
+    input: {
+      name?: string;
+      category?: string;
+      city?: string;
+      addressLine?: string;
+      isActive?: boolean;
+    }
+  ) {
+    return this.businessModel
+      .findByIdAndUpdate(
+        businessId,
+        {
+          ...(input.name ? { name: input.name } : {}),
+          ...(input.category ? { category: input.category } : {}),
+          ...(input.city ? { city: input.city } : {}),
+          ...(input.addressLine ? { addressLine: input.addressLine } : {}),
+          ...(typeof input.isActive === 'boolean' ? { isActive: input.isActive } : {})
+        },
+        { new: true }
+      )
+      .select('name category country city addressLine rating priceMin priceMax isActive ownerUserId createdAt')
+      .lean()
+      .exec();
   }
 }

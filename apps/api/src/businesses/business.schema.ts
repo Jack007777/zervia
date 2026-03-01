@@ -60,6 +60,9 @@ export class BusinessEntity {
 
   @Prop({ type: Number })
   rating?: number;
+
+  @Prop({ default: true })
+  isActive!: boolean;
 }
 
 export const BusinessSchema = SchemaFactory.createForClass(BusinessEntity);

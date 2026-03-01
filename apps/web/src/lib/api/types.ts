@@ -79,3 +79,18 @@ export type AdRecord = {
   clicks: number;
   createdAt: string;
 };
+
+export type AdminBusiness = {
+  _id: string;
+  ownerUserId: string;
+  name: string;
+  category?: string;
+  country: string;
+  city: string;
+  addressLine: string;
+  rating?: number;
+  priceMin?: number;
+  priceMax?: number;
+  isActive: boolean;
+  createdAt: string;
+};

@@ -6,9 +6,11 @@ import { useMemo, useState } from 'react';
 import { AuthGuard } from '../../../src/components/AuthGuard';
 import {
   useAdminAds,
+  useAdminBusinesses,
   useAdminUsers,
   useCreateAd,
   useMyAds,
+  useUpdateAdminBusiness,
   useUpdateAdminUser,
   useUpdateAdStatus
 } from '../../../src/lib/api/hooks';
@@ -37,7 +39,9 @@ export default function DashboardPage() {
 function AdminDashboard() {
   const usersQuery = useAdminUsers();
   const adsQuery = useAdminAds();
+  const businessesQuery = useAdminBusinesses();
   const updateUser = useUpdateAdminUser();
+  const updateBusiness = useUpdateAdminBusiness();
   const updateAdStatus = useUpdateAdStatus();
 
   return (
@@ -85,6 +89,41 @@ function AdminDashboard() {
                   }}
                 >
                   Toggle admin
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="mb-3 font-medium">Business management</h2>
+        {businessesQuery.isLoading ? <p className="text-sm text-slate-600">Loading businesses...</p> : null}
+        <div className="space-y-2">
+          {(businessesQuery.data ?? []).map((biz) => (
+            <article key={biz._id} className="rounded-xl border p-3 text-sm">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="font-medium">{biz.name}</p>
+                <span className={`rounded-full px-2 py-1 text-xs ${biz.isActive ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                  {biz.isActive ? 'Active' : 'Disabled'}
+                </span>
+              </div>
+              <p className="mb-2 text-slate-600">
+                {biz.category ?? 'Uncategorized'} | {biz.city} | {biz.country}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg border px-2 py-1"
+                  onClick={async () => {
+                    await updateBusiness.mutateAsync({
+                      businessId: biz._id,
+                      isActive: !biz.isActive
+                    });
+                    await businessesQuery.refetch();
+                  }}
+                >
+                  {biz.isActive ? 'Disable' : 'Enable'}
                 </button>
               </div>
             </article>

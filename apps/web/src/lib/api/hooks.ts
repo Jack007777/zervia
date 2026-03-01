@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiClient } from './client';
 import { setTokens } from './token-storage';
-import type { AdRecord, AdminUser, Booking, Business, SearchParams, Service } from './types';
+import type { AdRecord, AdminBusiness, AdminUser, Booking, Business, SearchParams, Service } from './types';
 
 function toSearchQuery(params: SearchParams) {
   const search = new URLSearchParams();
@@ -165,6 +165,37 @@ export function useCreateAd() {
       apiClient<AdRecord>('/ads', {
         method: 'POST',
         body: JSON.stringify(payload),
+        auth: true
+      })
+  });
+}
+
+export function useAdminBusinesses() {
+  return useQuery({
+    queryKey: ['admin-businesses'],
+    queryFn: () => apiClient<AdminBusiness[]>('/admin/businesses', { auth: true })
+  });
+}
+
+export function useUpdateAdminBusiness() {
+  return useMutation({
+    mutationFn: (payload: {
+      businessId: string;
+      name?: string;
+      category?: string;
+      city?: string;
+      addressLine?: string;
+      isActive?: boolean;
+    }) =>
+      apiClient<AdminBusiness>(`/admin/businesses/${payload.businessId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: payload.name,
+          category: payload.category,
+          city: payload.city,
+          addressLine: payload.addressLine,
+          isActive: payload.isActive
+        }),
         auth: true
       })
   });
