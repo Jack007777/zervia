@@ -17,6 +17,12 @@ export class UserEntity {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email!: string;
 
+  @Prop({ trim: true })
+  displayName?: string;
+
+  @Prop({ trim: true })
+  phone?: string;
+
   @Prop({ required: true })
   passwordHash!: string;
 
@@ -28,6 +34,9 @@ export class UserEntity {
 
   @Prop({ type: String, enum: SUPPORTED_LANGUAGES, default: 'de' })
   locale!: LanguageCode;
+
+  @Prop({ default: true })
+  isActive!: boolean;
 
   @Prop()
   refreshTokenHash?: string;

@@ -52,3 +52,30 @@ export type Booking = {
   vatRate?: number;
   vatAmount?: number;
 };
+
+export type AdminUser = {
+  _id: string;
+  email: string;
+  roles: Array<'customer' | 'business' | 'admin'>;
+  country: string;
+  locale: string;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type AdRecord = {
+  _id: string;
+  businessId: string;
+  createdByUserId: string;
+  title: string;
+  description?: string;
+  landingUrl?: string;
+  imageUrl?: string;
+  country: string;
+  currency: string;
+  budgetDaily: number;
+  status: 'pending' | 'approved' | 'rejected' | 'paused' | 'active';
+  impressions: number;
+  clicks: number;
+  createdAt: string;
+};

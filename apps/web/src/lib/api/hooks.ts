@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiClient } from './client';
 import { setTokens } from './token-storage';
-import type { Booking, Business, SearchParams, Service } from './types';
+import type { AdRecord, AdminUser, Booking, Business, SearchParams, Service } from './types';
 
 function toSearchQuery(params: SearchParams) {
   const search = new URLSearchParams();
@@ -97,6 +97,72 @@ export function useCreateBooking() {
       country?: string;
     }) =>
       apiClient<Booking>('/bookings', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        auth: true
+      })
+  });
+}
+
+export function useAdminUsers() {
+  return useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => apiClient<AdminUser[]>('/admin/users', { auth: true })
+  });
+}
+
+export function useUpdateAdminUser() {
+  return useMutation({
+    mutationFn: (payload: {
+      userId: string;
+      roles?: Array<'customer' | 'business' | 'admin'>;
+      isActive?: boolean;
+    }) =>
+      apiClient<AdminUser>(`/admin/users/${payload.userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ roles: payload.roles, isActive: payload.isActive }),
+        auth: true
+      })
+  });
+}
+
+export function useAdminAds() {
+  return useQuery({
+    queryKey: ['admin-ads'],
+    queryFn: () => apiClient<AdRecord[]>('/admin/ads', { auth: true })
+  });
+}
+
+export function useUpdateAdStatus() {
+  return useMutation({
+    mutationFn: (payload: { adId: string; status: AdRecord['status'] }) =>
+      apiClient<AdRecord>(`/admin/ads/${payload.adId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: payload.status }),
+        auth: true
+      })
+  });
+}
+
+export function useMyAds() {
+  return useQuery({
+    queryKey: ['my-ads'],
+    queryFn: () => apiClient<AdRecord[]>('/ads/me', { auth: true })
+  });
+}
+
+export function useCreateAd() {
+  return useMutation({
+    mutationFn: (payload: {
+      businessId: string;
+      title: string;
+      description?: string;
+      landingUrl?: string;
+      budgetDaily?: number;
+      country?: string;
+      currency?: string;
+    }) =>
+      apiClient<AdRecord>('/ads', {
         method: 'POST',
         body: JSON.stringify(payload),
         auth: true

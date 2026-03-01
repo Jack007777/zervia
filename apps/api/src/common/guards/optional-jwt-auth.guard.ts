@@ -7,11 +7,16 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  override handleRequest(err: unknown, user: unknown) {
+  override handleRequest<TUser = unknown>(
+    err: unknown,
+    user: TUser,
+    _info: unknown,
+    _context: ExecutionContext,
+    _status?: unknown
+  ): TUser | null {
     if (err) {
       return null;
     }
     return user ?? null;
   }
 }
-

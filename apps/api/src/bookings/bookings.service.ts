@@ -130,15 +130,16 @@ export class BookingsService {
         createdBooking = created[0] ?? null;
       });
 
-      if (createdBooking?.guestPhone) {
+      const booking = createdBooking as BookingDocument | null;
+      if (booking?.guestPhone) {
         await this.smsService.sendBookingUpdate({
-          toPhone: createdBooking.guestPhone,
+          toPhone: booking.guestPhone,
           event: 'created',
-          bookingId: String(createdBooking._id),
-          startTime: createdBooking.startTime.toISOString()
+          bookingId: String(booking._id),
+          startTime: booking.startTime.toISOString()
         });
       }
-      return createdBooking;
+      return booking;
     } catch (error: unknown) {
       if (
         typeof error === 'object' &&
@@ -250,4 +251,3 @@ export class BookingsService {
     return dayStart.set({ hour: Number(h), minute: Number(m), second: 0, millisecond: 0 });
   }
 }
-
