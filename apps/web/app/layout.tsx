@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'EU-first booking platform MVP',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icon-192.png',
+    icon: '/zervia-logo.svg',
     apple: '/icon-192.png'
   }
 };
