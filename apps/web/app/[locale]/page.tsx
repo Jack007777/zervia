@@ -3,11 +3,13 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { CategoryIcon } from '../../src/components/CategoryIcon';
+
 export default function HomePage() {
   const { locale } = useParams<{ locale: string }>();
   const [city, setCity] = useState('');
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('beauty');
+  const [category, setCategory] = useState<'beauty' | 'wellness' | 'fitness' | 'massage'>('beauty');
   const router = useRouter();
 
   function onSearch() {
@@ -38,16 +40,17 @@ export default function HomePage() {
           value={city}
           onChange={(e) => setCity(e.target.value)}
         />
-        <div className="grid grid-cols-3 gap-2">
-          {['beauty', 'wellness', 'fitness'].map((item) => (
+        <div className="grid grid-cols-2 gap-2">
+          {(['beauty', 'wellness', 'fitness', 'massage'] as const).map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => setCategory(item)}
-              className={`rounded-xl px-3 py-2 text-sm ${
+              className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm capitalize ${
                 category === item ? 'bg-brand-500 text-white' : 'bg-slate-100'
               }`}
             >
+              <CategoryIcon category={item} />
               {item}
             </button>
           ))}
