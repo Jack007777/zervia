@@ -6,19 +6,15 @@ import { useMemo, useState } from 'react';
 import { BusinessCard } from '../../src/components/BusinessCard';
 import { CategoryIcon } from '../../src/components/CategoryIcon';
 import { LiveMap } from '../../src/components/LiveMap';
+import { RatingStars } from '../../src/components/RatingStars';
 import { useCountry } from '../../src/hooks/useCountry';
 import { useSearchBusinesses } from '../../src/lib/api/hooks';
-import type { SearchParams } from '../../src/lib/api/types';
+import type { Business, SearchParams } from '../../src/lib/api/types';
 import { toApiCountry } from '../../src/lib/country';
+import { getMockSearchPreview } from '../../src/lib/mock-marketplace';
+import { uiCopy } from '../../src/lib/ui-copy';
 
-type MainCategory =
-  | 'friseur'
-  | 'naegel'
-  | 'haarentfernung'
-  | 'kosmetik'
-  | 'massage'
-  | 'maenner'
-  | 'frauen';
+type MainCategory = 'friseur' | 'naegel' | 'haarentfernung' | 'kosmetik' | 'massage' | 'maenner' | 'frauen';
 
 type CategoryConfig = {
   label: string;
@@ -30,14 +26,7 @@ const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
   friseur: {
     label: 'Friseur',
     allLabel: 'Alle Friseur Behandlungen',
-    sub: [
-      'Damenhaarschnitt',
-      'Damen - Farbe, Toenung & Straehnen',
-      'Herrenhaarschnitt',
-      'Styling und Foehnen',
-      'Balayage',
-      'Kinderhaarschnitt'
-    ]
+    sub: ['Damenhaarschnitt', 'Damen - Farbe, Toenung & Straehnen', 'Herrenhaarschnitt', 'Styling und Foehnen', 'Balayage', 'Kinderhaarschnitt']
   },
   naegel: {
     label: 'Naegel',
@@ -52,14 +41,7 @@ const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
   kosmetik: {
     label: 'Kosmetik',
     allLabel: 'Alle Kosmetik Behandlungen',
-    sub: [
-      'Gesichtsbehandlungen',
-      'Wimpernverlaengerung',
-      'Augenbrauen und Wimpern faerben',
-      'Augenbrauen zupfen',
-      'Wimpernwelle',
-      'Microdermabrasion'
-    ]
+    sub: ['Gesichtsbehandlungen', 'Wimpernverlaengerung', 'Augenbrauen und Wimpern faerben', 'Augenbrauen zupfen', 'Wimpernwelle', 'Microdermabrasion']
   },
   massage: {
     label: 'Massage',
@@ -78,11 +60,39 @@ const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
   }
 };
 
+function SkeletonResults() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 3 }).map((_, idx) => (
+        <div key={idx} className="h-20 animate-pulse rounded-xl bg-slate-200" />
+      ))}
+    </div>
+  );
+}
+
+function TrustStrip({ data }: { data: Business[] }) {
+  const avg = data.length ? data.reduce((acc, item) => acc + (item.avgRating ?? item.rating ?? 0), 0) / data.length : 4.8;
+  const reviews = data.reduce((acc, item) => acc + (item.reviewCount ?? 0), 0);
+
+  return (
+    <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900">Trust</h2>
+      <div className="mt-2 flex items-center gap-2">
+        <RatingStars rating={avg} size="md" />
+        <span className="font-semibold">{avg.toFixed(1)}</span>
+        <span className="text-sm text-slate-600">({reviews} reviews)</span>
+      </div>
+      <p className="mt-2 text-sm text-slate-600">Verified ratings, transparent prices, and real availability.</p>
+    </section>
+  );
+}
+
 export default function HomePage() {
-  const { locale } = useParams<{ locale: string }>();
+  const { locale } = useParams<{ locale: 'de' | 'en' }>();
   const country = useCountry();
+
   const [city, setCity] = useState('');
-  const [postalCode, setPostalCode] = useState('');
+  const [zip, setZip] = useState('');
   const [locationError, setLocationError] = useState('');
   const [serviceError, setServiceError] = useState('');
   const [radiusKm, setRadiusKm] = useState('');
@@ -92,6 +102,7 @@ export default function HomePage() {
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState('');
   const [gpsRequested, setGpsRequested] = useState(false);
+
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
   const [subCategory, setSubCategory] = useState<string>('');
   const [subMenuOpen, setSubMenuOpen] = useState(false);
@@ -100,16 +111,21 @@ export default function HomePage() {
   const current = useMemo(() => CATEGORY_MAP[mainCategory], [mainCategory]);
   const { data, isLoading } = useSearchBusinesses(submittedFilters ?? {}, Boolean(submittedFilters));
 
+  const previewData = useMemo(() => {
+    const remote = data && data.length ? data : [];
+    return (remote.length ? remote : getMockSearchPreview(6)).slice(0, 6);
+  }, [data]);
+
   const mapCenter = useMemo(() => {
     if (gps) {
       return gps;
     }
-    const firstWithGeo = (data ?? []).find((item) => typeof item.lat === 'number' && typeof item.lng === 'number');
-    if (firstWithGeo && typeof firstWithGeo.lat === 'number' && typeof firstWithGeo.lng === 'number') {
+    const firstWithGeo = previewData.find((item) => typeof item.lat === 'number' && typeof item.lng === 'number');
+    if (firstWithGeo?.lat && firstWithGeo?.lng) {
       return { lat: firstWithGeo.lat, lng: firstWithGeo.lng };
     }
     return { lat: 52.52, lng: 13.405 };
-  }, [data, gps]);
+  }, [previewData, gps]);
 
   function onSelectMain(next: MainCategory) {
     if (next === mainCategory) {
@@ -122,111 +138,76 @@ export default function HomePage() {
     setSubMenuOpen(true);
   }
 
-  function onSearch() {
-    if (!subCategory) {
-      setServiceError('Bitte zuerst eine konkrete Behandlung auswaehlen.');
-      return;
-    }
-    setServiceError('');
-
-    const hasTextLocation = city.trim() || postalCode.trim();
-    if (!hasTextLocation && !gps) {
-      setLocationError('Bitte Stadt/PLZ eingeben oder GPS-Standort erlauben.');
-      return;
-    }
-    setLocationError('');
-
-    const cityText = city.trim();
-    const postalCodeText = postalCode.trim();
-
-    const search = new URLSearchParams();
-    search.set('country', toApiCountry(country));
-    search.set('category', mainCategory);
-    const fullQuery = [subCategory, cityText, postalCodeText].filter(Boolean).join(' ');
-    if (fullQuery) {
-      search.set('q', fullQuery);
-    }
-    if (cityText) {
-      search.set('city', cityText);
-    }
-    if (postalCodeText) {
-      search.set('postalCode', postalCodeText);
-    }
-    if (gps) {
-      search.set('lat', gps.lat.toString());
-      search.set('lng', gps.lng.toString());
-      search.set('radiusKm', '8');
-    }
-    if (radiusKm) {
-      search.set('radiusKm', radiusKm);
-    }
-    if (ratingMin) {
-      search.set('ratingMin', ratingMin);
-    }
-    if (priceMin) {
-      search.set('priceMin', priceMin);
-    }
-    if (priceMax) {
-      search.set('priceMax', priceMax);
-    }
-
-    const params: SearchParams = {
-      country: toApiCountry(country),
-      category: mainCategory,
-      q: search.get('q') ?? undefined,
-      city: cityText,
-      postalCode: postalCodeText,
-      lat: gps?.lat,
-      lng: gps?.lng,
-      radiusKm: Number(search.get('radiusKm') ?? undefined),
-      ratingMin: Number(search.get('ratingMin') ?? undefined),
-      priceMin: Number(search.get('priceMin') ?? undefined),
-      priceMax: Number(search.get('priceMax') ?? undefined)
-    };
-
-    if (!search.get('radiusKm')) {
-      delete params.radiusKm;
-    }
-    if (!search.get('ratingMin')) {
-      delete params.ratingMin;
-    }
-    if (!search.get('priceMin')) {
-      delete params.priceMin;
-    }
-    if (!search.get('priceMax')) {
-      delete params.priceMax;
-    }
-
-    setSubmittedFilters(params);
-  }
-
   function requestGpsLocation() {
     if (gpsRequested || !navigator.geolocation) {
       if (!navigator.geolocation) {
-        setGpsStatus('GPS wird von diesem Geraet/Browser nicht unterstuetzt.');
+        setGpsStatus(locale === 'de' ? 'GPS wird auf diesem Geraet nicht unterstuetzt.' : 'GPS is not supported on this device.');
       }
       return;
     }
 
     setGpsRequested(true);
-    setGpsStatus('Standort wird abgefragt ...');
+    setGpsStatus(locale === 'de' ? 'Standort wird abgefragt ...' : 'Requesting location ...');
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const nextGps = {
-          lat: Number(position.coords.latitude.toFixed(6)),
-          lng: Number(position.coords.longitude.toFixed(6))
-        };
-        setGps(nextGps);
+        setGps({ lat: Number(position.coords.latitude.toFixed(6)), lng: Number(position.coords.longitude.toFixed(6)) });
         setLocationError('');
-        setGpsStatus('GPS-Standort aktiv.');
+        setGpsStatus(locale === 'de' ? 'GPS-Standort aktiv.' : 'GPS location enabled.');
       },
-      () => {
-        setGpsStatus('Standortzugriff abgelehnt. Bitte Stadt/PLZ manuell eingeben.');
-      },
+      () => setGpsStatus(locale === 'de' ? 'Standortzugriff abgelehnt. Bitte Stadt/PLZ eingeben.' : 'Location denied. Please enter city/zip.'),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 }
     );
   }
+
+  function onSearch() {
+    if (!subCategory) {
+      setServiceError(locale === 'de' ? 'Bitte zuerst einen Service auswaehlen.' : 'Please select a service first.');
+      return;
+    }
+
+    if (!city.trim() && !zip.trim() && !gps) {
+      setLocationError(locale === 'de' ? 'Bitte Stadt/PLZ eingeben oder GPS erlauben.' : 'Enter city/zip or allow GPS.');
+      return;
+    }
+
+    setServiceError('');
+    setLocationError('');
+
+    const params: SearchParams = {
+      country: toApiCountry(country),
+      category: mainCategory,
+      q: subCategory,
+      city: city.trim() || undefined,
+      zip: zip.trim() || undefined,
+      postalCode: zip.trim() || undefined,
+      lat: gps?.lat,
+      lng: gps?.lng,
+      radiusKm: radiusKm ? Number(radiusKm) : undefined,
+      ratingMin: ratingMin ? Number(ratingMin) : undefined,
+      priceMin: priceMin ? Number(priceMin) : undefined,
+      priceMax: priceMax ? Number(priceMax) : undefined,
+      sort: 'recommended',
+      page: 1,
+      limit: 10
+    };
+
+    setSubmittedFilters(params);
+  }
+
+  const searchHref = useMemo(() => {
+    const search = new URLSearchParams();
+    search.set('country', toApiCountry(country));
+    if (mainCategory) search.set('category', mainCategory);
+    if (subCategory) search.set('q', subCategory);
+    if (city.trim()) search.set('city', city.trim());
+    if (zip.trim()) search.set('zip', zip.trim());
+    if (gps) {
+      search.set('lat', String(gps.lat));
+      search.set('lng', String(gps.lng));
+    }
+    return `/${locale}/search?${search.toString()}`;
+  }, [country, mainCategory, subCategory, city, zip, gps, locale]);
 
   return (
     <div className="space-y-4">
@@ -234,6 +215,8 @@ export default function HomePage() {
         <h1 className="text-2xl font-semibold leading-tight">Book local services in minutes</h1>
         <p className="mt-2 text-sm text-blue-100">Germany-first booking platform for beauty, wellness and more.</p>
       </section>
+
+      <TrustStrip data={previewData} />
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
@@ -279,42 +262,37 @@ export default function HomePage() {
           </div>
         ) : (
           <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">
-            Klicke auf eine Kategorie, um Unterkategorien zu sehen.
+            {locale === 'de' ? 'Klicke auf eine Kategorie, um Unterkategorien zu sehen.' : 'Click a category to view subcategories.'}
           </p>
         )}
       </section>
 
       <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm">
         <label className="grid gap-1 text-sm text-slate-600">
-          Stadt
+          {locale === 'de' ? 'Stadt (oder GPS)' : 'City (or GPS)'}
           <input
             className="rounded-xl border p-3"
-            placeholder="z. B. Berlin (oder tippen fuer GPS)"
+            placeholder={locale === 'de' ? 'z. B. Berlin' : 'e.g. Berlin'}
             value={city}
             onChange={(e) => setCity(e.target.value)}
             onFocus={requestGpsLocation}
             onClick={requestGpsLocation}
           />
         </label>
+
         <label className="grid gap-1 text-sm text-slate-600">
-          PLZ
+          PLZ / ZIP
           <input
             className="rounded-xl border p-3"
-            placeholder="z. B. 10115"
+            placeholder={locale === 'de' ? 'z. B. 10115' : 'e.g. 10115'}
             inputMode="numeric"
-            value={postalCode}
-            onChange={(e) => setPostalCode(e.target.value)}
+            value={zip}
+            onChange={(e) => setZip(e.target.value)}
           />
         </label>
+
         <div className="grid grid-cols-2 gap-2">
-          <input
-            className="rounded-xl border p-3"
-            type="number"
-            min="1"
-            placeholder="Distanz (km)"
-            value={radiusKm}
-            onChange={(e) => setRadiusKm(e.target.value)}
-          />
+          <input className="rounded-xl border p-3" type="number" min="1" placeholder="Distanz (km)" value={radiusKm} onChange={(e) => setRadiusKm(e.target.value)} />
           <input
             className="rounded-xl border p-3"
             type="number"
@@ -325,45 +303,40 @@ export default function HomePage() {
             value={ratingMin}
             onChange={(e) => setRatingMin(e.target.value)}
           />
-          <input
-            className="rounded-xl border p-3"
-            type="number"
-            min="0"
-            placeholder="Preis min"
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-          />
-          <input
-            className="rounded-xl border p-3"
-            type="number"
-            min="0"
-            placeholder="Preis max"
-            value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-          />
+          <input className="rounded-xl border p-3" type="number" min="0" placeholder="Preis min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} />
+          <input className="rounded-xl border p-3" type="number" min="0" placeholder="Preis max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
         </div>
-        <button type="button" className="rounded-xl bg-brand-500 p-3 font-medium text-white" onClick={onSearch}>
-          Jetzt suchen
+
+        <button type="button" className="rounded-xl bg-brand-500 p-4 text-base font-semibold text-white" onClick={onSearch}>
+          {uiCopy[locale].ctaSearch}
         </button>
+        <a href={searchHref} className="rounded-xl border p-3 text-center text-sm font-medium text-slate-700">
+          {uiCopy[locale].ctaViewAll}
+        </a>
+
         {serviceError ? <p className="text-xs text-rose-600">{serviceError}</p> : null}
         {gpsStatus ? <p className="text-xs text-slate-600">{gpsStatus}</p> : null}
         {locationError ? <p className="text-xs text-rose-600">{locationError}</p> : null}
       </section>
 
-      {submittedFilters ? (
-        <section className="space-y-3">
-          <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} />
-          <div className="space-y-3">
-            {isLoading ? <p className="text-sm text-slate-600">Suche laeuft ...</p> : null}
-            {!isLoading && (!data || data.length === 0) ? (
-              <p className="text-sm text-slate-600">Keine Ergebnisse mit den aktuellen Filtern.</p>
-            ) : null}
-            {(data ?? []).map((business) => (
-              <BusinessCard key={business._id} locale={locale} business={business} />
-            ))}
+      <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">{uiCopy[locale].sampleResultsTitle}</h2>
+        {isLoading ? <SkeletonResults /> : null}
+        {!isLoading && previewData.length === 0 ? (
+          <div className="space-y-2 rounded-xl border border-dashed p-3 text-sm">
+            <p className="font-medium">{uiCopy[locale].emptyTitle}</p>
+            <p className="text-slate-600">{uiCopy[locale].emptyBody}</p>
+            <ul className="space-y-1 text-brand-700">
+              {uiCopy[locale].emptyActions.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
           </div>
-        </section>
-      ) : null}
+        ) : null}
+        {!isLoading ? previewData.slice(0, submittedFilters ? 6 : 3).map((business) => <BusinessCard key={business._id} locale={locale} business={business} />) : null}
+      </section>
+
+      {submittedFilters ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} /> : null}
     </div>
   );
 }

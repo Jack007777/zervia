@@ -3,25 +3,44 @@ export type SearchParams = {
   lat?: number;
   lng?: number;
   city?: string;
+  zip?: string;
   postalCode?: string;
   radiusKm?: number;
   category?: string;
   q?: string;
+  date?: string;
+  sort?: 'recommended' | 'distance' | 'price' | 'rating';
+  availableTime?: 'morning' | 'afternoon' | 'evening';
+  serviceFor?: 'all' | 'women' | 'men';
   priceMin?: number;
   priceMax?: number;
   ratingMin?: number;
+  page?: number;
+  limit?: number;
 };
 
 export type Business = {
   _id: string;
+  slug?: string;
   name: string;
   description?: string;
   category?: string;
+  tags?: string[];
   addressLine?: string;
+  city?: string;
+  area?: string;
   rating?: number;
+  avgRating?: number;
+  reviewCount?: number;
   lat?: number;
   lng?: number;
+  distanceKm?: number;
   priceMin?: number;
+  priceMax?: number;
+  earliestSlot?: string;
+  imageUrl?: string;
+  openingHours?: Array<{ day: string; open: string; close: string; closed?: boolean }>;
+  cancellationPolicy?: string;
   country?: string;
   defaultCurrency?: string;
   vatNumber?: string;
@@ -51,6 +70,27 @@ export type Booking = {
   currency?: string;
   vatRate?: number;
   vatAmount?: number;
+};
+
+export type Review = {
+  _id: string;
+  businessId: string;
+  rating: number;
+  text: string;
+  author: string;
+  createdAt: string;
+};
+
+export type PartnerLead = {
+  _id?: string;
+  businessName: string;
+  contactName: string;
+  phone: string;
+  city: string;
+  serviceCategory: string;
+  locale: 'de' | 'en';
+  country: string;
+  createdAt?: string;
 };
 
 export type AdminUser = {

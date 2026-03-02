@@ -8,60 +8,147 @@ import { LiveMap } from '../../../src/components/LiveMap';
 import { SearchFilters } from '../../../src/components/SearchFilters';
 import { useCountry } from '../../../src/hooks/useCountry';
 import { useSearchBusinesses } from '../../../src/lib/api/hooks';
-import type { SearchParams } from '../../../src/lib/api/types';
+import type { Business, SearchParams } from '../../../src/lib/api/types';
 import { toApiCountry } from '../../../src/lib/country';
+import { getMockSearchPreview } from '../../../src/lib/mock-marketplace';
+import { uiCopy } from '../../../src/lib/ui-copy';
+
+function applySort(items: Business[], sort: SearchParams['sort']) {
+  const list = [...items];
+  if (sort === 'distance') {
+    return list.sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+  }
+  if (sort === 'price') {
+    return list.sort((a, b) => (a.priceMin ?? 9999) - (b.priceMin ?? 9999));
+  }
+  if (sort === 'rating') {
+    return list.sort((a, b) => (b.avgRating ?? b.rating ?? 0) - (a.avgRating ?? a.rating ?? 0));
+  }
+  return list.sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
+}
 
 export default function SearchPage() {
-  const { locale } = useParams<{ locale: string }>();
+  const { locale } = useParams<{ locale: 'de' | 'en' }>();
   const q = useSearchParams();
   const selectedCountry = useCountry();
+
   const city = q.get('city') ?? '';
-  const postalCode = q.get('postalCode') ?? '';
-  const combinedLocation = [city, postalCode].filter(Boolean).join(' ');
+  const zip = q.get('zip') ?? q.get('postalCode') ?? '';
+  const date = q.get('date') ?? '';
 
   const initial = useMemo<SearchParams>(
     () => ({
-      q: q.get('q') ?? (combinedLocation || undefined),
+      q: q.get('q') ?? undefined,
       category: q.get('category') ?? undefined,
+      city: city || undefined,
+      zip: zip || undefined,
+      postalCode: zip || undefined,
+      date: date || undefined,
+      sort: (q.get('sort') as SearchParams['sort']) ?? 'recommended',
       country: toApiCountry((q.get('country') ?? selectedCountry) as string),
       lat: q.get('lat') ? Number(q.get('lat')) : undefined,
       lng: q.get('lng') ? Number(q.get('lng')) : undefined,
-      radiusKm: q.get('radiusKm') ? Number(q.get('radiusKm')) : undefined
+      radiusKm: q.get('radiusKm') ? Number(q.get('radiusKm')) : undefined,
+      page: q.get('page') ? Number(q.get('page')) : 1,
+      limit: 10
     }),
-    [q, selectedCountry, combinedLocation]
+    [q, selectedCountry, city, zip, date]
   );
+
   const [filters, setFilters] = useState<SearchParams>(initial);
+
   const apiFilters = useMemo(
     () => ({ ...filters, country: toApiCountry(filters.country ?? selectedCountry) }),
     [filters, selectedCountry]
   );
+
   const { data, isLoading } = useSearchBusinesses(apiFilters);
+
+  const mergedData = useMemo(() => {
+    const base = data && data.length ? data : getMockSearchPreview(12);
+    const filtered = base.filter((item) => {
+      if (filters.category && item.category && !String(item.category).toLowerCase().includes(filters.category.toLowerCase())) {
+        return false;
+      }
+      if (filters.ratingMin && (item.avgRating ?? item.rating ?? 0) < filters.ratingMin) {
+        return false;
+      }
+      if (filters.priceMin && (item.priceMin ?? 0) < filters.priceMin) {
+        return false;
+      }
+      if (filters.priceMax && (item.priceMin ?? 0) > filters.priceMax) {
+        return false;
+      }
+      return true;
+    });
+
+    return applySort(filtered, filters.sort);
+  }, [data, filters]);
+
+  const page = filters.page ?? 1;
+  const limit = filters.limit ?? 10;
+  const totalPages = Math.max(1, Math.ceil(mergedData.length / limit));
+  const paginated = mergedData.slice((page - 1) * limit, page * limit);
+
   const mapCenter = useMemo(() => {
     if (typeof filters.lat === 'number' && typeof filters.lng === 'number') {
       return { lat: filters.lat, lng: filters.lng };
     }
-    const firstWithGeo = (data ?? []).find((item) => typeof item.lat === 'number' && typeof item.lng === 'number');
+    const firstWithGeo = mergedData.find((item) => typeof item.lat === 'number' && typeof item.lng === 'number');
     if (firstWithGeo && typeof firstWithGeo.lat === 'number' && typeof firstWithGeo.lng === 'number') {
       return { lat: firstWithGeo.lat, lng: firstWithGeo.lng };
     }
     return { lat: 52.52, lng: 13.405 };
-  }, [filters.lat, filters.lng, data]);
+  }, [filters.lat, filters.lng, mergedData]);
 
   return (
     <div className="space-y-3">
-      <h1 className="text-xl font-semibold">Find businesses</h1>
-      {combinedLocation ? <p className="text-sm text-slate-600">Region: {combinedLocation}</p> : null}
-      <SearchFilters initial={initial} onChange={setFilters} />
+      <h1 className="text-xl font-semibold">{uiCopy[locale].findBusinesses}</h1>
+      <p className="text-sm text-slate-600">
+        {city || zip ? `${city} ${zip}`.trim() : 'Germany'} {date ? `- ${date}` : ''}
+      </p>
+
+      <SearchFilters
+        locale={locale}
+        initial={initial}
+        onChange={(next) => {
+          setFilters({ ...next, page: 1, limit });
+        }}
+      />
+
       <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} />
+
       <div className="space-y-3">
         {isLoading ? <p className="text-sm text-slate-600">Loading...</p> : null}
-        {!isLoading && (!data || data.length === 0) ? (
-          <p className="text-sm text-slate-600">No results found for current filters.</p>
-        ) : null}
-        {(data ?? []).map((business) => (
+        {!isLoading && paginated.length === 0 ? <p className="text-sm text-slate-600">No results found for current filters.</p> : null}
+        {paginated.map((business) => (
           <BusinessCard key={business._id} locale={locale} business={business} />
         ))}
       </div>
+
+      {mergedData.length > limit ? (
+        <div className="flex items-center justify-between rounded-xl bg-white p-3 text-sm shadow-sm">
+          <button
+            type="button"
+            className="rounded-lg border px-3 py-1 disabled:opacity-40"
+            disabled={page <= 1}
+            onClick={() => setFilters((prev) => ({ ...prev, page: Math.max(1, (prev.page ?? 1) - 1) }))}
+          >
+            Prev
+          </button>
+          <span>
+            Page {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            className="rounded-lg border px-3 py-1 disabled:opacity-40"
+            disabled={page >= totalPages}
+            onClick={() => setFilters((prev) => ({ ...prev, page: Math.min(totalPages, (prev.page ?? 1) + 1) }))}
+          >
+            Next
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
