@@ -28,8 +28,13 @@ export default async function LocaleLayout({
       <div className="mx-auto min-h-screen max-w-md bg-slate-50">
         <header className="sticky top-0 z-10 border-b bg-white/90 px-4 py-3 backdrop-blur">
           <div className="flex items-center justify-between gap-2">
-            <Link href={`/${resolvedLocale}`} className="text-xl font-bold text-brand-700">
-              Zervia
+            <Link href={`/${resolvedLocale}`} className="flex items-center gap-2 text-xl font-bold text-brand-700">
+              <img
+                src="/zervia-logo.svg"
+                alt="Zervia logo"
+                className="h-8 w-8 rounded-md border border-slate-200 bg-white object-contain p-0.5"
+              />
+              <span>Zervia</span>
             </Link>
             <LoginEntry locale={resolvedLocale} />
           </div>
