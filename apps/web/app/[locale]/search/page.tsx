@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { BusinessCard } from '../../../src/components/BusinessCard';
-import { MapPlaceholder } from '../../../src/components/MapPlaceholder';
+import { LiveMap } from '../../../src/components/LiveMap';
 import { SearchFilters } from '../../../src/components/SearchFilters';
 import { useCountry } from '../../../src/hooks/useCountry';
 import { useSearchBusinesses } from '../../../src/lib/api/hooks';
@@ -36,13 +36,23 @@ export default function SearchPage() {
     [filters, selectedCountry]
   );
   const { data, isLoading } = useSearchBusinesses(apiFilters);
+  const mapCenter = useMemo(() => {
+    if (typeof filters.lat === 'number' && typeof filters.lng === 'number') {
+      return { lat: filters.lat, lng: filters.lng };
+    }
+    const firstWithGeo = (data ?? []).find((item) => typeof item.lat === 'number' && typeof item.lng === 'number');
+    if (firstWithGeo && typeof firstWithGeo.lat === 'number' && typeof firstWithGeo.lng === 'number') {
+      return { lat: firstWithGeo.lat, lng: firstWithGeo.lng };
+    }
+    return { lat: 52.52, lng: 13.405 };
+  }, [filters.lat, filters.lng, data]);
 
   return (
     <div className="space-y-3">
       <h1 className="text-xl font-semibold">Find businesses</h1>
       {combinedLocation ? <p className="text-sm text-slate-600">Region: {combinedLocation}</p> : null}
       <SearchFilters initial={initial} onChange={setFilters} />
-      <MapPlaceholder />
+      <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} />
       <div className="space-y-3">
         {isLoading ? <p className="text-sm text-slate-600">Loading...</p> : null}
         {!isLoading && (!data || data.length === 0) ? (
