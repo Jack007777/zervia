@@ -24,7 +24,12 @@ export function BusinessCard({ locale, business }: Props) {
       <div className="p-4">
         <div className="mb-2 flex items-start justify-between gap-3">
           <h3 className="text-lg font-semibold">{business.name}</h3>
-          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs">{business.category ?? '-'}</span>
+          <div className="flex items-center gap-1">
+            {business.isVirtual ? (
+              <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">Virtual</span>
+            ) : null}
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs">{business.category ?? '-'}</span>
+          </div>
         </div>
         <p className="mb-2 line-clamp-2 text-sm text-slate-600">{business.description ?? 'No description yet.'}</p>
 

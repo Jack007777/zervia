@@ -43,6 +43,27 @@ function AdminDashboard() {
   const updateUser = useUpdateAdminUser();
   const updateBusiness = useUpdateAdminBusiness();
   const updateAdStatus = useUpdateAdStatus();
+  const [bizFilter, setBizFilter] = useState<'all' | 'virtual' | 'real'>('all');
+
+  const businessRows = useMemo(() => {
+    const all = businessesQuery.data ?? [];
+    if (bizFilter === 'virtual') {
+      return all.filter((item) => item.isVirtual);
+    }
+    if (bizFilter === 'real') {
+      return all.filter((item) => !item.isVirtual);
+    }
+    return all;
+  }, [businessesQuery.data, bizFilter]);
+
+  const businessStats = useMemo(() => {
+    const all = businessesQuery.data ?? [];
+    return {
+      total: all.length,
+      virtual: all.filter((item) => item.isVirtual).length,
+      real: all.filter((item) => !item.isVirtual).length
+    };
+  }, [businessesQuery.data]);
 
   return (
     <div className="space-y-4">
@@ -97,20 +118,37 @@ function AdminDashboard() {
       </section>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-3 font-medium">Business management</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="font-medium">Business management</h2>
+          <select
+            className="rounded-lg border px-2 py-1 text-xs"
+            value={bizFilter}
+            onChange={(e) => setBizFilter(e.target.value as 'all' | 'virtual' | 'real')}
+          >
+            <option value="all">All ({businessStats.total})</option>
+            <option value="virtual">Virtual ({businessStats.virtual})</option>
+            <option value="real">Real ({businessStats.real})</option>
+          </select>
+        </div>
         {businessesQuery.isLoading ? <p className="text-sm text-slate-600">Loading businesses...</p> : null}
         <div className="space-y-2">
-          {(businessesQuery.data ?? []).map((biz) => (
+          {businessRows.map((biz) => (
             <article key={biz._id} className="rounded-xl border p-3 text-sm">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="font-medium">{biz.name}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${biz.isActive ? 'bg-emerald-100' : 'bg-rose-100'}`}>
-                  {biz.isActive ? 'Active' : 'Disabled'}
-                </span>
+                <div className="flex items-center gap-1">
+                  {biz.isVirtual ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">Virtual</span>
+                  ) : null}
+                  <span className={`rounded-full px-2 py-1 text-xs ${biz.isActive ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                    {biz.isActive ? 'Active' : 'Disabled'}
+                  </span>
+                </div>
               </div>
               <p className="mb-2 text-slate-600">
                 {biz.category ?? 'Uncategorized'} | {biz.city} | {biz.country}
               </p>
+              {biz.virtualSeedBatch ? <p className="mb-2 text-xs text-slate-500">Batch: {biz.virtualSeedBatch}</p> : null}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"

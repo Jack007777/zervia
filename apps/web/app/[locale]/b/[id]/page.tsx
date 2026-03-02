@@ -120,7 +120,14 @@ export default function BusinessDetailPage() {
       {schema ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} /> : null}
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <h1 className="text-xl font-semibold">{business?.name ?? 'Business'}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold">{business?.name ?? 'Business'}</h1>
+          {business?.isVirtual ? (
+            <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">
+              Virtual listing
+            </span>
+          ) : null}
+        </div>
         <div className="mt-2 flex items-center gap-2">
           <RatingStars rating={rating} size="md" />
           <span className="font-medium">{rating.toFixed(1)}</span>

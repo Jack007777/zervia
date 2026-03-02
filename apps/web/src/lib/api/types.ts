@@ -134,5 +134,7 @@ export type AdminBusiness = {
   priceMin?: number;
   priceMax?: number;
   isActive: boolean;
+  isVirtual?: boolean;
+  virtualSeedBatch?: string;
   createdAt: string;
 };
