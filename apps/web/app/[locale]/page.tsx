@@ -91,8 +91,7 @@ export default function HomePage() {
   const { locale } = useParams<{ locale: 'de' | 'en' }>();
   const country = useCountry();
 
-  const [city, setCity] = useState('');
-  const [zip, setZip] = useState('');
+  const [locationQuery, setLocationQuery] = useState('');
   const [locationError, setLocationError] = useState('');
   const [serviceError, setServiceError] = useState('');
   const [radiusKm, setRadiusKm] = useState('');
@@ -162,7 +161,9 @@ export default function HomePage() {
 
   function onSearch() {
     const fallbackCity = 'Berlin';
-    const resolvedCity = city.trim() || (!gps && !zip.trim() ? fallbackCity : '');
+    const rawLocation = locationQuery.trim();
+    const resolvedCity = rawLocation || (!gps ? fallbackCity : '');
+    const isZipOnly = /^\d{4,6}$/.test(rawLocation);
     const resolvedQuery = subCategory || CATEGORY_MAP[mainCategory].label;
 
     if (!subCategory) {
@@ -173,13 +174,13 @@ export default function HomePage() {
       setServiceError('');
     }
 
-    if (!city.trim() && !zip.trim() && !gps) {
+    if (!rawLocation && !gps) {
       setLocationError(
         locale === 'de'
           ? `Kein Ort angegeben. Standardort wird verwendet: ${fallbackCity}.`
           : `No location provided. Using default city: ${fallbackCity}.`
       );
-      setCity(fallbackCity);
+      setLocationQuery(fallbackCity);
     } else {
       setLocationError('');
     }
@@ -189,8 +190,8 @@ export default function HomePage() {
       category: mainCategory,
       q: resolvedQuery,
       city: resolvedCity || undefined,
-      zip: zip.trim() || undefined,
-      postalCode: zip.trim() || undefined,
+      zip: isZipOnly ? rawLocation : undefined,
+      postalCode: isZipOnly ? rawLocation : undefined,
       lat: gps?.lat,
       lng: gps?.lng,
       radiusKm: radiusKm ? Number(radiusKm) : undefined,
@@ -210,14 +211,18 @@ export default function HomePage() {
     search.set('country', toApiCountry(country));
     if (mainCategory) search.set('category', mainCategory);
     if (subCategory) search.set('q', subCategory);
-    if (city.trim()) search.set('city', city.trim());
-    if (zip.trim()) search.set('zip', zip.trim());
+    if (locationQuery.trim()) {
+      search.set('city', locationQuery.trim());
+      if (/^\d{4,6}$/.test(locationQuery.trim())) {
+        search.set('zip', locationQuery.trim());
+      }
+    }
     if (gps) {
       search.set('lat', String(gps.lat));
       search.set('lng', String(gps.lng));
     }
     return `/${locale}/search?${search.toString()}`;
-  }, [country, mainCategory, subCategory, city, zip, gps, locale]);
+  }, [country, mainCategory, subCategory, locationQuery, gps, locale]);
 
   return (
     <div className="space-y-4">
@@ -279,27 +284,23 @@ export default function HomePage() {
 
       <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm">
         <label className="grid gap-1 text-sm text-slate-600">
-          {locale === 'de' ? 'Stadt (oder GPS)' : 'City (or GPS)'}
+          {locale === 'de' ? 'PLZ, Ort oder Region' : 'ZIP, city or region'}
           <input
             className="rounded-xl border p-3"
-            placeholder={locale === 'de' ? 'z. B. Berlin' : 'e.g. Berlin'}
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
+            placeholder={locale === 'de' ? 'PLZ, Ort oder Region eingeben' : 'Enter ZIP, city or region'}
+            value={locationQuery}
+            onChange={(e) => setLocationQuery(e.target.value)}
             onFocus={requestGpsLocation}
-            onClick={requestGpsLocation}
           />
         </label>
-
-        <label className="grid gap-1 text-sm text-slate-600">
-          PLZ / ZIP
-          <input
-            className="rounded-xl border p-3"
-            placeholder={locale === 'de' ? 'z. B. 10115' : 'e.g. 10115'}
-            inputMode="numeric"
-            value={zip}
-            onChange={(e) => setZip(e.target.value)}
-          />
-        </label>
+        <button
+          type="button"
+          className="flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-medium text-slate-700"
+          onClick={requestGpsLocation}
+        >
+          <span aria-hidden>◎</span>
+          {locale === 'de' ? 'Aktueller Standort' : 'Current location'}
+        </button>
 
         <div className="grid grid-cols-2 gap-2">
           <input className="rounded-xl border p-3" type="number" min="1" placeholder="Distanz (km)" value={radiusKm} onChange={(e) => setRadiusKm(e.target.value)} />
