@@ -9,7 +9,9 @@
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "corepack pnpm exec jest --config ./jest.config.ts",
-    "test:booking-concurrency": "node scripts/booking-concurrency-test.js"
+    "test:booking-concurrency": "node scripts/booking-concurrency-test.js",
+    "seed:virtual:de": "node scripts/seed-virtual-businesses.js --count 200",
+    "seed:virtual:de:purge": "node scripts/seed-virtual-businesses.js --count 200 --purge-virtual"
   },
   "dependencies": {
     "express-rate-limit": "^7.5.1",

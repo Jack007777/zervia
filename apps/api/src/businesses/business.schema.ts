@@ -63,6 +63,12 @@ export class BusinessEntity {
 
   @Prop({ default: true })
   isActive!: boolean;
+
+  @Prop({ default: false, index: true })
+  isVirtual!: boolean;
+
+  @Prop({ trim: true, index: true })
+  virtualSeedBatch?: string;
 }
 
 export const BusinessSchema = SchemaFactory.createForClass(BusinessEntity);

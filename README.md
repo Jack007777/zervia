@@ -85,6 +85,20 @@ pnpm --filter @zervia/web dev
 - `POST /api/v1/bookings` (`customer` or `admin`)
 - `GET /api/v1/admin/overview` (`admin`)
 
+## Seed Virtual Germany Data (200 businesses)
+
+```bash
+cd apps/api
+MONGO_URI="your-atlas-uri" corepack pnpm run seed:virtual:de
+```
+
+Optional purge old virtual data first:
+
+```bash
+cd apps/api
+MONGO_URI="your-atlas-uri" corepack pnpm run seed:virtual:de:purge
+```
+
 ## Deployment Notes (Hetzner VPS)
 
 - Deploy `apps/api` as a Node service (PM2/systemd + reverse proxy).

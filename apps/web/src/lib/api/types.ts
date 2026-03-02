@@ -45,6 +45,8 @@ export type Business = {
   defaultCurrency?: string;
   vatNumber?: string;
   vatRate?: number;
+  isVirtual?: boolean;
+  virtualSeedBatch?: string;
 };
 
 export type Service = {

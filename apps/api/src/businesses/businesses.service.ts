@@ -66,7 +66,7 @@ export class BusinessesService {
       .find()
       .sort({ createdAt: -1 })
       .limit(limit)
-      .select('name category country city addressLine rating priceMin priceMax isActive ownerUserId createdAt')
+      .select('name category country city addressLine rating priceMin priceMax isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
   }
@@ -93,7 +93,7 @@ export class BusinessesService {
         },
         { new: true }
       )
-      .select('name category country city addressLine rating priceMin priceMax isActive ownerUserId createdAt')
+      .select('name category country city addressLine rating priceMin priceMax isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
   }
