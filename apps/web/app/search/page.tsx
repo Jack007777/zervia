@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 
 import { resolveLocale } from '../../src/i18n/config';
 
+export const runtime = 'edge';
+
 export default async function SearchRedirectPage({
   searchParams
 }: {
