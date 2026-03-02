@@ -161,24 +161,34 @@ export default function HomePage() {
   }
 
   function onSearch() {
+    const fallbackCity = 'Berlin';
+    const resolvedCity = city.trim() || (!gps && !zip.trim() ? fallbackCity : '');
+    const resolvedQuery = subCategory || CATEGORY_MAP[mainCategory].label;
+
     if (!subCategory) {
-      setServiceError(locale === 'de' ? 'Bitte zuerst einen Service auswaehlen.' : 'Please select a service first.');
-      return;
+      setServiceError(
+        locale === 'de' ? `Keine Unterkategorie gewaehlt. Wir suchen nach: ${resolvedQuery}.` : `No subcategory selected. Searching for: ${resolvedQuery}.`
+      );
+    } else {
+      setServiceError('');
     }
 
     if (!city.trim() && !zip.trim() && !gps) {
-      setLocationError(locale === 'de' ? 'Bitte Stadt/PLZ eingeben oder GPS erlauben.' : 'Enter city/zip or allow GPS.');
-      return;
+      setLocationError(
+        locale === 'de'
+          ? `Kein Ort angegeben. Standardort wird verwendet: ${fallbackCity}.`
+          : `No location provided. Using default city: ${fallbackCity}.`
+      );
+      setCity(fallbackCity);
+    } else {
+      setLocationError('');
     }
-
-    setServiceError('');
-    setLocationError('');
 
     const params: SearchParams = {
       country: toApiCountry(country),
       category: mainCategory,
-      q: subCategory,
-      city: city.trim() || undefined,
+      q: resolvedQuery,
+      city: resolvedCity || undefined,
       zip: zip.trim() || undefined,
       postalCode: zip.trim() || undefined,
       lat: gps?.lat,
