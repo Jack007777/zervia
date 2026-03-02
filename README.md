@@ -63,6 +63,17 @@ Services:
 pnpm build
 ```
 
+## Web-Only Quick Run
+
+```bash
+pnpm --filter @zervia/web dev
+```
+
+## New Docs
+
+- `docs/improvement-plan.md`: audit and phased roadmap (P0/P1/P2)
+- `docs/api-contracts.md`: request/response contracts for search, detail, reviews, booking, partner leads
+
 ## Minimal API Endpoints
 
 - `POST /api/v1/auth/register`
