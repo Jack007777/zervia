@@ -26,6 +26,7 @@ export class AuthController {
   register(@Body() body: RegisterDto) {
     return this.authService.register({
       email: body.email,
+      phone: body.phone,
       password: body.password,
       roles: body.roles,
       country: body.country,
@@ -38,7 +39,7 @@ export class AuthController {
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ type: ErrorResponseDto })
   login(@Body() body: LoginDto) {
-    return this.authService.login(body.email, body.password);
+    return this.authService.login(body.identifier, body.password);
   }
 
   @Post('refresh')

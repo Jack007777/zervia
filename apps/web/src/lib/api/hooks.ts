@@ -63,7 +63,7 @@ export function useMyBookings(country = 'DE') {
 
 export function useLogin() {
   return useMutation({
-    mutationFn: (payload: { email: string; password: string }) =>
+    mutationFn: (payload: { identifier: string; password: string }) =>
       apiClient<{ tokens: { accessToken: string; refreshToken: string } }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify(payload)
@@ -76,7 +76,7 @@ export function useLogin() {
 
 export function useRegister() {
   return useMutation({
-    mutationFn: (payload: { email: string; password: string; roles: string[] }) =>
+    mutationFn: (payload: { email?: string; phone?: string; password: string; roles: string[] }) =>
       apiClient<{ tokens: { accessToken: string; refreshToken: string } }>('/auth/register', {
         method: 'POST',
         body: JSON.stringify(payload)

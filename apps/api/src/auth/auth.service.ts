@@ -16,30 +16,47 @@ export class AuthService {
   ) {}
 
   async register(input: {
-    email: string;
+    email?: string;
+    phone?: string;
     password: string;
     roles: Role[];
     country: 'DE';
     locale: 'de' | 'en';
   }) {
-    const existing = await this.usersService.findByEmail(input.email);
-    if (existing) {
-      throw new UnauthorizedException('Email already exists');
+    const email = input.email?.trim().toLowerCase();
+    const phone = input.phone?.trim();
+    if (!email && !phone) {
+      throw new UnauthorizedException('Email or phone is required');
+    }
+
+    if (email) {
+      const existingByEmail = await this.usersService.findByEmail(email);
+      if (existingByEmail) {
+        throw new UnauthorizedException('Email already exists');
+      }
+    }
+
+    if (phone) {
+      const existingByPhone = await this.usersService.findByPhone(phone);
+      if (existingByPhone) {
+        throw new UnauthorizedException('Phone already exists');
+      }
     }
     const passwordHash = await bcrypt.hash(input.password, 12);
     const user = await this.usersService.create({
-      email: input.email,
+      email,
+      phone,
       passwordHash,
       roles: input.roles,
       country: input.country,
       locale: input.locale
     });
 
-    return this.issueTokens(user.id, user.email, user.roles, user.country);
+    return this.issueTokens(user.id, user.email ?? user.phone ?? 'user', user.roles, user.country);
   }
 
-  async login(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
+  async login(identifier: string, password: string) {
+    const user = await this.usersService.findByIdentifier(identifier);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -49,7 +66,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.issueTokens(user.id, user.email, user.roles, user.country);
+    return this.issueTokens(user.id, user.email ?? user.phone ?? 'user', user.roles, user.country);
   }
 
   async refresh(refreshToken: string) {
@@ -68,7 +85,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh');
     }
 
-    return this.issueTokens(user.id, user.email, user.roles, user.country);
+    return this.issueTokens(user.id, user.email ?? user.phone ?? 'user', user.roles, user.country);
   }
 
   async logout(userId: string, refreshToken: string) {

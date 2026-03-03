@@ -14,13 +14,13 @@ export type UserDocument = HydratedDocument<UserEntity>;
 
 @Schema({ timestamps: true, collection: 'users' })
 export class UserEntity {
-  @Prop({ required: true, unique: true, lowercase: true, trim: true })
-  email!: string;
+  @Prop({ required: false, unique: true, sparse: true, lowercase: true, trim: true })
+  email?: string;
 
   @Prop({ trim: true })
   displayName?: string;
 
-  @Prop({ trim: true })
+  @Prop({ trim: true, unique: true, sparse: true })
   phone?: string;
 
   @Prop({ required: true })

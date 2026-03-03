@@ -1,12 +1,29 @@
-import { IsArray, IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  MinLength,
+  ValidateIf
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { ROLES, SUPPORTED_COUNTRIES, SUPPORTED_LANGUAGES } from '@zervia/shared';
 
 export class RegisterDto {
-  @ApiProperty({ example: 'owner@zervia.eu' })
+  @ApiPropertyOptional({ example: 'owner@zervia.eu' })
+  @IsOptional()
+  @ValidateIf((o) => !o.phone)
   @IsEmail()
-  email!: string;
+  email?: string;
+
+  @ApiPropertyOptional({ example: '+4917612345678' })
+  @IsOptional()
+  @ValidateIf((o) => !o.email)
+  @IsPhoneNumber('DE')
+  phone?: string;
 
   @ApiProperty({ example: 'StrongPass123!' })
   @IsString()
@@ -30,9 +47,9 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @ApiProperty({ example: 'owner@zervia.eu' })
-  @IsEmail()
-  email!: string;
+  @ApiProperty({ example: 'owner@zervia.eu or +4917612345678' })
+  @IsString()
+  identifier!: string;
 
   @ApiProperty({ example: 'StrongPass123!' })
   @IsString()

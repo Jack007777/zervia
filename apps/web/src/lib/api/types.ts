@@ -97,7 +97,8 @@ export type PartnerLead = {
 
 export type AdminUser = {
   _id: string;
-  email: string;
+  email?: string;
+  phone?: string;
   roles: Array<'customer' | 'business' | 'admin'>;
   country: string;
   locale: string;

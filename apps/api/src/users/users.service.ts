@@ -11,7 +11,8 @@ export class UsersService {
   constructor(@InjectModel(UserEntity.name) private readonly userModel: Model<UserDocument>) {}
 
   create(input: {
-    email: string;
+    email?: string;
+    phone?: string;
     passwordHash: string;
     roles: Role[];
     country: CountryCode;
@@ -22,6 +23,22 @@ export class UsersService {
 
   findByEmail(email: string) {
     return this.userModel.findOne({ email: email.toLowerCase() }).exec();
+  }
+
+  findByPhone(phone: string) {
+    return this.userModel.findOne({ phone: phone.trim() }).exec();
+  }
+
+  async findByIdentifier(identifier: string) {
+    const value = identifier.trim();
+    if (!value) {
+      return null;
+    }
+
+    if (value.includes('@')) {
+      return this.findByEmail(value);
+    }
+    return this.findByPhone(value);
   }
 
   findById(id: string) {

@@ -75,7 +75,7 @@ function AdminDashboard() {
           {(usersQuery.data ?? []).map((user) => (
             <article key={user._id} className="rounded-xl border p-3 text-sm">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="font-medium">{user.email}</p>
+                <p className="font-medium">{user.email ?? user.phone ?? 'no-identifier'}</p>
                 <span className={`rounded-full px-2 py-1 text-xs ${user.isActive ? 'bg-emerald-100' : 'bg-rose-100'}`}>
                   {user.isActive ? 'Active' : 'Disabled'}
                 </span>
