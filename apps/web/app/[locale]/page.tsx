@@ -126,6 +126,19 @@ export default function HomePage() {
     return { lat: 52.52, lng: 13.405 };
   }, [previewData, gps]);
 
+  const mapMarkers = useMemo(
+    () =>
+      previewData
+        .filter((item) => typeof item.lat === 'number' && typeof item.lng === 'number')
+        .map((item) => ({
+          id: item._id,
+          name: item.name,
+          lat: item.lat as number,
+          lng: item.lng as number
+        })),
+    [previewData]
+  );
+
   function onSelectMain(next: MainCategory) {
     if (next === mainCategory) {
       setSubMenuOpen((prev) => !prev);
@@ -347,7 +360,7 @@ export default function HomePage() {
         {!isLoading ? previewData.slice(0, submittedFilters ? 6 : 3).map((business) => <BusinessCard key={business._id} locale={locale} business={business} />) : null}
       </section>
 
-      {submittedFilters ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} /> : null}
+      {submittedFilters ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} /> : null}
     </div>
   );
 }

@@ -101,6 +101,19 @@ export default function SearchPage() {
     return { lat: 52.52, lng: 13.405 };
   }, [filters.lat, filters.lng, mergedData]);
 
+  const mapMarkers = useMemo(
+    () =>
+      paginated
+        .filter((item) => typeof item.lat === 'number' && typeof item.lng === 'number')
+        .map((item) => ({
+          id: item._id,
+          name: item.name,
+          lat: item.lat as number,
+          lng: item.lng as number
+        })),
+    [paginated]
+  );
+
   return (
     <div className="space-y-3">
       <h1 className="text-xl font-semibold">{uiCopy[locale].findBusinesses}</h1>
@@ -116,7 +129,7 @@ export default function SearchPage() {
         }}
       />
 
-      <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} />
+      <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} />
 
       <div className="space-y-3">
         {isLoading ? <p className="text-sm text-slate-600">Loading...</p> : null}
