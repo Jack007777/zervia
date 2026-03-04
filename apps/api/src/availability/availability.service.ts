@@ -73,6 +73,11 @@ export class AvailabilityService {
     const dayStart = DateTime.fromISO(query.date, { zone: timezone }).startOf('day');
     const dayEnd = dayStart.plus({ days: 1 });
     const durationMinutes = service.durationMinutes;
+    const now = DateTime.now().setZone(timezone);
+
+    if (dayEnd <= now) {
+      return query.staffId ? [] : {};
+    }
 
     const overlappingBookings = await this.bookingModel
       .find({
@@ -105,7 +110,13 @@ export class AvailabilityService {
           )
         );
 
-      slotsByStaff[staffId] = this.generateSlots(windows, dayStart, durationMinutes, bookingIntervals);
+      slotsByStaff[staffId] = this.generateSlots(
+        windows,
+        dayStart,
+        durationMinutes,
+        bookingIntervals,
+        now
+      );
     }
 
     if (query.staffId) {
@@ -174,7 +185,8 @@ export class AvailabilityService {
     windows: AvailabilityWindow[],
     dayStart: DateTime,
     durationMinutes: number,
-    bookingIntervals: Interval[]
+    bookingIntervals: Interval[],
+    now: DateTime
   ): string[] {
     const slots: string[] = [];
 
@@ -193,7 +205,7 @@ export class AvailabilityService {
         const hasConflict = bookingIntervals.some((bookingInterval) =>
           bookingInterval.overlaps(slotInterval)
         );
-        if (!hasConflict) {
+        if (!hasConflict && cursor >= now) {
           slots.push(cursor.toISO({ suppressMilliseconds: true }) ?? '');
         }
         cursor = cursor.plus({ minutes: 15 });

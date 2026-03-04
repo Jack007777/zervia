@@ -8,7 +8,7 @@
   },
   "home": {
     "title": "Lokale Services in Minuten buchen",
-    "subtitle": "Deutschland-first Terminplattform fuer Beauty, Wellness und mehr.",
+    "subtitle": "Deutschland-first Terminplattform für Beauty, Wellness und mehr.",
     "cityPlaceholder": "Stadt oder PLZ",
     "searchPlaceholder": "Suche nach Studio oder Service",
     "searchAction": "Jetzt suchen"
@@ -18,9 +18,9 @@
     "empty": "Keine Treffer mit diesen Filtern."
   },
   "booking": {
-    "selectService": "Service waehlen",
-    "selectDate": "Datum waehlen",
-    "selectTime": "Zeit waehlen",
-    "confirm": "Termin bestaetigen"
+    "selectService": "Service wählen",
+    "selectDate": "Datum wählen",
+    "selectTime": "Zeit wählen",
+    "confirm": "Termin bestätigen"
   }
 }

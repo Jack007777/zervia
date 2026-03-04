@@ -3,7 +3,7 @@ import { SUPPORTED_LANGUAGES, type LanguageCode } from '@zervia/shared';
 export const copy: Record<LanguageCode, Record<string, string>> = {
   de: {
     title: 'Zervia',
-    subtitle: 'PWA Terminplattform fuer Deutschland',
+    subtitle: 'PWA Terminplattform für Deutschland',
     ctaCustomer: 'Als Kunde starten',
     ctaBusiness: 'Als Unternehmen starten'
   },

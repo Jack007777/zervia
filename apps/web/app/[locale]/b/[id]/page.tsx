@@ -86,8 +86,18 @@ function ServiceList({ services }: { services: Service[] }) {
 
 export default function BusinessDetailPage() {
   const { locale, id } = useParams<{ locale: string; id: string }>();
-  const { data: apiBusiness } = useBusiness(id);
-  const { data: apiServices, isLoading } = useBusinessServices(id);
+  const {
+    data: apiBusiness,
+    isLoading: isBusinessLoading,
+    isError: isBusinessError,
+    refetch: refetchBusiness
+  } = useBusiness(id);
+  const {
+    data: apiServices,
+    isLoading: isServicesLoading,
+    isError: isServicesError,
+    refetch: refetchServices
+  } = useBusinessServices(id);
 
   const mockBusiness = getMockBusinessById(id);
   const business = apiBusiness ?? mockBusiness;
@@ -114,6 +124,8 @@ export default function BusinessDetailPage() {
   }, [business, reviews.length]);
 
   const rating = business?.avgRating ?? business?.rating ?? 0;
+  const hasError = isBusinessError || isServicesError;
+  const isLoading = isBusinessLoading || isServicesLoading;
 
   return (
     <div className="space-y-4">
@@ -166,7 +178,29 @@ export default function BusinessDetailPage() {
 
       <ReviewsSection reviews={reviews} />
 
-      {isLoading ? <p className="text-sm text-slate-600">Loading...</p> : null}
+      {isLoading ? (
+        <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+          <div className="h-5 w-2/5 animate-pulse rounded bg-slate-200" />
+          <div className="h-4 w-full animate-pulse rounded bg-slate-200" />
+          <div className="h-4 w-4/5 animate-pulse rounded bg-slate-200" />
+        </section>
+      ) : null}
+
+      {hasError ? (
+        <section className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <p>{locale === 'de' ? 'Daten konnten nicht vollständig geladen werden.' : 'Some data could not be loaded.'}</p>
+          <button
+            type="button"
+            className="mt-2 rounded-lg border border-rose-300 bg-white px-3 py-1 text-rose-700"
+            onClick={() => {
+              void refetchBusiness();
+              void refetchServices();
+            }}
+          >
+            {locale === 'de' ? 'Erneut versuchen' : 'Retry'}
+          </button>
+        </section>
+      ) : null}
 
       <Link href={`/${locale}/b/${id}/book`} className="block rounded-xl bg-brand-500 p-3 text-center font-medium text-white">
         Book now

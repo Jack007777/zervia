@@ -26,12 +26,12 @@ const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
   friseur: {
     label: 'Friseur',
     allLabel: 'Alle Friseur Behandlungen',
-    sub: ['Damenhaarschnitt', 'Damen - Farbe, Toenung & Straehnen', 'Herrenhaarschnitt', 'Styling und Foehnen', 'Balayage', 'Kinderhaarschnitt']
+    sub: ['Damenhaarschnitt', 'Damen - Farbe, Tönung & Strähnen', 'Herrenhaarschnitt', 'Styling und Föhnen', 'Balayage', 'Kinderhaarschnitt']
   },
   naegel: {
-    label: 'Naegel',
+    label: 'Nägel',
     allLabel: 'Alle Nagelbehandlungen',
-    sub: ['Pedikuere', 'Manikuere', 'Nagel Design', 'Gel Manikuere', 'Naegel auffuellen', 'Nagelmodellage']
+    sub: ['Pediküre', 'Maniküre', 'Nageldesign', 'Gel-Maniküre', 'Nägel auffüllen', 'Nagelmodellage']
   },
   haarentfernung: {
     label: 'Haarentfernung',
@@ -41,22 +41,22 @@ const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
   kosmetik: {
     label: 'Kosmetik',
     allLabel: 'Alle Kosmetik Behandlungen',
-    sub: ['Gesichtsbehandlungen', 'Wimpernverlaengerung', 'Augenbrauen und Wimpern faerben', 'Augenbrauen zupfen', 'Wimpernwelle', 'Microdermabrasion']
+    sub: ['Gesichtsbehandlungen', 'Wimpernverlängerung', 'Augenbrauen und Wimpern färben', 'Augenbrauen zupfen', 'Wimpernwelle', 'Mikrodermabrasion']
   },
   massage: {
     label: 'Massage',
     allLabel: 'Alle Massagen',
-    sub: ['Entspannungsmassage', 'Thai Massage', 'Aromaoel Massage', 'Therapeutische Massage', 'Fussmassage', 'Sportmassage']
+    sub: ['Entspannungsmassage', 'Thai Massage', 'Aromaöl Massage', 'Therapeutische Massage', 'Fußmassage', 'Sportmassage']
   },
   maenner: {
-    label: 'Maenner',
-    allLabel: 'Alle Maenner Behandlungen',
-    sub: ['Maennerhaarschnitte', 'Herren - Farbe', 'Bart trimmen & Rasur', 'Gesichtsbehandlungen fuer Maenner', 'Barbershop']
+    label: 'Männer',
+    allLabel: 'Alle Männer Behandlungen',
+    sub: ['Männerhaarschnitte', 'Herren - Farbe', 'Bart trimmen & Rasur', 'Gesichtsbehandlungen für Männer', 'Barbershop']
   },
   frauen: {
     label: 'Frauen',
     allLabel: 'Alle Frauen Behandlungen',
-    sub: ['Damenhaarschnitt', 'Damen Waxing', 'Damen Massage', 'Gesichtsbehandlungen', 'Manikuere', 'Pedikuere']
+    sub: ['Damenhaarschnitt', 'Damen Waxing', 'Damen Massage', 'Gesichtsbehandlungen', 'Maniküre', 'Pediküre']
   }
 };
 

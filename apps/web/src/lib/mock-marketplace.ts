@@ -15,6 +15,10 @@ const HOURS = [
   { day: 'Sun', open: '00:00', close: '00:00', closed: true }
 ];
 
+function futureSlot(hoursFromNow: number) {
+  return new Date(Date.now() + hoursFromNow * 60 * 60 * 1000).toISOString();
+}
+
 export const mockBusinesses: MockBusinessFull[] = [
   {
     _id: 'm1',
@@ -34,7 +38,7 @@ export const mockBusinesses: MockBusinessFull[] = [
     distanceKm: 1.4,
     priceMin: 45,
     priceMax: 139,
-    earliestSlot: '2026-03-03T10:30:00+01:00',
+    earliestSlot: futureSlot(2),
     defaultCurrency: 'EUR',
     openingHours: HOURS,
     cancellationPolicy: 'Free cancellation up to 24h before appointment.',
@@ -67,7 +71,7 @@ export const mockBusinesses: MockBusinessFull[] = [
     name: 'Mio Hair Lounge',
     description: 'Cuts, coloring and styling with senior stylists.',
     category: 'friseur',
-    tags: ['Damenhaarschnitt', 'Balayage', 'Foehnen'],
+    tags: ['Damenhaarschnitt', 'Balayage', 'Föhnen'],
     addressLine: 'Rosenthaler Str. 35, 10178 Berlin',
     city: 'Berlin',
     area: 'Mitte',
@@ -79,7 +83,7 @@ export const mockBusinesses: MockBusinessFull[] = [
     distanceKm: 2.1,
     priceMin: 39,
     priceMax: 199,
-    earliestSlot: '2026-03-03T09:15:00+01:00',
+    earliestSlot: futureSlot(3),
     defaultCurrency: 'EUR',
     openingHours: HOURS,
     cancellationPolicy: 'Free cancellation up to 12h before appointment.',
@@ -116,7 +120,7 @@ export const mockBusinesses: MockBusinessFull[] = [
     distanceKm: 3.8,
     priceMin: 49,
     priceMax: 119,
-    earliestSlot: '2026-03-03T08:45:00+01:00',
+    earliestSlot: futureSlot(5),
     defaultCurrency: 'EUR',
     openingHours: HOURS,
     cancellationPolicy: 'Free cancellation up to 24h before appointment.',
@@ -141,7 +145,7 @@ export const mockBusinesses: MockBusinessFull[] = [
     name: 'Nail Lab Mitte',
     description: 'Gel nails, manicure and pedicure with modern tools.',
     category: 'naegel',
-    tags: ['Manikuere', 'Gel', 'Pedikuere'],
+    tags: ['Maniküre', 'Gel', 'Pediküre'],
     addressLine: 'Friedrichstrasse 120, 10117 Berlin',
     city: 'Berlin',
     area: 'Friedrichstrasse',
@@ -153,7 +157,7 @@ export const mockBusinesses: MockBusinessFull[] = [
     distanceKm: 4.4,
     priceMin: 29,
     priceMax: 85,
-    earliestSlot: '2026-03-03T11:00:00+01:00',
+    earliestSlot: futureSlot(6),
     defaultCurrency: 'EUR',
     openingHours: HOURS,
     cancellationPolicy: 'Free cancellation up to 8h before appointment.',

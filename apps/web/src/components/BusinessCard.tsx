@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import type { Business } from '../lib/api/types';
+import { formatBerlinDateTime, isFutureOrNowSlot } from '../lib/time';
 
 import { RatingStars } from './RatingStars';
 
@@ -12,7 +13,12 @@ type Props = {
 export function BusinessCard({ locale, business }: Props) {
   const rating = business.avgRating ?? business.rating ?? 0;
   const reviewCount = business.reviewCount ?? 0;
-  const earliestSlot = business.earliestSlot ? new Date(business.earliestSlot).toLocaleString() : 'Today';
+  const hasValidEarliest = isFutureOrNowSlot(business.earliestSlot);
+  const earliestSlot = hasValidEarliest
+    ? formatBerlinDateTime(business.earliestSlot, locale === 'de' ? 'de-DE' : 'en-GB')
+    : locale === 'de'
+      ? 'Heute keine freien Termine'
+      : 'No upcoming slots today';
   const currency = business.defaultCurrency ?? 'EUR';
   const slugOrId = business.slug ?? business._id;
 
@@ -44,7 +50,9 @@ export function BusinessCard({ locale, business }: Props) {
             {currency} {business.priceMin ?? '--'}+
           </span>
           <span>{business.distanceKm ? `${business.distanceKm.toFixed(1)} km` : business.area ?? business.city ?? '-'}</span>
-          <span className="col-span-2 rounded-md bg-emerald-50 px-2 py-1 text-emerald-700">Earliest: {earliestSlot}</span>
+          <span className="col-span-2 rounded-md bg-emerald-50 px-2 py-1 text-emerald-700">
+            {locale === 'de' ? 'Frühester Termin:' : 'Earliest:'} {earliestSlot}
+          </span>
         </div>
 
         {business.tags?.length ? (

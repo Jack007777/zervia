@@ -89,6 +89,12 @@ export default function SearchPage() {
   const limit = filters.limit ?? 10;
   const totalPages = Math.max(1, Math.ceil(mergedData.length / limit));
   const paginated = mergedData.slice((page - 1) * limit, page * limit);
+  const activeChips = [
+    filters.availableTime ? { key: 'availableTime', label: `Time: ${filters.availableTime}` } : null,
+    filters.serviceFor && filters.serviceFor !== 'all' ? { key: 'serviceFor', label: `For: ${filters.serviceFor}` } : null,
+    filters.sort ? { key: 'sort', label: `Sort: ${filters.sort}` } : null,
+    filters.radiusKm ? { key: 'radiusKm', label: `Radius: ${filters.radiusKm} km` } : null
+  ].filter(Boolean) as Array<{ key: string; label: string }>;
 
   const mapCenter = useMemo(() => {
     if (typeof filters.lat === 'number' && typeof filters.lng === 'number') {
@@ -120,6 +126,39 @@ export default function SearchPage() {
       <p className="text-sm text-slate-600">
         {city || zip ? `${city} ${zip}`.trim() : 'Germany'} {date ? `- ${date}` : ''}
       </p>
+      <section className="rounded-2xl bg-white p-3 text-sm shadow-sm">
+        <p className="font-medium text-slate-900">
+          {mergedData.length} results
+          {filters.city ? ` · ${filters.city}` : ''}
+          {filters.radiusKm ? ` · ${filters.radiusKm} km` : ''}
+          {filters.sort ? ` · ${filters.sort}` : ''}
+        </p>
+        {activeChips.length ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {activeChips.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                className="rounded-full border bg-slate-50 px-2 py-1 text-xs text-slate-700"
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    [chip.key]:
+                      chip.key === 'sort'
+                        ? 'recommended'
+                        : chip.key === 'serviceFor'
+                          ? 'all'
+                          : undefined,
+                    page: 1
+                  }))
+                }
+              >
+                {chip.label} ×
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </section>
 
       <SearchFilters
         locale={locale}

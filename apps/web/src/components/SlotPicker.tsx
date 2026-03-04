@@ -6,11 +6,23 @@ type Props = {
   onSelect: (slot: string) => void;
 };
 
+function toBerlinTimeLabel(slot: string) {
+  const parsed = Date.parse(slot);
+  if (!Number.isFinite(parsed)) {
+    return slot.slice(11, 16);
+  }
+  return new Intl.DateTimeFormat('de-DE', {
+    timeZone: 'Europe/Berlin',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(parsed));
+}
+
 export function SlotPicker({ slots, selected, onSelect }: Props) {
   return (
     <div className="grid grid-cols-3 gap-2">
       {slots.map((slot) => {
-        const timeLabel = slot.slice(11, 16);
+        const timeLabel = toBerlinTimeLabel(slot);
         const active = selected === slot;
         return (
           <button

@@ -62,7 +62,7 @@ export default function PartnersPage() {
           Category
           <select className="rounded-xl border p-3" value={state.serviceCategory} onChange={(e) => setState((p) => ({ ...p, serviceCategory: e.target.value }))}>
             <option value="friseur">Friseur</option>
-            <option value="naegel">Naegel</option>
+            <option value="naegel">Nägel</option>
             <option value="kosmetik">Kosmetik</option>
             <option value="massage">Massage</option>
           </select>

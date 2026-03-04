@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon';
+import { DateTime, Settings } from 'luxon';
 
 import { AvailabilityService } from './availability.service';
 
@@ -27,6 +27,11 @@ describe('AvailabilityService.getSlots', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    Settings.now = () => new Date('2026-02-28T11:00:00.000Z').valueOf();
+  });
+
+  afterAll(() => {
+    Settings.now = () => Date.now();
   });
 
   it('returns 15-minute slots for a normal day', async () => {

@@ -9,6 +9,7 @@ import { useBusinessServices, useCreateBooking, useSlots } from '../../../../../
 import { getAccessToken } from '../../../../../src/lib/api/token-storage';
 import { toApiCountry } from '../../../../../src/lib/country';
 import { getMockBusinessById } from '../../../../../src/lib/mock-marketplace';
+import { filterFutureSlots, formatBerlinDateTime } from '../../../../../src/lib/time';
 import { uiCopy } from '../../../../../src/lib/ui-copy';
 
 export default function BookingPage() {
@@ -35,16 +36,17 @@ export default function BookingPage() {
   const slots = useMemo(() => {
     const data = slotsQuery.data;
     if (!data) {
-      return [
-        `${date || '2026-03-03'}T09:00:00+01:00`,
-        `${date || '2026-03-03'}T10:15:00+01:00`,
-        `${date || '2026-03-03'}T11:30:00+01:00`
-      ];
+      const baseDate = date || new Date().toISOString().slice(0, 10);
+      return filterFutureSlots([
+        `${baseDate}T09:00:00+01:00`,
+        `${baseDate}T10:15:00+01:00`,
+        `${baseDate}T11:30:00+01:00`
+      ]);
     }
     if (Array.isArray(data)) {
-      return data;
+      return filterFutureSlots(data);
     }
-    return Object.values(data).flat();
+    return filterFutureSlots(Object.values(data).flat());
   }, [slotsQuery.data, date]);
 
   async function onConfirm() {
@@ -116,8 +118,13 @@ export default function BookingPage() {
       <section className="rounded-2xl bg-white p-4 shadow-sm text-sm">
         <h2 className="font-semibold">4. Confirm</h2>
         <p className="mt-2 text-slate-700">Service: {selectedService?.name ?? '-'}</p>
-        <p className="text-slate-700">Time: {slot ? new Date(slot).toLocaleString() : '-'}</p>
+        <p className="text-slate-700">Time: {slot ? formatBerlinDateTime(slot, locale === 'de' ? 'de-DE' : 'en-GB') : '-'}</p>
         <p className="mt-2 rounded-md bg-slate-100 px-2 py-1 text-slate-600">{uiCopy[locale].paySoon}</p>
+        <ul className="mt-3 space-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          <li>{locale === 'de' ? 'Kostenlose Stornierung bis 24h vor Termin.' : 'Free cancellation up to 24h before appointment.'}</li>
+          <li>{locale === 'de' ? 'Bei mehr als 15 Min. Verspätung kann der Termin verkürzt werden.' : 'If you are more than 15 min late, appointment time may be reduced.'}</li>
+          <li>{locale === 'de' ? 'Deine Daten werden nur zur Terminabwicklung verwendet.' : 'Your data is only used for booking operations.'}</li>
+        </ul>
       </section>
 
       <button

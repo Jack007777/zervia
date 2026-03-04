@@ -18,19 +18,19 @@ type UiCopy = {
 
 export const uiCopy: Record<AppLocale, UiCopy> = {
   de: {
-    ctaSearch: 'Jetzt verfuegbare Termine finden',
+    ctaSearch: 'Jetzt verfügbare Termine finden',
     ctaViewAll: 'Alle Treffer als Liste',
-    sampleResultsTitle: 'Top-Ergebnisse in deiner Naehe',
+    sampleResultsTitle: 'Top-Ergebnisse in deiner Nähe',
     trustTitle: 'Vertrauen von Kundinnen und Kunden',
     trustBody: 'Verifizierte Bewertungen, klare Preise und freie Zeiten auf einen Blick.',
     emptyTitle: 'Keine passenden Ergebnisse',
-    emptyBody: 'Versuche einen groesseren Radius oder wechsle die Stadt.',
-    emptyActions: ['Radius auf 15 km erweitern', 'Auf Berlin wechseln', 'Auf Muenchen wechseln'],
+    emptyBody: 'Versuche einen größeren Radius oder wechsle die Stadt.',
+    emptyActions: ['Radius auf 15 km erweitern', 'Auf Berlin wechseln', 'Auf München wechseln'],
     findBusinesses: 'Studios finden',
     sortLabel: 'Sortieren',
-    partnersTitle: 'Mehr Buchungen fuer dein Studio',
+    partnersTitle: 'Mehr Buchungen für dein Studio',
     partnersSubtitle: 'Gewinne neue Kundschaft mit Online-Terminbuchung, Bewertungen und automatischen Erinnerungen.',
-    paySoon: 'Online-Zahlung (demnaechst)'
+    paySoon: 'Online-Zahlung (demnächst)'
   },
   en: {
     ctaSearch: 'Find available appointments now',
