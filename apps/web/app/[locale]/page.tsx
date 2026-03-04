@@ -108,11 +108,15 @@ export default function HomePage() {
   const [subMenuOpen, setSubMenuOpen] = useState(false);
   const [categoryTouched, setCategoryTouched] = useState(false);
   const [submittedFilters, setSubmittedFilters] = useState<SearchParams | null>(null);
+  const hasInteractedSearch = Boolean(submittedFilters || gps);
 
   const current = useMemo(() => CATEGORY_MAP[mainCategory], [mainCategory]);
   const { data, isLoading } = useSearchBusinesses(submittedFilters ?? {}, Boolean(submittedFilters));
 
   const previewData = useMemo(() => {
+    if (!hasInteractedSearch) {
+      return [];
+    }
     const hasSubmittedQuery = Boolean(submittedFilters);
     const remote = data && data.length ? data : [];
     if (remote.length) {
@@ -125,7 +129,7 @@ export default function HomePage() {
       return getMockSearchPreview(6);
     }
     return [];
-  }, [data, submittedFilters, gps]);
+  }, [data, submittedFilters, gps, hasInteractedSearch]);
 
   const mapCenter = useMemo(() => {
     if (gps) {
@@ -408,8 +412,13 @@ export default function HomePage() {
 
       <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">{uiCopy[locale].sampleResultsTitle}</h2>
+        {!hasInteractedSearch ? (
+          <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">
+            {locale === 'de' ? 'Bitte suche nach Standort oder nutze GPS, um Ergebnisse zu sehen.' : 'Search by location or use GPS to see results.'}
+          </p>
+        ) : null}
         {isLoading ? <SkeletonResults /> : null}
-        {!isLoading && previewData.length === 0 ? (
+        {hasInteractedSearch && !isLoading && previewData.length === 0 ? (
           <div className="space-y-2 rounded-xl border border-dashed p-3 text-sm">
             <p className="font-medium">{uiCopy[locale].emptyTitle}</p>
             <p className="text-slate-600">{uiCopy[locale].emptyBody}</p>
@@ -420,7 +429,7 @@ export default function HomePage() {
             </ul>
           </div>
         ) : null}
-        {!isLoading ? previewData.slice(0, submittedFilters ? 6 : 3).map((business) => <BusinessCard key={business._id} locale={locale} business={business} />) : null}
+        {hasInteractedSearch && !isLoading ? previewData.slice(0, submittedFilters ? 6 : 3).map((business) => <BusinessCard key={business._id} locale={locale} business={business} />) : null}
       </section>
 
       {submittedFilters || gps ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} /> : null}
