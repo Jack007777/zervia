@@ -100,7 +100,7 @@ export default function HomePage() {
   const [priceMax, setPriceMax] = useState('');
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState('');
-  const [gpsRequested, setGpsRequested] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
   const [subCategory, setSubCategory] = useState<string>('');
@@ -151,14 +151,17 @@ export default function HomePage() {
   }
 
   function requestGpsLocation() {
-    if (gpsRequested || !navigator.geolocation) {
-      if (!navigator.geolocation) {
-        setGpsStatus(locale === 'de' ? 'GPS wird auf diesem Geraet nicht unterstuetzt.' : 'GPS is not supported on this device.');
-      }
+    if (!navigator.geolocation) {
+      setGpsStatus(locale === 'de' ? 'GPS wird auf diesem Geraet nicht unterstuetzt.' : 'GPS is not supported on this device.');
       return;
     }
 
-    setGpsRequested(true);
+    if (isLocating) {
+      setGpsStatus(locale === 'de' ? 'Standort wird noch abgefragt ...' : 'Still requesting location ...');
+      return;
+    }
+
+    setIsLocating(true);
     setGpsStatus(locale === 'de' ? 'Standort wird abgefragt ...' : 'Requesting location ...');
 
     navigator.geolocation.getCurrentPosition(
@@ -166,8 +169,12 @@ export default function HomePage() {
         setGps({ lat: Number(position.coords.latitude.toFixed(6)), lng: Number(position.coords.longitude.toFixed(6)) });
         setLocationError('');
         setGpsStatus(locale === 'de' ? 'GPS-Standort aktiv.' : 'GPS location enabled.');
+        setIsLocating(false);
       },
-      () => setGpsStatus(locale === 'de' ? 'Standortzugriff abgelehnt. Bitte Stadt/PLZ eingeben.' : 'Location denied. Please enter city/zip.'),
+      () => {
+        setGpsStatus(locale === 'de' ? 'Standortzugriff abgelehnt. Bitte Stadt/PLZ eingeben.' : 'Location denied. Please enter city/zip.');
+        setIsLocating(false);
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 }
     );
   }
