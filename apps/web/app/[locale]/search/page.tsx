@@ -27,6 +27,16 @@ function applySort(items: Business[], sort: SearchParams['sort']) {
   return list.sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
 }
 
+function ResultsSkeleton() {
+  return (
+    <div className="grid min-h-64 gap-3">
+      {Array.from({ length: 4 }).map((_, idx) => (
+        <div key={idx} className="h-32 animate-pulse rounded-2xl bg-slate-200" />
+      ))}
+    </div>
+  );
+}
+
 export default function SearchPage() {
   const { locale } = useParams<{ locale: 'de' | 'en' }>();
   const q = useSearchParams();
@@ -171,7 +181,7 @@ export default function SearchPage() {
       <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} />
 
       <div className="space-y-3">
-        {isLoading ? <p className="text-sm text-slate-600">Loading...</p> : null}
+        {isLoading ? <ResultsSkeleton /> : null}
         {!isLoading && paginated.length === 0 ? <p className="text-sm text-slate-600">No results found for current filters.</p> : null}
         {paginated.map((business) => (
           <BusinessCard key={business._id} locale={locale} business={business} />

@@ -14,6 +14,15 @@ export function BusinessCard({ locale, business }: Props) {
   const rating = business.avgRating ?? business.rating ?? 0;
   const reviewCount = business.reviewCount ?? 0;
   const hasValidEarliest = isFutureOrNowSlot(business.earliestSlot);
+  if (business.earliestSlot && !hasValidEarliest) {
+    // Frontend safety net: never trust/print stale past slots.
+    console.error('CRITICAL: past earliest slot filtered from UI', {
+      businessId: business._id,
+      earliestSlot: business.earliestSlot,
+      nowIso: new Date().toISOString(),
+      timezone: 'Europe/Berlin'
+    });
+  }
   const earliestSlot = hasValidEarliest
     ? formatBerlinDateTime(business.earliestSlot, locale === 'de' ? 'de-DE' : 'en-GB')
     : locale === 'de'

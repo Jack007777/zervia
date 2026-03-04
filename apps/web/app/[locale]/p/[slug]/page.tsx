@@ -29,6 +29,7 @@ type ApiService = {
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://api.zervia.eu/api/v1';
+const WEEK_DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function isObjectId(value: string) {
   return /^[a-f0-9]{24}$/i.test(value);
@@ -95,6 +96,8 @@ export default async function BusinessSlugPage({ params }: { params: Promise<Par
   const rating = business.avgRating ?? business.rating ?? 0;
   const reviewCount = business.reviewCount ?? (mockBusiness?.reviews?.length ?? 0);
   const bookId = apiBusiness?._id ?? mockBusiness?._id ?? slug;
+  const today = WEEK_DAYS_SHORT[new Date().getDay()];
+  const todayHours = (business.openingHours ?? []).find((row) => row.day === today);
 
   return (
     <div className="space-y-4">
@@ -109,6 +112,12 @@ export default async function BusinessSlugPage({ params }: { params: Promise<Par
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="font-medium">{locale === 'de' ? 'Öffnungszeiten' : 'Opening hours'}</h2>
+        {todayHours ? (
+          <p className="mt-1 text-sm font-medium text-slate-800">
+            {locale === 'de' ? 'Heute:' : 'Today:'}{' '}
+            {todayHours.closed ? (locale === 'de' ? 'Geschlossen' : 'Closed') : `${todayHours.open} - ${todayHours.close}`}
+          </p>
+        ) : null}
         <ul className="mt-2 space-y-1 text-sm text-slate-700">
           {(business.openingHours ?? []).map((row) => (
             <li key={row.day} className="flex justify-between">
