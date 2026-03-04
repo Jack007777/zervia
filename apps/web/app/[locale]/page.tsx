@@ -203,7 +203,7 @@ export default function HomePage() {
     const normalizedLocation = isGpsLabel ? '' : rawLocation;
     const resolvedCity = normalizedLocation || (!gps ? '' : '');
     const isZipOnly = /^\d{4,6}$/.test(rawLocation);
-    const resolvedQuery = subCategory || CATEGORY_MAP[mainCategory].label;
+    const resolvedQuery = subCategory || '';
 
     if (!subCategory) {
       setServiceError(
@@ -223,7 +223,7 @@ export default function HomePage() {
     const params: SearchParams = {
       country: toApiCountry(country),
       category: mainCategory,
-      q: resolvedQuery,
+      q: resolvedQuery || undefined,
       city: resolvedCity || undefined,
       zip: isZipOnly ? normalizedLocation : undefined,
       postalCode: isZipOnly ? normalizedLocation : undefined,
