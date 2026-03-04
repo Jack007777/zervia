@@ -44,6 +44,20 @@ function buildSrcDoc(lat: number, lng: number, markers: Props['markers']) {
     <style>
       html, body, #map { margin: 0; width: 100%; height: 100%; }
       .leaflet-popup-content { margin: 8px 10px; font: 12px/1.3 system-ui, sans-serif; }
+      .leaflet-control-attribution {
+        font-size: 10px;
+        line-height: 1.2;
+        background: rgba(255, 255, 255, 0.65);
+        color: rgba(71, 85, 105, 0.8);
+        padding: 1px 4px;
+      }
+      .leaflet-control-attribution a {
+        color: rgba(37, 99, 235, 0.75);
+        text-decoration: none;
+      }
+      .leaflet-control-attribution a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
