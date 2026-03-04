@@ -106,6 +106,7 @@ export default function HomePage() {
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
   const [subCategory, setSubCategory] = useState<string>('');
   const [subMenuOpen, setSubMenuOpen] = useState(false);
+  const [categoryTouched, setCategoryTouched] = useState(false);
   const [submittedFilters, setSubmittedFilters] = useState<SearchParams | null>(null);
 
   const current = useMemo(() => CATEGORY_MAP[mainCategory], [mainCategory]);
@@ -148,6 +149,7 @@ export default function HomePage() {
   );
 
   function onSelectMain(next: MainCategory) {
+    setCategoryTouched(true);
     if (next === mainCategory) {
       setSubMenuOpen((prev) => !prev);
       return;
@@ -222,7 +224,7 @@ export default function HomePage() {
 
     const params: SearchParams = {
       country: toApiCountry(country),
-      category: mainCategory,
+      category: categoryTouched ? mainCategory : undefined,
       q: resolvedQuery || undefined,
       city: resolvedCity || undefined,
       zip: isZipOnly ? normalizedLocation : undefined,
@@ -244,7 +246,7 @@ export default function HomePage() {
   const searchHref = useMemo(() => {
     const search = new URLSearchParams();
     search.set('country', toApiCountry(country));
-    if (mainCategory) search.set('category', mainCategory);
+    if (categoryTouched && mainCategory) search.set('category', mainCategory);
     if (subCategory) search.set('q', subCategory);
     const rawLocation = locationQuery.trim();
     if (rawLocation && !rawLocation.startsWith('GPS:')) {
@@ -258,7 +260,7 @@ export default function HomePage() {
       search.set('lng', String(gps.lng));
     }
     return `/${locale}/search?${search.toString()}`;
-  }, [country, mainCategory, subCategory, locationQuery, gps, locale]);
+  }, [country, mainCategory, subCategory, locationQuery, gps, locale, categoryTouched]);
 
   return (
     <div className="space-y-4">
@@ -394,7 +396,7 @@ export default function HomePage() {
         {!isLoading ? previewData.slice(0, submittedFilters ? 6 : 3).map((business) => <BusinessCard key={business._id} locale={locale} business={business} />) : null}
       </section>
 
-      {submittedFilters ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} /> : null}
+      {submittedFilters || gps ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} /> : null}
     </div>
   );
 }
