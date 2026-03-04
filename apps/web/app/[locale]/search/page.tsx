@@ -75,7 +75,16 @@ export default function SearchPage() {
   const { data, isLoading } = useSearchBusinesses(apiFilters);
 
   const mergedData = useMemo(() => {
-    const base = data && data.length ? data : getMockSearchPreview(12);
+    const hasRealSearchIntent = Boolean(
+      filters.category ||
+        filters.q ||
+        filters.city ||
+        filters.zip ||
+        filters.postalCode ||
+        filters.lat !== undefined ||
+        filters.lng !== undefined
+    );
+    const base = data && data.length ? data : hasRealSearchIntent ? [] : getMockSearchPreview(12);
     const filtered = base.filter((item) => {
       if (filters.category && item.category && !String(item.category).toLowerCase().includes(filters.category.toLowerCase())) {
         return false;

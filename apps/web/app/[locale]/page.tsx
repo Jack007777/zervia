@@ -112,9 +112,16 @@ export default function HomePage() {
   const { data, isLoading } = useSearchBusinesses(submittedFilters ?? {}, Boolean(submittedFilters));
 
   const previewData = useMemo(() => {
+    const hasSubmittedQuery = Boolean(submittedFilters);
     const remote = data && data.length ? data : [];
-    return (remote.length ? remote : getMockSearchPreview(6)).slice(0, 6);
-  }, [data]);
+    if (remote.length) {
+      return remote.slice(0, 6);
+    }
+    if (!hasSubmittedQuery) {
+      return getMockSearchPreview(6);
+    }
+    return [];
+  }, [data, submittedFilters]);
 
   const mapCenter = useMemo(() => {
     if (gps) {
@@ -191,9 +198,10 @@ export default function HomePage() {
   }
 
   function onSearch() {
-    const fallbackCity = 'Berlin';
     const rawLocation = locationQuery.trim();
-    const resolvedCity = rawLocation || (!gps ? fallbackCity : '');
+    const isGpsLabel = rawLocation.startsWith('GPS:');
+    const normalizedLocation = isGpsLabel ? '' : rawLocation;
+    const resolvedCity = normalizedLocation || (!gps ? '' : '');
     const isZipOnly = /^\d{4,6}$/.test(rawLocation);
     const resolvedQuery = subCategory || CATEGORY_MAP[mainCategory].label;
 
@@ -206,12 +214,8 @@ export default function HomePage() {
     }
 
     if (!rawLocation && !gps) {
-      setLocationError(
-        locale === 'de'
-          ? `Kein Ort angegeben. Standardort wird verwendet: ${fallbackCity}.`
-          : `No location provided. Using default city: ${fallbackCity}.`
-      );
-      setLocationQuery(fallbackCity);
+      setLocationError(locale === 'de' ? 'Bitte gib einen Ort an oder nutze GPS.' : 'Please enter a location or use GPS.');
+      return;
     } else {
       setLocationError('');
     }
@@ -221,8 +225,8 @@ export default function HomePage() {
       category: mainCategory,
       q: resolvedQuery,
       city: resolvedCity || undefined,
-      zip: isZipOnly ? rawLocation : undefined,
-      postalCode: isZipOnly ? rawLocation : undefined,
+      zip: isZipOnly ? normalizedLocation : undefined,
+      postalCode: isZipOnly ? normalizedLocation : undefined,
       lat: gps?.lat,
       lng: gps?.lng,
       radiusKm: radiusKm ? Number(radiusKm) : undefined,
@@ -242,10 +246,11 @@ export default function HomePage() {
     search.set('country', toApiCountry(country));
     if (mainCategory) search.set('category', mainCategory);
     if (subCategory) search.set('q', subCategory);
-    if (locationQuery.trim()) {
-      search.set('city', locationQuery.trim());
-      if (/^\d{4,6}$/.test(locationQuery.trim())) {
-        search.set('zip', locationQuery.trim());
+    const rawLocation = locationQuery.trim();
+    if (rawLocation && !rawLocation.startsWith('GPS:')) {
+      search.set('city', rawLocation);
+      if (/^\d{4,6}$/.test(rawLocation)) {
+        search.set('zip', rawLocation);
       }
     }
     if (gps) {

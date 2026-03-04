@@ -131,6 +131,21 @@ export class SearchQueryDto {
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional({ example: 'Berlin' })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ example: '10115' })
+  @IsOptional()
+  @IsString()
+  zip?: string;
+
+  @ApiPropertyOptional({ example: '10115' })
+  @IsOptional()
+  @IsString()
+  postalCode?: string;
+
   @ApiPropertyOptional({ example: 'nail' })
   @IsOptional()
   @IsString()
