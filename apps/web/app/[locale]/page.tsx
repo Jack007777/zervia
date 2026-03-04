@@ -100,6 +100,7 @@ export default function HomePage() {
   const [priceMax, setPriceMax] = useState('');
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState('');
+  const [gpsStatusType, setGpsStatusType] = useState<'loading' | 'success' | 'error' | ''>('');
   const [isLocating, setIsLocating] = useState(false);
 
   const [mainCategory, setMainCategory] = useState<MainCategory>('massage');
@@ -153,26 +154,36 @@ export default function HomePage() {
   function requestGpsLocation() {
     if (!navigator.geolocation) {
       setGpsStatus(locale === 'de' ? 'GPS wird auf diesem Geraet nicht unterstuetzt.' : 'GPS is not supported on this device.');
+      setGpsStatusType('error');
       return;
     }
 
     if (isLocating) {
       setGpsStatus(locale === 'de' ? 'Standort wird noch abgefragt ...' : 'Still requesting location ...');
+      setGpsStatusType('loading');
       return;
     }
 
     setIsLocating(true);
     setGpsStatus(locale === 'de' ? 'Standort wird abgefragt ...' : 'Requesting location ...');
+    setGpsStatusType('loading');
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setGps({ lat: Number(position.coords.latitude.toFixed(6)), lng: Number(position.coords.longitude.toFixed(6)) });
+        const nextGps = {
+          lat: Number(position.coords.latitude.toFixed(6)),
+          lng: Number(position.coords.longitude.toFixed(6))
+        };
+        setGps(nextGps);
+        setLocationQuery(`GPS: ${nextGps.lat}, ${nextGps.lng}`);
         setLocationError('');
         setGpsStatus(locale === 'de' ? 'GPS-Standort aktiv.' : 'GPS location enabled.');
+        setGpsStatusType('success');
         setIsLocating(false);
       },
       () => {
         setGpsStatus(locale === 'de' ? 'Standortzugriff abgelehnt. Bitte Stadt/PLZ eingeben.' : 'Location denied. Please enter city/zip.');
+        setGpsStatusType('error');
         setIsLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 }
@@ -310,7 +321,6 @@ export default function HomePage() {
             placeholder={locale === 'de' ? 'PLZ, Ort oder Region eingeben' : 'Enter ZIP, city or region'}
             value={locationQuery}
             onChange={(e) => setLocationQuery(e.target.value)}
-            onFocus={requestGpsLocation}
           />
         </label>
         <button
@@ -346,7 +356,19 @@ export default function HomePage() {
         </a>
 
         {serviceError ? <p className="text-xs text-rose-600">{serviceError}</p> : null}
-        {gpsStatus ? <p className="text-xs text-slate-600">{gpsStatus}</p> : null}
+        {gpsStatus ? (
+          <p
+            className={`rounded-lg px-2 py-1 text-xs ${
+              gpsStatusType === 'success'
+                ? 'bg-emerald-50 text-emerald-700'
+                : gpsStatusType === 'error'
+                  ? 'bg-rose-50 text-rose-700'
+                  : 'bg-slate-100 text-slate-700'
+            }`}
+          >
+            {gpsStatus}
+          </p>
+        ) : null}
         {locationError ? <p className="text-xs text-rose-600">{locationError}</p> : null}
       </section>
 
