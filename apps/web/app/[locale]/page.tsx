@@ -118,11 +118,14 @@ export default function HomePage() {
     if (remote.length) {
       return remote.slice(0, 6);
     }
+    if (gps && !hasSubmittedQuery) {
+      return [];
+    }
     if (!hasSubmittedQuery) {
       return getMockSearchPreview(6);
     }
     return [];
-  }, [data, submittedFilters]);
+  }, [data, submittedFilters, gps]);
 
   const mapCenter = useMemo(() => {
     if (gps) {
@@ -183,11 +186,27 @@ export default function HomePage() {
           lat: Number(position.coords.latitude.toFixed(6)),
           lng: Number(position.coords.longitude.toFixed(6))
         };
+        const nextCategory = categoryTouched ? mainCategory : undefined;
+        const nextQuery = subCategory || undefined;
         setGps(nextGps);
         setLocationQuery(`GPS: ${nextGps.lat}, ${nextGps.lng}`);
         setLocationError('');
         setGpsStatus(locale === 'de' ? 'GPS-Standort aktiv.' : 'GPS location enabled.');
         setGpsStatusType('success');
+        setSubmittedFilters({
+          country: toApiCountry(country),
+          category: nextCategory,
+          q: nextQuery,
+          lat: nextGps.lat,
+          lng: nextGps.lng,
+          radiusKm: radiusKm ? Number(radiusKm) : 120,
+          ratingMin: ratingMin ? Number(ratingMin) : undefined,
+          priceMin: priceMin ? Number(priceMin) : undefined,
+          priceMax: priceMax ? Number(priceMax) : undefined,
+          sort: 'recommended',
+          page: 1,
+          limit: 10
+        });
         setIsLocating(false);
       },
       () => {
