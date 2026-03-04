@@ -222,6 +222,8 @@ export default function HomePage() {
       setLocationError('');
     }
 
+    const resolvedRadiusKm = radiusKm ? Number(radiusKm) : gps ? 120 : undefined;
+
     const params: SearchParams = {
       country: toApiCountry(country),
       category: categoryTouched ? mainCategory : undefined,
@@ -231,7 +233,7 @@ export default function HomePage() {
       postalCode: isZipOnly ? normalizedLocation : undefined,
       lat: gps?.lat,
       lng: gps?.lng,
-      radiusKm: radiusKm ? Number(radiusKm) : undefined,
+      radiusKm: resolvedRadiusKm,
       ratingMin: ratingMin ? Number(ratingMin) : undefined,
       priceMin: priceMin ? Number(priceMin) : undefined,
       priceMax: priceMax ? Number(priceMax) : undefined,
@@ -258,9 +260,15 @@ export default function HomePage() {
     if (gps) {
       search.set('lat', String(gps.lat));
       search.set('lng', String(gps.lng));
+      if (!radiusKm) {
+        search.set('radiusKm', '120');
+      }
+    }
+    if (radiusKm) {
+      search.set('radiusKm', radiusKm);
     }
     return `/${locale}/search?${search.toString()}`;
-  }, [country, mainCategory, subCategory, locationQuery, gps, locale, categoryTouched]);
+  }, [country, mainCategory, subCategory, locationQuery, gps, locale, categoryTouched, radiusKm]);
 
   return (
     <div className="space-y-4">
