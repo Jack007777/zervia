@@ -401,6 +401,7 @@ export default function HomePage() {
                       setSubCategory(item);
                       setCategoryTouched(true);
                       setServiceError('');
+                      setSubMenuOpen(false);
                     }}
                     className={`w-full rounded-lg border px-2 py-2 text-left transition ${
                       subCategory === item
@@ -423,6 +424,7 @@ export default function HomePage() {
                     setSubCategory(ALL_SUBCATEGORY);
                     setCategoryTouched(true);
                     setServiceError('');
+                    setSubMenuOpen(false);
                   }}
                   className={`w-full rounded-lg border px-2 py-2 text-left font-semibold transition ${
                     subCategory === ALL_SUBCATEGORY
