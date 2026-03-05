@@ -184,3 +184,30 @@ export class SearchQueryDto {
   @Max(5)
   ratingMin?: number;
 }
+
+export class UpsertBusinessCustomerListDto {
+  @ApiProperty({ example: '+4915112345678' })
+  @IsString()
+  @Matches(/^\+?[1-9]\d{6,14}$/)
+  phone!: string;
+
+  @ApiPropertyOptional({ example: 'Herr Mueller' })
+  @IsOptional()
+  @IsString()
+  customName?: string;
+
+  @ApiPropertyOptional({ enum: ['none', 'whitelist', 'blacklist'], example: 'whitelist' })
+  @IsOptional()
+  @IsEnum(['none', 'whitelist', 'blacklist'])
+  listType?: 'none' | 'whitelist' | 'blacklist';
+
+  @ApiPropertyOptional({ example: 'VIP regular customer' })
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @ApiPropertyOptional({ enum: SUPPORTED_COUNTRIES, example: 'DE' })
+  @IsOptional()
+  @IsEnum(SUPPORTED_COUNTRIES)
+  country: (typeof SUPPORTED_COUNTRIES)[number] = 'DE';
+}
