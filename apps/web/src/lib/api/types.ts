@@ -46,6 +46,7 @@ export type Business = {
   vatNumber?: string;
   vatRate?: number;
   bookingMode?: 'instant' | 'request';
+  requireVerifiedPhoneForBooking?: boolean;
   isVirtual?: boolean;
   virtualSeedBatch?: string;
 };
@@ -144,8 +145,19 @@ export type AdminBusiness = {
   priceMin?: number;
   priceMax?: number;
   bookingMode?: 'instant' | 'request';
+  requireVerifiedPhoneForBooking?: boolean;
   isActive: boolean;
   isVirtual?: boolean;
   virtualSeedBatch?: string;
   createdAt: string;
+};
+
+export type AuthMe = {
+  userId: string;
+  email?: string;
+  phone?: string;
+  roles: Array<'customer' | 'business' | 'admin'>;
+  country: string;
+  locale: string;
+  phoneVerified: boolean;
 };

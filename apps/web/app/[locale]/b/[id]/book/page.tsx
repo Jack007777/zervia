@@ -67,15 +67,29 @@ export default function BookingPage() {
     }
 
     const hasAuth = Boolean(getAccessToken());
-    await createBooking.mutateAsync({
-      businessId: id,
-      serviceId,
-      startTime: requestedStartTime,
-      guestName: name.trim(),
-      guestPhone: phone.trim(),
-      notes: email.trim() ? `contactEmail=${email.trim()}` : undefined,
-      country: apiCountry
-    });
+    try {
+      await createBooking.mutateAsync({
+        businessId: id,
+        serviceId,
+        startTime: requestedStartTime,
+        guestName: name.trim(),
+        guestPhone: phone.trim(),
+        notes: email.trim() ? `contactEmail=${email.trim()}` : undefined,
+        country: apiCountry
+      });
+    } catch (error) {
+      const text = error instanceof Error ? error.message : 'Booking failed';
+      if (text.includes('PHONE_VERIFICATION_REQUIRED')) {
+        setResultMessage(
+          locale === 'de'
+            ? 'Diese Buchung erfordert ein telefonverifiziertes Konto. Bitte verifiziere zuerst deine Mobilnummer.'
+            : 'This booking requires a phone-verified account. Please verify your mobile number first.'
+        );
+        return;
+      }
+      setResultMessage(locale === 'de' ? 'Buchung fehlgeschlagen.' : 'Booking failed.');
+      return;
+    }
 
     if (bookingMode === 'request') {
       setResultMessage(
@@ -148,6 +162,13 @@ export default function BookingPage() {
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="font-semibold">3. Your details</h2>
+        {business?.requireVerifiedPhoneForBooking ? (
+          <p className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-700">
+            {locale === 'de'
+              ? 'Dieser Anbieter akzeptiert nur telefonverifizierte Konten.'
+              : 'This business accepts bookings only from phone-verified accounts.'}
+          </p>
+        ) : null}
         <div className="mt-2 grid gap-2">
           <input className="rounded-xl border p-3" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
           <input className="rounded-xl border p-3" placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />

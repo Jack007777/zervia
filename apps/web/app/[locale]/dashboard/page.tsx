@@ -210,6 +210,7 @@ function AdminDashboard() {
 function BusinessDashboard() {
   const [businessId, setBusinessId] = useState('');
   const [bookingMode, setBookingMode] = useState<'instant' | 'request'>('instant');
+  const [requireVerifiedPhoneForBooking, setRequireVerifiedPhoneForBooking] = useState(false);
   const [modeMessage, setModeMessage] = useState('');
   const [counterTimes, setCounterTimes] = useState<Record<string, string>>({});
   const [bookingMessage, setBookingMessage] = useState('');
@@ -250,6 +251,14 @@ function BusinessDashboard() {
             <option value="instant">Instant booking</option>
             <option value="request">Request booking (hidden availability)</option>
           </select>
+          <label className="flex items-center gap-2 rounded-xl border p-2 text-sm">
+            <input
+              type="checkbox"
+              checked={requireVerifiedPhoneForBooking}
+              onChange={(e) => setRequireVerifiedPhoneForBooking(e.target.checked)}
+            />
+            Only phone-verified users can book
+          </label>
           <button
             type="button"
             className="rounded-xl bg-slate-900 p-2 text-white disabled:opacity-50"
@@ -257,9 +266,12 @@ function BusinessDashboard() {
             onClick={async () => {
               await updateBusiness.mutateAsync({
                 businessId: businessId.trim(),
-                bookingMode
+                bookingMode,
+                requireVerifiedPhoneForBooking
               });
-              setModeMessage(`Updated booking mode to "${bookingMode}"`);
+              setModeMessage(
+                `Updated: mode="${bookingMode}", phone-verified-only=${requireVerifiedPhoneForBooking ? 'on' : 'off'}`
+              );
             }}
           >
             {updateBusiness.isPending ? 'Saving...' : 'Save booking mode'}

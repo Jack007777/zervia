@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiClient } from './client';
 import { setTokens } from './token-storage';
-import type { AdRecord, AdminBusiness, AdminUser, Booking, Business, SearchParams, Service } from './types';
+import type { AdRecord, AdminBusiness, AdminUser, AuthMe, Booking, Business, SearchParams, Service } from './types';
 
 function toSearchQuery(params: SearchParams) {
   const search = new URLSearchParams();
@@ -79,6 +79,35 @@ export function useLogin() {
     onSuccess: (data) => {
       setTokens(data.tokens);
     }
+  });
+}
+
+export function useAuthMe() {
+  return useQuery({
+    queryKey: ['auth-me'],
+    queryFn: () => apiClient<AuthMe>('/auth/me', { auth: true })
+  });
+}
+
+export function useSendPhoneCode() {
+  return useMutation({
+    mutationFn: (payload: { phone?: string }) =>
+      apiClient<{ success: boolean; expiresAt: string }>('/auth/phone/send-code', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        auth: true
+      })
+  });
+}
+
+export function useVerifyPhoneCode() {
+  return useMutation({
+    mutationFn: (payload: { code: string }) =>
+      apiClient<{ success: boolean; phoneVerified: boolean }>('/auth/phone/verify', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        auth: true
+      })
   });
 }
 
@@ -260,6 +289,7 @@ export function useUpdateBusiness() {
     mutationFn: (payload: {
       businessId: string;
       bookingMode?: 'instant' | 'request';
+      requireVerifiedPhoneForBooking?: boolean;
       name?: string;
       category?: string;
       description?: string;
@@ -271,6 +301,7 @@ export function useUpdateBusiness() {
         method: 'PATCH',
         body: JSON.stringify({
           bookingMode: payload.bookingMode,
+          requireVerifiedPhoneForBooking: payload.requireVerifiedPhoneForBooking,
           name: payload.name,
           category: payload.category,
           description: payload.description,

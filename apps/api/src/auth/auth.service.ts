@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 
 import type { JwtPayload, Role } from '@zervia/shared';
 
+import { SmsService } from '../notifications/sms.service';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -12,7 +13,8 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly smsService: SmsService
   ) {}
 
   async register(input: {
@@ -101,12 +103,64 @@ export class AuthService {
     return { success: true };
   }
 
+  async me(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      userId: user.id,
+      email: user.email,
+      phone: user.phone,
+      roles: user.roles,
+      country: user.country,
+      locale: user.locale,
+      phoneVerified: Boolean(user.phoneVerified)
+    };
+  }
+
+  async sendPhoneCode(userId: string, phoneInput?: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const phone = phoneInput?.trim() ?? user.phone?.trim();
+    if (!phone) {
+      throw new BadRequestException('Phone is required');
+    }
+
+    const existingByPhone = await this.usersService.findByPhone(phone);
+    if (existingByPhone && existingByPhone.id !== userId) {
+      throw new BadRequestException('Phone already used by another account');
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await this.usersService.createPhoneVerificationChallenge(userId, phone, code, expiresAt);
+
+    await this.smsService.sendVerificationCode({ toPhone: phone, code });
+
+    return { success: true, expiresAt: expiresAt.toISOString() };
+  }
+
+  async verifyPhoneCode(userId: string, code: string) {
+    const result = await this.usersService.verifyPhoneCode(userId, code.trim());
+    if (!result.ok) {
+      throw new BadRequestException(result.reason);
+    }
+    return { success: true, phoneVerified: true };
+  }
+
   private async issueTokens(userId: string, email: string, roles: Role[], country: 'DE') {
+    const user = await this.usersService.findById(userId);
     const payload: JwtPayload = {
       sub: userId,
       email,
       roles,
-      country
+      country,
+      phoneVerified: Boolean(user?.phoneVerified)
     };
     const accessToken = await this.jwtService.signAsync(payload, {
       secret:

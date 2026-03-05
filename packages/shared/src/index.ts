@@ -67,4 +67,5 @@ export interface JwtPayload {
   email: string;
   roles: Role[];
   country: CountryCode;
+  phoneVerified?: boolean;
 }

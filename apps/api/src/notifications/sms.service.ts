@@ -16,4 +16,9 @@ export class SmsService {
     );
     return { ok: true };
   }
+
+  async sendVerificationCode(input: { toPhone: string; code: string }) {
+    this.logger.log(`SMS(verification) => ${input.toPhone} code=${input.code}`);
+    return { ok: true };
+  }
 }

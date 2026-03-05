@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -11,7 +11,7 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { AuthService } from './auth.service';
-import { LoginDto, LogoutDto, RefreshDto, RegisterDto } from './dto/auth.dto';
+import { AuthMeDto, LoginDto, LogoutDto, PhoneSendCodeDto, PhoneVerifyDto, RefreshDto, RegisterDto } from './dto/auth.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 
 @ApiTags('Auth')
@@ -63,5 +63,29 @@ export class AuthController {
   })
   logout(@Req() req: { user: { sub: string } }, @Body() body: LogoutDto) {
     return this.authService.logout(req.user.sub, body.refreshToken);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('bearer')
+  @ApiOkResponse({ type: AuthMeDto })
+  me(@Req() req: { user: { sub: string } }) {
+    return this.authService.me(req.user.sub);
+  }
+
+  @Post('phone/send-code')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('bearer')
+  @ApiBody({ type: PhoneSendCodeDto })
+  sendPhoneCode(@Req() req: { user: { sub: string } }, @Body() body: PhoneSendCodeDto) {
+    return this.authService.sendPhoneCode(req.user.sub, body.phone);
+  }
+
+  @Post('phone/verify')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('bearer')
+  @ApiBody({ type: PhoneVerifyDto })
+  verifyPhone(@Req() req: { user: { sub: string } }, @Body() body: PhoneVerifyDto) {
+    return this.authService.verifyPhoneCode(req.user.sub, body.code);
   }
 }

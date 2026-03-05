@@ -33,5 +33,10 @@ export class UpdateAdminBusinessDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
+  requireVerifiedPhoneForBooking?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 }

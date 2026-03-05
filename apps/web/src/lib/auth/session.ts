@@ -4,12 +4,14 @@ type JwtPayload = {
   sub?: string;
   email?: string;
   roles?: string[];
+  phoneVerified?: boolean;
 };
 
 export type SessionUser = {
   userId: string;
   email: string;
   roles: string[];
+  phoneVerified: boolean;
 };
 
 function decodePayload(token: string): JwtPayload | null {
@@ -40,7 +42,7 @@ export function getSessionUser(): SessionUser | null {
   return {
     userId: payload.sub,
     email: payload.email,
-    roles: payload.roles ?? []
+    roles: payload.roles ?? [],
+    phoneVerified: Boolean(payload.phoneVerified)
   };
 }
-

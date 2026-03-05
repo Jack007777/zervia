@@ -64,6 +64,9 @@ export class BusinessEntity {
   @Prop({ default: 'instant', enum: ['instant', 'request'] })
   bookingMode!: 'instant' | 'request';
 
+  @Prop({ default: false })
+  requireVerifiedPhoneForBooking!: boolean;
+
   @Prop({ default: true })
   isActive!: boolean;
 

@@ -38,6 +38,15 @@ export class UserEntity {
   @Prop({ default: true })
   isActive!: boolean;
 
+  @Prop({ default: false })
+  phoneVerified!: boolean;
+
+  @Prop()
+  phoneVerificationCodeHash?: string;
+
+  @Prop({ type: Date })
+  phoneVerificationExpiresAt?: Date;
+
   @Prop()
   refreshTokenHash?: string;
 }

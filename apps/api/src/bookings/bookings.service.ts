@@ -7,6 +7,7 @@ import { AvailabilityEntity, type AvailabilityDocument } from '../availability/a
 import { BusinessEntity, type BusinessDocument } from '../businesses/business.schema';
 import { SmsService } from '../notifications/sms.service';
 import { ServiceEntity, type ServiceDocument } from '../services/service.schema';
+import { UserEntity, type UserDocument } from '../users/user.schema';
 import { BookingEntity, type BookingDocument } from './booking.schema';
 import type {
   AcceptCounterProposalDto,
@@ -25,6 +26,7 @@ export class BookingsService {
     @InjectModel(BusinessEntity.name) private readonly businessModel: Model<BusinessDocument>,
     @InjectModel(ServiceEntity.name) private readonly serviceModel: Model<ServiceDocument>,
     @InjectModel(AvailabilityEntity.name) private readonly availabilityModel: Model<AvailabilityDocument>,
+    @InjectModel(UserEntity.name) private readonly userModel: Model<UserDocument>,
     private readonly smsService: SmsService
   ) {}
 
@@ -62,6 +64,22 @@ export class BookingsService {
             errorCode: 'BUSINESS_NOT_FOUND',
             message: 'Business not found'
           });
+        }
+
+        if (business.requireVerifiedPhoneForBooking) {
+          if (!customerUserId) {
+            throw new BadRequestException({
+              errorCode: 'PHONE_VERIFICATION_REQUIRED',
+              message: 'Phone-verified account is required for this business'
+            });
+          }
+          const customer = await this.userModel.findById(customerUserId).session(session).exec();
+          if (!customer?.phoneVerified) {
+            throw new BadRequestException({
+              errorCode: 'PHONE_VERIFICATION_REQUIRED',
+              message: 'Please verify your phone number before booking this business'
+            });
+          }
         }
 
         const timezone = availability?.timezone ?? 'Europe/Berlin';

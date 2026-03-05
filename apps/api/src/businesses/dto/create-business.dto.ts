@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsArray,
   IsEnum,
   IsNumber,
@@ -72,6 +73,11 @@ export class CreateBusinessDto {
   @IsOptional()
   @IsEnum(SUPPORTED_BOOKING_MODES)
   bookingMode?: (typeof SUPPORTED_BOOKING_MODES)[number];
+
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @IsBoolean()
+  requireVerifiedPhoneForBooking?: boolean;
 
   @ApiPropertyOptional({ example: '+49301234567' })
   @IsOptional()

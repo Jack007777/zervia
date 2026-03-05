@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsArray,
   IsEmail,
   IsEnum,
@@ -66,4 +67,42 @@ export class LogoutDto {
   @ApiProperty({ example: 'refresh-jwt-token' })
   @IsString()
   refreshToken!: string;
+}
+
+export class PhoneSendCodeDto {
+  @ApiPropertyOptional({ example: '+4917612345678' })
+  @IsOptional()
+  @IsPhoneNumber('DE')
+  phone?: string;
+}
+
+export class PhoneVerifyDto {
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @MinLength(4)
+  code!: string;
+}
+
+export class AuthMeDto {
+  @ApiProperty()
+  userId!: string;
+
+  @ApiPropertyOptional()
+  email?: string;
+
+  @ApiPropertyOptional()
+  phone?: string;
+
+  @ApiProperty({ type: [String], enum: ROLES })
+  roles!: (typeof ROLES)[number][];
+
+  @ApiProperty({ enum: SUPPORTED_COUNTRIES })
+  country!: (typeof SUPPORTED_COUNTRIES)[number];
+
+  @ApiProperty({ enum: SUPPORTED_LANGUAGES })
+  locale!: (typeof SUPPORTED_LANGUAGES)[number];
+
+  @ApiProperty()
+  @IsBoolean()
+  phoneVerified!: boolean;
 }

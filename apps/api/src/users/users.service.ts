@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as bcrypt from 'bcryptjs';
 
 import type { CountryCode, LanguageCode, Role } from '@zervia/shared';
 
@@ -74,5 +75,39 @@ export class UsersService {
     await this.userModel
       .findByIdAndUpdate(userId, { refreshTokenHash: refreshTokenHash ?? undefined })
       .exec();
+  }
+
+  async createPhoneVerificationChallenge(userId: string, phone: string, code: string, expiresAt: Date) {
+    const codeHash = await bcrypt.hash(code, 10);
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        phone: phone.trim(),
+        phoneVerified: false,
+        phoneVerificationCodeHash: codeHash,
+        phoneVerificationExpiresAt: expiresAt
+      })
+      .exec();
+  }
+
+  async verifyPhoneCode(userId: string, code: string) {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user || !user.phoneVerificationCodeHash || !user.phoneVerificationExpiresAt) {
+      return { ok: false as const, reason: 'NO_PENDING_VERIFICATION' };
+    }
+
+    if (user.phoneVerificationExpiresAt.getTime() < Date.now()) {
+      return { ok: false as const, reason: 'CODE_EXPIRED' };
+    }
+
+    const valid = await bcrypt.compare(code, user.phoneVerificationCodeHash);
+    if (!valid) {
+      return { ok: false as const, reason: 'INVALID_CODE' };
+    }
+
+    user.phoneVerified = true;
+    user.phoneVerificationCodeHash = undefined;
+    user.phoneVerificationExpiresAt = undefined;
+    await user.save();
+    return { ok: true as const };
   }
 }
