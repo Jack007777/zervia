@@ -558,6 +558,8 @@ export default function HomePage() {
         {locationError ? <p className="text-xs text-rose-600">{locationError}</p> : null}
       </section>
 
+      {submittedFilters || gps ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} /> : null}
+
       <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">{uiCopy[locale].sampleResultsTitle}</h2>
         {!showResults ? (
@@ -579,8 +581,6 @@ export default function HomePage() {
         ) : null}
         {showResults && !isLoading ? previewData.slice(0, submittedFilters ? 6 : 3).map((business) => <BusinessCard key={business._id} locale={locale} business={business} />) : null}
       </section>
-
-      {submittedFilters || gps ? <LiveMap lat={mapCenter.lat} lng={mapCenter.lng} markers={mapMarkers} /> : null}
     </div>
   );
 }
