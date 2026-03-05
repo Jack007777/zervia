@@ -33,9 +33,13 @@ export function BusinessCard({ locale, business }: Props) {
 
   return (
     <article className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-      <div className="aspect-[16/7] w-full bg-gradient-to-br from-slate-100 to-slate-200 p-3 text-xs text-slate-500">
+      <Link
+        href={`/${locale}/p/${slugOrId}`}
+        className="block aspect-[16/7] w-full bg-gradient-to-br from-slate-100 to-slate-200 p-3 text-xs text-slate-500 hover:opacity-95"
+        aria-label={`Open ${business.name} details`}
+      >
         Image
-      </div>
+      </Link>
       <div className="p-4">
         <div className="mb-2 flex items-start justify-between gap-3">
           <h3 className="text-lg font-semibold">{business.name}</h3>
