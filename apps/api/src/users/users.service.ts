@@ -99,6 +99,18 @@ export class UsersService {
       .exec();
   }
 
+  async requestManualPhoneVerification(userId: string, phone: string) {
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        phone: phone.trim(),
+        phoneVerified: false,
+        manualPhoneApprovalPending: true,
+        phoneVerificationCodeHash: undefined,
+        phoneVerificationExpiresAt: undefined
+      })
+      .exec();
+  }
+
   async createOrRefreshEmailVerificationChallenge(input: {
     email: string;
     passwordHash: string;

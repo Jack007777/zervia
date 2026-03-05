@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { useLogin } from '../../../../src/lib/api/hooks';
 
 const loginSchema = z.object({
-  identifier: z.string().min(3),
+  email: z.string().email(),
   password: z.string().min(8)
 });
 
@@ -21,7 +21,7 @@ export default function LoginPage() {
   const mutation = useLogin();
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { identifier: '', password: '' }
+    defaultValues: { email: '', password: '' }
   });
 
   async function onSubmit(values: LoginInput) {
@@ -33,9 +33,9 @@ export default function LoginPage() {
     <main className="mx-auto max-w-md space-y-4 py-10">
       <h1 className="text-2xl font-semibold">Sign in</h1>
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-3 rounded-2xl bg-white p-5 shadow-sm">
-        <input className="rounded-xl border p-3" placeholder="Email or phone" {...form.register('identifier')} />
-        {form.formState.errors.identifier ? (
-          <p className="text-xs text-rose-600">{form.formState.errors.identifier.message}</p>
+        <input className="rounded-xl border p-3" placeholder="Email" {...form.register('email')} />
+        {form.formState.errors.email ? (
+          <p className="text-xs text-rose-600">{form.formState.errors.email.message}</p>
         ) : null}
         <input className="rounded-xl border p-3" placeholder="Password" type="password" {...form.register('password')} />
         {form.formState.errors.password ? (

@@ -6,7 +6,6 @@ import * as bcrypt from 'bcryptjs';
 import type { JwtPayload, Role } from '@zervia/shared';
 
 import { EmailService } from '../notifications/email.service';
-import { SmsService } from '../notifications/sms.service';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -15,83 +14,53 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly smsService: SmsService,
     private readonly emailService: EmailService
   ) {}
 
   async register(input: {
-    email?: string;
-    phone?: string;
+    email: string;
     password: string;
     roles: Role[];
     country: 'DE';
     locale: 'de' | 'en';
   }) {
     const email = input.email?.trim().toLowerCase();
-    const phone = input.phone?.trim();
-    if (!email && !phone) {
-      throw new UnauthorizedException('Email or phone is required');
-    }
-
-    if (phone) {
-      const existingByPhone = await this.usersService.findByPhone(phone);
-      if (existingByPhone) {
-        throw new UnauthorizedException('Phone already exists');
-      }
+    if (!email) {
+      throw new UnauthorizedException('Email is required');
     }
 
     const passwordHash = await bcrypt.hash(input.password, 12);
-
-    if (email) {
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      const created = await this.usersService.createOrRefreshEmailVerificationChallenge({
-        email,
-        passwordHash,
-        roles: input.roles,
-        country: input.country,
-        locale: input.locale,
-        code,
-        expiresAt
-      });
-
-      if (!created.ok) {
-        throw new UnauthorizedException('Email already exists');
-      }
-
-      await this.emailService.sendRegisterVerificationCode({
-        toEmail: email,
-        code,
-        locale: input.locale
-      });
-
-      return {
-        verificationRequired: true,
-        channel: 'email' as const,
-        identifier: email
-      };
-    }
-
-    const user = await this.usersService.create({
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const created = await this.usersService.createOrRefreshEmailVerificationChallenge({
       email,
-      phone,
       passwordHash,
       roles: input.roles,
       country: input.country,
       locale: input.locale,
-      isActive: false,
-      phoneVerified: false,
-      manualPhoneApprovalPending: true
+      code,
+      expiresAt
     });
+
+    if (!created.ok) {
+      throw new UnauthorizedException('Email already exists');
+    }
+
+    await this.emailService.sendRegisterVerificationCode({
+      toEmail: email,
+      code,
+      locale: input.locale
+    });
+
     return {
       verificationRequired: true,
-      channel: 'phone_manual' as const,
-      identifier: user.phone
+      channel: 'email' as const,
+      identifier: email
     };
   }
 
-  async login(identifier: string, password: string) {
-    const user = await this.usersService.findByIdentifier(identifier);
+  async login(email: string, password: string) {
+    const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -175,13 +144,13 @@ export class AuthService {
     };
   }
 
-  async sendPhoneCode(userId: string, phoneInput?: string) {
+  async requestManualPhoneVerification(userId: string, phoneInput: string) {
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    const phone = phoneInput?.trim() ?? user.phone?.trim();
+    const phone = phoneInput?.trim();
     if (!phone) {
       throw new BadRequestException('Phone is required');
     }
@@ -191,21 +160,12 @@ export class AuthService {
       throw new BadRequestException('Phone already used by another account');
     }
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await this.usersService.createPhoneVerificationChallenge(userId, phone, code, expiresAt);
-
-    await this.smsService.sendVerificationCode({ toPhone: phone, code });
-
-    return { success: true, expiresAt: expiresAt.toISOString() };
-  }
-
-  async verifyPhoneCode(userId: string, code: string) {
-    const result = await this.usersService.verifyPhoneCode(userId, code.trim());
-    if (!result.ok) {
-      throw new BadRequestException(result.reason);
-    }
-    return { success: true, phoneVerified: true };
+    await this.usersService.requestManualPhoneVerification(userId, phone);
+    return {
+      success: true,
+      status: 'pending_manual_review',
+      message: 'Send SMS "verify" from this phone number to your admin number, then wait for manual approval.'
+    };
   }
 
   private async issueTokens(userId: string, email: string, roles: Role[], country: 'DE') {

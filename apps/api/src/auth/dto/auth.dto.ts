@@ -4,27 +4,18 @@ import {
   IsEmail,
   IsEnum,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   MinLength,
-  ValidateIf
+  Matches
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { ROLES, SUPPORTED_COUNTRIES, SUPPORTED_LANGUAGES } from '@zervia/shared';
 
 export class RegisterDto {
-  @ApiPropertyOptional({ example: 'owner@zervia.eu' })
-  @IsOptional()
-  @ValidateIf((o) => !o.phone)
+  @ApiProperty({ example: 'owner@zervia.eu' })
   @IsEmail()
-  email?: string;
-
-  @ApiPropertyOptional({ example: '+4917612345678' })
-  @IsOptional()
-  @ValidateIf((o) => !o.email)
-  @IsPhoneNumber('DE')
-  phone?: string;
+  email!: string;
 
   @ApiProperty({ example: 'StrongPass123!' })
   @IsString()
@@ -59,9 +50,9 @@ export class RegisterVerifyEmailDto {
 }
 
 export class LoginDto {
-  @ApiProperty({ example: 'owner@zervia.eu or +4917612345678' })
-  @IsString()
-  identifier!: string;
+  @ApiProperty({ example: 'owner@zervia.eu' })
+  @IsEmail()
+  email!: string;
 
   @ApiProperty({ example: 'StrongPass123!' })
   @IsString()
@@ -81,17 +72,10 @@ export class LogoutDto {
 }
 
 export class PhoneSendCodeDto {
-  @ApiPropertyOptional({ example: '+4917612345678' })
-  @IsOptional()
-  @IsPhoneNumber('DE')
-  phone?: string;
-}
-
-export class PhoneVerifyDto {
-  @ApiProperty({ example: '123456' })
+  @ApiProperty({ example: '+4917612345678' })
   @IsString()
-  @MinLength(4)
-  code!: string;
+  @Matches(/^\+?[1-9]\d{6,14}$/)
+  phone!: string;
 }
 
 export class AuthMeDto {

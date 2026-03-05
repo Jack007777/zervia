@@ -20,7 +20,7 @@ export class AuthResponseDto {
   verificationRequired?: boolean;
 
   @ApiPropertyOptional()
-  channel?: 'email' | 'phone_manual';
+  channel?: 'email';
 
   @ApiPropertyOptional()
   identifier?: string;

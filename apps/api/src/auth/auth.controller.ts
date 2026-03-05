@@ -16,7 +16,6 @@ import {
   LoginDto,
   LogoutDto,
   PhoneSendCodeDto,
-  PhoneVerifyDto,
   RefreshDto,
   RegisterDto,
   RegisterVerifyEmailDto
@@ -35,7 +34,6 @@ export class AuthController {
   register(@Body() body: RegisterDto) {
     return this.authService.register({
       email: body.email,
-      phone: body.phone,
       password: body.password,
       roles: body.roles,
       country: body.country,
@@ -55,7 +53,7 @@ export class AuthController {
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ type: ErrorResponseDto })
   login(@Body() body: LoginDto) {
-    return this.authService.login(body.identifier, body.password);
+    return this.authService.login(body.email, body.password);
   }
 
   @Post('refresh')
@@ -94,14 +92,14 @@ export class AuthController {
   @ApiBearerAuth('bearer')
   @ApiBody({ type: PhoneSendCodeDto })
   sendPhoneCode(@Req() req: { user: { sub: string } }, @Body() body: PhoneSendCodeDto) {
-    return this.authService.sendPhoneCode(req.user.sub, body.phone);
+    return this.authService.requestManualPhoneVerification(req.user.sub, body.phone);
   }
 
-  @Post('phone/verify')
+  @Post('phone/request-manual')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('bearer')
-  @ApiBody({ type: PhoneVerifyDto })
-  verifyPhone(@Req() req: { user: { sub: string } }, @Body() body: PhoneVerifyDto) {
-    return this.authService.verifyPhoneCode(req.user.sub, body.code);
+  @ApiBody({ type: PhoneSendCodeDto })
+  requestManualPhoneVerification(@Req() req: { user: { sub: string } }, @Body() body: PhoneSendCodeDto) {
+    return this.authService.requestManualPhoneVerification(req.user.sub, body.phone);
   }
 }

@@ -88,7 +88,7 @@ export function useBusinessBookings(businessId: string, country = 'DE') {
 
 export function useLogin() {
   return useMutation({
-    mutationFn: (payload: { identifier: string; password: string }) =>
+    mutationFn: (payload: { email: string; password: string }) =>
       apiClient<{ tokens: { accessToken: string; refreshToken: string } }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify(payload)
@@ -108,19 +108,8 @@ export function useAuthMe() {
 
 export function useSendPhoneCode() {
   return useMutation({
-    mutationFn: (payload: { phone?: string }) =>
-      apiClient<{ success: boolean; expiresAt: string }>('/auth/phone/send-code', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        auth: true
-      })
-  });
-}
-
-export function useVerifyPhoneCode() {
-  return useMutation({
-    mutationFn: (payload: { code: string }) =>
-      apiClient<{ success: boolean; phoneVerified: boolean }>('/auth/phone/verify', {
+    mutationFn: (payload: { phone: string }) =>
+      apiClient<{ success: boolean; status: string; message: string }>('/auth/phone/request-manual', {
         method: 'POST',
         body: JSON.stringify(payload),
         auth: true
@@ -130,11 +119,11 @@ export function useVerifyPhoneCode() {
 
 export function useRegister() {
   return useMutation({
-    mutationFn: (payload: { email?: string; phone?: string; password: string; roles: string[] }) =>
+    mutationFn: (payload: { email: string; password: string; roles: string[] }) =>
       apiClient<{
         tokens?: { accessToken: string; refreshToken: string };
         verificationRequired?: boolean;
-        channel?: 'email' | 'phone_manual';
+        channel?: 'email';
         identifier?: string;
       }>('/auth/register', {
         method: 'POST',

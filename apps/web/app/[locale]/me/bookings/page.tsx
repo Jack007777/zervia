@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { AuthGuard } from '../../../../src/components/AuthGuard';
 import { useCountry } from '../../../../src/hooks/useCountry';
-import { useAuthMe, useMyBookings, useSendPhoneCode, useVerifyPhoneCode } from '../../../../src/lib/api/hooks';
+import { useAuthMe, useMyBookings, useSendPhoneCode } from '../../../../src/lib/api/hooks';
 import { toApiCountry } from '../../../../src/lib/country';
 
 export default function MyBookingsPage() {
@@ -14,10 +14,9 @@ export default function MyBookingsPage() {
   const { data, isLoading } = useMyBookings(toApiCountry(country));
   const meQuery = useAuthMe();
   const sendCode = useSendPhoneCode();
-  const verifyCode = useVerifyPhoneCode();
   const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
+  const manualVerifyPhone = process.env.NEXT_PUBLIC_MANUAL_VERIFICATION_PHONE ?? '+49XXXXXXXXXX';
 
   return (
     <AuthGuard locale={locale}>
@@ -40,37 +39,17 @@ export default function MyBookingsPage() {
               className="rounded-xl border p-2"
               onClick={async () => {
                 try {
-                  await sendCode.mutateAsync({ phone: phone.trim() || undefined });
-                  setMessage('Verification code sent via SMS.');
+                  await sendCode.mutateAsync({ phone: phone.trim() });
+                  setMessage(
+                    `Request submitted. Send SMS "verify" from ${phone.trim()} to ${manualVerifyPhone}. Admin will approve manually.`
+                  );
                   await meQuery.refetch();
                 } catch (error) {
-                  setMessage(error instanceof Error ? error.message : 'Failed to send code');
+                  setMessage(error instanceof Error ? error.message : 'Failed to submit verification request');
                 }
               }}
             >
-              Send SMS code
-            </button>
-            <input
-              className="rounded-xl border p-2"
-              placeholder="6-digit code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
-            <button
-              type="button"
-              className="rounded-xl bg-brand-500 p-2 text-white"
-              onClick={async () => {
-                try {
-                  await verifyCode.mutateAsync({ code: code.trim() });
-                  setMessage('Phone verified.');
-                  setCode('');
-                  await meQuery.refetch();
-                } catch (error) {
-                  setMessage(error instanceof Error ? error.message : 'Verification failed');
-                }
-              }}
-            >
-              Verify code
+              Submit manual verification request
             </button>
             {message ? <p className="text-xs text-emerald-700">{message}</p> : null}
           </div>
