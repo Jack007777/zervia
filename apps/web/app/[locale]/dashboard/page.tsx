@@ -26,7 +26,7 @@ import {
 import { getSessionUser } from '../../../src/lib/auth/session';
 
 export default function DashboardPage() {
-  const { locale } = useParams<{ locale: string }>();
+  const { locale } = useParams<{ locale: 'de' | 'en' }>();
   const session = getSessionUser();
   const roles = session?.roles ?? [];
   const isAdmin = roles.includes('admin');
@@ -35,7 +35,7 @@ export default function DashboardPage() {
   return (
     <AuthGuard locale={locale}>
       {isAdmin ? <AdminDashboard /> : null}
-      {!isAdmin && isBusiness ? <BusinessDashboard /> : null}
+      {!isAdmin && isBusiness ? <BusinessDashboard locale={locale} /> : null}
       {!isAdmin && !isBusiness ? (
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
           Dashboard is available for business/admin accounts only.
@@ -237,7 +237,7 @@ function AdminDashboard() {
   );
 }
 
-function BusinessDashboard() {
+function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const myBusinesses = useMyBusinesses('DE');
   const [selectedBusinessId, setSelectedBusinessId] = useState('');
   const [manualBusinessId, setManualBusinessId] = useState('');
@@ -407,30 +407,36 @@ function BusinessDashboard() {
       </section>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-3 font-medium">Customer whitelist / blacklist</h2>
+        <h2 className="mb-3 font-medium">
+          {locale === 'de' ? 'Kundenliste (Whitelist/Blacklist)' : 'Customer whitelist / blacklist'}
+        </h2>
         <p className="mb-2 text-xs text-slate-600">
-          Use phone numbers to label repeat customers or block abusive users.
+          {locale === 'de'
+            ? 'Nutze Telefonnummern, um Stammkunden zu markieren oder problematische Nutzer zu sperren.'
+            : 'Use phone numbers to label repeat customers or block abusive users.'}
         </p>
         {!activeBusinessId ? (
-          <p className="text-sm text-slate-500">Select a branch first.</p>
+          <p className="text-sm text-slate-500">
+            {locale === 'de' ? 'Bitte zuerst eine Filiale auswählen.' : 'Select a branch first.'}
+          </p>
         ) : (
           <div className="space-y-3">
             <div className="grid gap-2">
               <input
                 className="rounded-xl border p-2"
-                placeholder="Phone (+49...)"
+                placeholder={locale === 'de' ? 'Telefon (+49...)' : 'Phone (+49...)'}
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
               />
               <input
                 className="rounded-xl border p-2"
-                placeholder="Custom name (optional)"
+                placeholder={locale === 'de' ? 'Eigener Name (optional)' : 'Custom name (optional)'}
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
               />
               <input
                 className="rounded-xl border p-2"
-                placeholder="Note (optional)"
+                placeholder={locale === 'de' ? 'Notiz (optional)' : 'Note (optional)'}
                 value={customerNote}
                 onChange={(e) => setCustomerNote(e.target.value)}
               />
@@ -439,9 +445,9 @@ function BusinessDashboard() {
                 value={customerListType}
                 onChange={(e) => setCustomerListType(e.target.value as 'none' | 'whitelist' | 'blacklist')}
               >
-                <option value="whitelist">Whitelist</option>
-                <option value="blacklist">Blacklist</option>
-                <option value="none">Neutral</option>
+                <option value="whitelist">{locale === 'de' ? 'Whitelist' : 'Whitelist'}</option>
+                <option value="blacklist">{locale === 'de' ? 'Blacklist' : 'Blacklist'}</option>
+                <option value="none">{locale === 'de' ? 'Neutral' : 'Neutral'}</option>
               </select>
               <button
                 type="button"
@@ -457,22 +463,34 @@ function BusinessDashboard() {
                       listType: customerListType,
                       country: 'DE'
                     });
-                    setCustomerListMessage('Saved customer entry');
+                    setCustomerListMessage(locale === 'de' ? 'Eintrag gespeichert' : 'Saved customer entry');
                     setCustomerPhone('');
                     setCustomerName('');
                     setCustomerNote('');
                     await customerListQuery.refetch();
                   } catch (error) {
-                    setCustomerListMessage(error instanceof Error ? error.message : 'Failed to save');
+                    setCustomerListMessage(
+                      error instanceof Error ? error.message : locale === 'de' ? 'Speichern fehlgeschlagen' : 'Failed to save'
+                    );
                   }
                 }}
               >
-                {upsertCustomerEntry.isPending ? 'Saving...' : 'Save entry'}
+                {upsertCustomerEntry.isPending
+                  ? locale === 'de'
+                    ? 'Speichern...'
+                    : 'Saving...'
+                  : locale === 'de'
+                    ? 'Eintrag speichern'
+                    : 'Save entry'}
               </button>
               {customerListMessage ? <p className="text-xs text-emerald-700">{customerListMessage}</p> : null}
             </div>
 
-            {customerListQuery.isLoading ? <p className="text-sm text-slate-600">Loading customer list...</p> : null}
+            {customerListQuery.isLoading ? (
+              <p className="text-sm text-slate-600">
+                {locale === 'de' ? 'Kundenliste wird geladen...' : 'Loading customer list...'}
+              </p>
+            ) : null}
             <div className="space-y-2">
               {(customerListQuery.data ?? []).map((entry) => (
                 <article key={entry._id} className="rounded-xl border p-3 text-sm">
@@ -504,7 +522,7 @@ function BusinessDashboard() {
                       await customerListQuery.refetch();
                     }}
                   >
-                    Remove
+                    {locale === 'de' ? 'Entfernen' : 'Remove'}
                   </button>
                 </article>
               ))}

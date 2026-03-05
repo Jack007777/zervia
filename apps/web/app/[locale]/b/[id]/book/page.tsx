@@ -12,6 +12,32 @@ import { getMockBusinessById } from '../../../../../src/lib/mock-marketplace';
 import { filterFutureSlots, formatBerlinDateTime } from '../../../../../src/lib/time';
 import { uiCopy } from '../../../../../src/lib/ui-copy';
 
+function mapBookingError(locale: 'de' | 'en', message: string) {
+  if (message.includes('PHONE_VERIFICATION_REQUIRED')) {
+    return locale === 'de'
+      ? 'Dieser Anbieter akzeptiert nur telefonverifizierte Konten. Bitte verifiziere zuerst deine Mobilnummer.'
+      : 'This business accepts bookings only from phone-verified accounts. Please verify your mobile number first.';
+  }
+  if (message.includes('PHONE_BLACKLISTED')) {
+    return locale === 'de'
+      ? 'Deine Telefonnummer wurde von diesem Anbieter für Buchungen gesperrt.'
+      : 'Your phone number is blocked by this business for bookings.';
+  }
+  if (message.includes('PHONE_NOT_WHITELISTED')) {
+    return locale === 'de'
+      ? 'Dieser Anbieter akzeptiert aktuell nur freigegebene Telefonnummern (Whitelist).'
+      : 'This business currently accepts bookings only from approved phone numbers (whitelist).';
+  }
+  if (message.includes('PHONE_REQUIRED_FOR_WHITELIST')) {
+    return locale === 'de'
+      ? 'Für diesen Anbieter musst du eine freigegebene Telefonnummer angeben.'
+      : 'For this business, you must provide an approved phone number.';
+  }
+  return locale === 'de'
+    ? 'Buchung fehlgeschlagen. Bitte prüfe deine Angaben und versuche es erneut.'
+    : 'Booking failed. Please check your details and try again.';
+}
+
 export default function BookingPage() {
   const { locale, id } = useParams<{ locale: 'de' | 'en'; id: string }>();
   const country = useCountry();
@@ -62,7 +88,7 @@ export default function BookingPage() {
         : slot;
 
     if (!serviceId || !requestedStartTime || !name.trim() || !phone.trim() || !email.trim()) {
-      setResultMessage(locale === 'de' ? 'Bitte alle Felder ausfuellen.' : 'Please fill in all required fields.');
+      setResultMessage(locale === 'de' ? 'Bitte alle Felder ausfüllen.' : 'Please fill in all required fields.');
       return;
     }
 
@@ -79,22 +105,14 @@ export default function BookingPage() {
       });
     } catch (error) {
       const text = error instanceof Error ? error.message : 'Booking failed';
-      if (text.includes('PHONE_VERIFICATION_REQUIRED')) {
-        setResultMessage(
-          locale === 'de'
-            ? 'Diese Buchung erfordert ein telefonverifiziertes Konto. Bitte verifiziere zuerst deine Mobilnummer.'
-            : 'This booking requires a phone-verified account. Please verify your mobile number first.'
-        );
-        return;
-      }
-      setResultMessage(locale === 'de' ? 'Buchung fehlgeschlagen.' : 'Booking failed.');
+      setResultMessage(mapBookingError(locale, text));
       return;
     }
 
     if (bookingMode === 'request') {
       setResultMessage(
         locale === 'de'
-          ? 'Anfrage gesendet. Der Anbieter bestaetigt oder sendet einen Gegenvorschlag per SMS.'
+          ? 'Anfrage gesendet. Der Anbieter bestätigt oder sendet einen Gegenvorschlag per SMS.'
           : 'Request sent. The business will confirm or send a counter proposal via SMS.'
       );
       return;
@@ -103,10 +121,10 @@ export default function BookingPage() {
     setResultMessage(
       hasAuth
         ? locale === 'de'
-          ? 'Termin erfolgreich bestaetigt.'
+          ? 'Termin erfolgreich bestätigt.'
           : 'Booking confirmed successfully.'
         : locale === 'de'
-          ? 'Termin als Gast erstellt. SMS-Bestaetigung wurde versendet.'
+          ? 'Termin als Gast erstellt. SMS-Bestätigung wurde versendet.'
           : 'Guest booking created. SMS confirmation has been sent.'
     );
   }
@@ -147,7 +165,7 @@ export default function BookingPage() {
           <>
             <p className="mt-2 text-sm text-slate-600">
               {locale === 'de'
-                ? 'Verfuegbare Zeiten sind nicht oeffentlich. Sende deinen Wunschzeitpunkt.'
+                ? 'Verfügbare Zeiten sind nicht öffentlich. Sende deinen Wunschzeitpunkt.'
                 : 'Available slots are hidden. Send your preferred appointment time.'}
             </p>
             <input
