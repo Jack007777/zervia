@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -9,7 +10,9 @@ import { LiveMap } from '../../src/components/LiveMap';
 import { RatingStars } from '../../src/components/RatingStars';
 import { useCountry } from '../../src/hooks/useCountry';
 import { useSearchBusinesses } from '../../src/lib/api/hooks';
+import { AUTH_CHANGED_EVENT } from '../../src/lib/api/token-storage';
 import type { Business, SearchParams } from '../../src/lib/api/types';
+import { getSessionUser } from '../../src/lib/auth/session';
 import { toApiCountry } from '../../src/lib/country';
 import { getMockSearchPreview } from '../../src/lib/mock-marketplace';
 import { uiCopy } from '../../src/lib/ui-copy';
@@ -95,9 +98,53 @@ function TrustStrip({ data }: { data: Business[] }) {
   );
 }
 
+function BusinessHomePanel({ locale }: { locale: 'de' | 'en' }) {
+  return (
+    <div className="space-y-4">
+      <section className="rounded-3xl bg-gradient-to-br from-brand-700 to-brand-500 p-5 text-white">
+        <h1 className="text-2xl font-semibold leading-tight">
+          {locale === 'de' ? 'Willkommen im Partnerbereich' : 'Welcome to your partner workspace'}
+        </h1>
+        <p className="mt-2 text-sm text-blue-100">
+          {locale === 'de'
+            ? 'Verwalte Filialen, Buchungen, Kundenlisten und Werbeanzeigen zentral.'
+            : 'Manage branches, bookings, customer lists, and ads in one place.'}
+        </p>
+      </section>
+
+      <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm">
+        <Link href={`/${locale}/dashboard`} className="rounded-xl bg-brand-500 p-4 text-center text-base font-semibold text-white">
+          {locale === 'de' ? 'Zum Business Dashboard' : 'Open business dashboard'}
+        </Link>
+        <div className="grid grid-cols-2 gap-2">
+          <Link href={`/${locale}/dashboard`} className="rounded-xl border p-3 text-center text-sm font-medium text-slate-700">
+            {locale === 'de' ? 'Buchungen' : 'Bookings'}
+          </Link>
+          <Link href={`/${locale}/dashboard`} className="rounded-xl border p-3 text-center text-sm font-medium text-slate-700">
+            {locale === 'de' ? 'Kundenliste' : 'Customer list'}
+          </Link>
+          <Link href={`/${locale}/dashboard`} className="rounded-xl border p-3 text-center text-sm font-medium text-slate-700">
+            {locale === 'de' ? 'Anzeigen' : 'Ads'}
+          </Link>
+          <Link href={`/${locale}/search`} className="rounded-xl border p-3 text-center text-sm font-medium text-slate-700">
+            {locale === 'de' ? 'Marketplace ansehen' : 'View marketplace'}
+          </Link>
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
+        {locale === 'de'
+          ? 'Hinweis: Die Endkundensuche ist für Kundinnen und Kunden gedacht. Als Anbieter startest du am besten direkt im Dashboard.'
+          : 'Tip: Consumer search is designed for customers. As a merchant, start directly from the dashboard.'}
+      </section>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { locale } = useParams<{ locale: 'de' | 'en' }>();
   const country = useCountry();
+  const [session, setSession] = useState(() => getSessionUser());
 
   const [locationQuery, setLocationQuery] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
@@ -120,6 +167,7 @@ export default function HomePage() {
   const [categoryTouched, setCategoryTouched] = useState(false);
   const [submittedFilters, setSubmittedFilters] = useState<SearchParams | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const isBusinessUser = Boolean(session?.roles.some((role) => role === 'business' || role === 'admin'));
 
   const current = useMemo(() => CATEGORY_MAP[mainCategory], [mainCategory]);
   const { data, isLoading } = useSearchBusinesses(submittedFilters ?? {}, Boolean(submittedFilters));
@@ -360,6 +408,20 @@ export default function HomePage() {
     }
     return `/${locale}/search?${search.toString()}`;
   }, [country, mainCategory, subCategory, locationQuery, gps, locale, categoryTouched, radiusKm]);
+
+  useEffect(() => {
+    const onAuthChange = () => setSession(getSessionUser());
+    window.addEventListener(AUTH_CHANGED_EVENT, onAuthChange);
+    window.addEventListener('storage', onAuthChange);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, onAuthChange);
+      window.removeEventListener('storage', onAuthChange);
+    };
+  }, []);
+
+  if (isBusinessUser) {
+    return <BusinessHomePanel locale={locale} />;
+  }
 
   return (
     <div className="space-y-4">

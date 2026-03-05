@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { useLogin } from '../../../../src/lib/api/hooks';
+import { getSessionUser } from '../../../../src/lib/auth/session';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -41,6 +42,12 @@ export default function LoginPage() {
 
   async function onSubmit(values: LoginInput) {
     await mutation.mutateAsync(values);
+    const session = getSessionUser();
+    const roles = session?.roles ?? [];
+    if (roles.includes('business') || roles.includes('admin')) {
+      router.push(`/${locale}/dashboard`);
+      return;
+    }
     router.push(`/${locale}/search`);
   }
 
