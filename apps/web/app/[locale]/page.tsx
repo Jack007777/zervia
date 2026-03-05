@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { BusinessCard } from '../../src/components/BusinessCard';
 import { CategoryIcon } from '../../src/components/CategoryIcon';
@@ -20,6 +20,13 @@ type CategoryConfig = {
   label: string;
   allLabel: string;
   sub: string[];
+};
+
+type LocationSuggestion = {
+  placeId: string;
+  label: string;
+  lat: number;
+  lng: number;
 };
 
 const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
@@ -92,6 +99,9 @@ export default function HomePage() {
   const country = useCountry();
 
   const [locationQuery, setLocationQuery] = useState('');
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [isLocationSuggestLoading, setIsLocationSuggestLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [serviceError, setServiceError] = useState('');
   const [radiusKm, setRadiusKm] = useState('');
@@ -154,6 +164,61 @@ export default function HomePage() {
         })),
     [previewData]
   );
+
+  useEffect(() => {
+    const query = locationQuery.trim();
+    if (!query || query.startsWith('GPS:') || query.length < 3) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      setIsLocationSuggestLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setIsLocationSuggestLoading(true);
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=de&limit=6&q=${encodeURIComponent(
+          query
+        )}`;
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            'accept-language': locale === 'de' ? 'de' : 'en'
+          }
+        });
+        if (!response.ok) {
+          setLocationSuggestions([]);
+          setShowLocationSuggestions(false);
+          return;
+        }
+        const payload = (await response.json()) as Array<{
+          place_id: number | string;
+          display_name: string;
+          lat: string;
+          lon: string;
+        }>;
+        const next = payload.map((item) => ({
+          placeId: String(item.place_id),
+          label: item.display_name,
+          lat: Number(item.lat),
+          lng: Number(item.lon)
+        }));
+        setLocationSuggestions(next);
+        setShowLocationSuggestions(true);
+      } catch {
+        setLocationSuggestions([]);
+        setShowLocationSuggestions(false);
+      } finally {
+        setIsLocationSuggestLoading(false);
+      }
+    }, 280);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [locationQuery, locale]);
 
   function onSelectMain(next: MainCategory) {
     setCategoryTouched(true);
@@ -360,8 +425,45 @@ export default function HomePage() {
             className="rounded-xl border p-3"
             placeholder={locale === 'de' ? 'PLZ, Ort oder Region eingeben' : 'Enter ZIP, city or region'}
             value={locationQuery}
-            onChange={(e) => setLocationQuery(e.target.value)}
+            onChange={(e) => {
+              setLocationQuery(e.target.value);
+              setGps(null);
+            }}
+            onFocus={() => {
+              if (locationSuggestions.length > 0) {
+                setShowLocationSuggestions(true);
+              }
+            }}
           />
+          {isLocationSuggestLoading ? <p className="text-xs text-slate-500">{locale === 'de' ? 'Suche Adressen ...' : 'Searching addresses ...'}</p> : null}
+          {showLocationSuggestions && locationSuggestions.length > 0 ? (
+            <div className="max-h-56 overflow-auto rounded-xl border bg-white shadow-sm">
+              {locationSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion.placeId}
+                  type="button"
+                  className="block w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50"
+                  onClick={() => {
+                    setLocationQuery(suggestion.label);
+                    setGps({
+                      lat: Number(suggestion.lat.toFixed(6)),
+                      lng: Number(suggestion.lng.toFixed(6))
+                    });
+                    setShowLocationSuggestions(false);
+                    setLocationSuggestions([]);
+                    setGpsStatus(
+                      locale === 'de'
+                        ? 'Adresse ausgewählt. Du kannst jetzt suchen.'
+                        : 'Address selected. You can search now.'
+                    );
+                    setGpsStatusType('success');
+                  }}
+                >
+                  {suggestion.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </label>
         <button
           type="button"
