@@ -2,8 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -16,9 +16,12 @@ const registerSchema = z.object({
 });
 
 type RegisterInput = z.infer<typeof registerSchema>;
+const AUTH_ROLE_STORAGE_KEY = 'zervia_auth_preferred_role';
+const normalizeRole = (role: string | null): 'customer' | 'business' => (role === 'business' ? 'business' : 'customer');
 
 export default function RegisterPage() {
   const { locale } = useParams<{ locale: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const manualApprovalPhone = process.env.NEXT_PUBLIC_MANUAL_REGISTRATION_PHONE ?? '+49XXXXXXXXXX';
   const mutation = useRegister();
@@ -30,6 +33,34 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: { email: '', password: '', accountType: 'customer' }
   });
+
+  useEffect(() => {
+    const fromQuery = searchParams.get('role');
+    const fromStorage = (() => {
+      try {
+        return window.localStorage.getItem(AUTH_ROLE_STORAGE_KEY);
+      } catch {
+        return null;
+      }
+    })();
+    const role = fromQuery ? normalizeRole(fromQuery) : normalizeRole(fromStorage);
+    form.setValue('accountType', role, { shouldDirty: false, shouldValidate: false });
+  }, [form, searchParams]);
+
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      const nextRole = values.accountType;
+      if (nextRole !== 'customer' && nextRole !== 'business') {
+        return;
+      }
+      try {
+        window.localStorage.setItem(AUTH_ROLE_STORAGE_KEY, nextRole);
+      } catch {
+        // ignore storage errors
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   async function onSubmit(values: RegisterInput) {
     const response = await mutation.mutateAsync({

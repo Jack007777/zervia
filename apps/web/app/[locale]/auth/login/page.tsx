@@ -2,7 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -14,15 +15,29 @@ const loginSchema = z.object({
 });
 
 type LoginInput = z.infer<typeof loginSchema>;
+const AUTH_ROLE_STORAGE_KEY = 'zervia_auth_preferred_role';
 
 export default function LoginPage() {
   const { locale } = useParams<{ locale: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const mutation = useLogin();
+  const preferredRole = useMemo<'customer' | 'business'>(() => {
+    const role = searchParams.get('role');
+    return role === 'business' ? 'business' : 'customer';
+  }, [searchParams]);
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' }
   });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(AUTH_ROLE_STORAGE_KEY, preferredRole);
+    } catch {
+      // ignore storage errors
+    }
+  }, [preferredRole]);
 
   async function onSubmit(values: LoginInput) {
     await mutation.mutateAsync(values);
@@ -46,7 +61,7 @@ export default function LoginPage() {
         </button>
         {mutation.error ? <p className="text-xs text-rose-600">{mutation.error.message}</p> : null}
       </form>
-      <Link href={`/${locale}/auth/register`} className="text-sm text-brand-700">
+      <Link href={`/${locale}/auth/register?role=${preferredRole}`} className="text-sm text-brand-700">
         Create account
       </Link>
     </main>
