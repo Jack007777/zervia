@@ -398,13 +398,20 @@ export default function HomePage() {
                     type="button"
                     onClick={() => {
                       setSubCategory(item);
+                      setCategoryTouched(true);
                       setServiceError('');
                     }}
-                    className={`w-full rounded-lg px-2 py-1 text-left ${
-                      subCategory === item ? 'bg-white font-semibold text-brand-700' : 'text-slate-700'
+                    className={`w-full rounded-lg border px-2 py-2 text-left transition ${
+                      subCategory === item
+                        ? 'border-brand-300 bg-white font-semibold text-brand-700'
+                        : 'border-transparent text-slate-700 hover:border-slate-200 hover:bg-white'
                     }`}
+                    aria-pressed={subCategory === item}
                   >
-                    {item}
+                    <span className="flex items-center justify-between">
+                      <span>{item}</span>
+                      {subCategory === item ? <span className="text-xs">✓</span> : null}
+                    </span>
                   </button>
                 </li>
               ))}
@@ -419,6 +426,20 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm">
+        {subCategory ? (
+          <div className="flex items-center justify-between rounded-xl border border-brand-200 bg-blue-50 px-3 py-2 text-sm text-brand-800">
+            <span>
+              {locale === 'de' ? 'Gewählte Unterkategorie:' : 'Selected subcategory:'} <strong>{subCategory}</strong>
+            </span>
+            <button
+              type="button"
+              className="rounded-md border border-brand-300 px-2 py-1 text-xs"
+              onClick={() => setSubCategory('')}
+            >
+              {locale === 'de' ? 'Zurücksetzen' : 'Clear'}
+            </button>
+          </div>
+        ) : null}
         <label className="grid gap-1 text-sm text-slate-600">
           {locale === 'de' ? 'PLZ, Ort oder Region' : 'ZIP, city or region'}
           <input
