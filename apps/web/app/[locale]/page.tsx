@@ -28,6 +28,7 @@ type LocationSuggestion = {
   lat: number;
   lng: number;
 };
+const ALL_SUBCATEGORY = '__ALL__';
 
 const CATEGORY_MAP: Record<MainCategory, CategoryConfig> = {
   friseur: {
@@ -256,7 +257,7 @@ export default function HomePage() {
           lng: Number(position.coords.longitude.toFixed(6))
         };
         const nextCategory = categoryTouched ? mainCategory : undefined;
-        const nextQuery = subCategory || undefined;
+        const nextQuery = subCategory && subCategory !== ALL_SUBCATEGORY ? subCategory : undefined;
         setGps(nextGps);
         setLocationQuery(`GPS: ${nextGps.lat}, ${nextGps.lng}`);
         setLocationError('');
@@ -294,7 +295,7 @@ export default function HomePage() {
     const normalizedLocation = isGpsLabel ? '' : rawLocation;
     const resolvedCity = normalizedLocation || (!gps ? '' : '');
     const isZipOnly = /^\d{4,6}$/.test(rawLocation);
-    const resolvedQuery = subCategory || '';
+    const resolvedQuery = subCategory && subCategory !== ALL_SUBCATEGORY ? subCategory : '';
 
     if (!subCategory) {
       setServiceError(
@@ -339,7 +340,7 @@ export default function HomePage() {
     const search = new URLSearchParams();
     search.set('country', toApiCountry(country));
     if (categoryTouched && mainCategory) search.set('category', mainCategory);
-    if (subCategory) search.set('q', subCategory);
+    if (subCategory && subCategory !== ALL_SUBCATEGORY) search.set('q', subCategory);
     const rawLocation = locationQuery.trim();
     if (rawLocation && !rawLocation.startsWith('GPS:')) {
       search.set('city', rawLocation);
@@ -419,13 +420,20 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSubCategory('');
+                    setSubCategory(ALL_SUBCATEGORY);
                     setCategoryTouched(true);
                     setServiceError('');
                   }}
-                  className="w-full rounded-lg border border-transparent px-2 py-2 text-left font-semibold text-slate-900 hover:border-slate-200 hover:bg-white"
+                  className={`w-full rounded-lg border px-2 py-2 text-left font-semibold transition ${
+                    subCategory === ALL_SUBCATEGORY
+                      ? 'border-brand-300 bg-white text-brand-700'
+                      : 'border-transparent text-slate-900 hover:border-slate-200 hover:bg-white'
+                  }`}
                 >
-                  {current.allLabel}
+                  <span className="flex items-center justify-between">
+                    <span>{current.allLabel}</span>
+                    {subCategory === ALL_SUBCATEGORY ? <span className="text-xs">✓</span> : null}
+                  </span>
                 </button>
               </li>
             </ul>
@@ -441,7 +449,8 @@ export default function HomePage() {
         {subCategory ? (
           <div className="flex items-center justify-between rounded-xl border border-brand-200 bg-blue-50 px-3 py-2 text-sm text-brand-800">
             <span>
-              {locale === 'de' ? 'Gewählte Unterkategorie:' : 'Selected subcategory:'} <strong>{subCategory}</strong>
+              {locale === 'de' ? 'Gewählte Unterkategorie:' : 'Selected subcategory:'}{' '}
+              <strong>{subCategory === ALL_SUBCATEGORY ? current.allLabel : subCategory}</strong>
             </span>
             <button
               type="button"
