@@ -5,6 +5,7 @@ import * as bcrypt from 'bcryptjs';
 
 import type { JwtPayload, Role } from '@zervia/shared';
 
+import { EmailService } from '../notifications/email.service';
 import { SmsService } from '../notifications/sms.service';
 import { UsersService } from '../users/users.service';
 
@@ -14,7 +15,8 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly smsService: SmsService
+    private readonly smsService: SmsService,
+    private readonly emailService: EmailService
   ) {}
 
   async register(input: {
@@ -31,20 +33,45 @@ export class AuthService {
       throw new UnauthorizedException('Email or phone is required');
     }
 
-    if (email) {
-      const existingByEmail = await this.usersService.findByEmail(email);
-      if (existingByEmail) {
-        throw new UnauthorizedException('Email already exists');
-      }
-    }
-
     if (phone) {
       const existingByPhone = await this.usersService.findByPhone(phone);
       if (existingByPhone) {
         throw new UnauthorizedException('Phone already exists');
       }
     }
+
     const passwordHash = await bcrypt.hash(input.password, 12);
+
+    if (email) {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      const created = await this.usersService.createOrRefreshEmailVerificationChallenge({
+        email,
+        passwordHash,
+        roles: input.roles,
+        country: input.country,
+        locale: input.locale,
+        code,
+        expiresAt
+      });
+
+      if (!created.ok) {
+        throw new UnauthorizedException('Email already exists');
+      }
+
+      await this.emailService.sendRegisterVerificationCode({
+        toEmail: email,
+        code,
+        locale: input.locale
+      });
+
+      return {
+        verificationRequired: true,
+        channel: 'email' as const,
+        identifier: email
+      };
+    }
+
     const user = await this.usersService.create({
       email,
       phone,
@@ -53,7 +80,6 @@ export class AuthService {
       country: input.country,
       locale: input.locale
     });
-
     return this.issueTokens(user.id, user.email ?? user.phone ?? 'user', user.roles, user.country);
   }
 
@@ -68,6 +94,20 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.email && !user.emailVerified) {
+      throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
+    }
+
+    return this.issueTokens(user.id, user.email ?? user.phone ?? 'user', user.roles, user.country);
+  }
+
+  async verifyEmailRegistration(email: string, code: string) {
+    const result = await this.usersService.verifyEmailCode(email, code);
+    if (!result.ok) {
+      throw new BadRequestException(result.reason);
+    }
+
+    const user = result.user;
     return this.issueTokens(user.id, user.email ?? user.phone ?? 'user', user.roles, user.country);
   }
 

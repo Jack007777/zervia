@@ -89,6 +89,48 @@ export class UsersService {
       .exec();
   }
 
+  async createOrRefreshEmailVerificationChallenge(input: {
+    email: string;
+    passwordHash: string;
+    roles: Role[];
+    country: CountryCode;
+    locale: LanguageCode;
+    code: string;
+    expiresAt: Date;
+  }) {
+    const email = input.email.trim().toLowerCase();
+    const existing = await this.userModel.findOne({ email }).exec();
+    const codeHash = await bcrypt.hash(input.code, 10);
+
+    if (existing) {
+      if (existing.emailVerified) {
+        return { ok: false as const, reason: 'EMAIL_ALREADY_EXISTS' };
+      }
+
+      existing.passwordHash = input.passwordHash;
+      existing.roles = input.roles;
+      existing.country = input.country;
+      existing.locale = input.locale;
+      existing.emailVerificationCodeHash = codeHash;
+      existing.emailVerificationExpiresAt = input.expiresAt;
+      existing.emailVerified = false;
+      await existing.save();
+      return { ok: true as const, userId: existing.id };
+    }
+
+    const created = await this.userModel.create({
+      email,
+      passwordHash: input.passwordHash,
+      roles: input.roles,
+      country: input.country,
+      locale: input.locale,
+      emailVerified: false,
+      emailVerificationCodeHash: codeHash,
+      emailVerificationExpiresAt: input.expiresAt
+    });
+    return { ok: true as const, userId: created.id };
+  }
+
   async verifyPhoneCode(userId: string, code: string) {
     const user = await this.userModel.findById(userId).exec();
     if (!user || !user.phoneVerificationCodeHash || !user.phoneVerificationExpiresAt) {
@@ -109,5 +151,28 @@ export class UsersService {
     user.phoneVerificationExpiresAt = undefined;
     await user.save();
     return { ok: true as const };
+  }
+
+  async verifyEmailCode(emailInput: string, code: string) {
+    const email = emailInput.trim().toLowerCase();
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user || !user.emailVerificationCodeHash || !user.emailVerificationExpiresAt) {
+      return { ok: false as const, reason: 'NO_PENDING_VERIFICATION' };
+    }
+
+    if (user.emailVerificationExpiresAt.getTime() < Date.now()) {
+      return { ok: false as const, reason: 'CODE_EXPIRED' };
+    }
+
+    const valid = await bcrypt.compare(code, user.emailVerificationCodeHash);
+    if (!valid) {
+      return { ok: false as const, reason: 'INVALID_CODE' };
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationCodeHash = undefined;
+    user.emailVerificationExpiresAt = undefined;
+    await user.save();
+    return { ok: true as const, user };
   }
 }

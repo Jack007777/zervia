@@ -3,10 +3,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { useRegister } from '../../../../src/lib/api/hooks';
+import { useRegister, useVerifyEmailRegister } from '../../../../src/lib/api/hooks';
 
 const registerSchema = z.object({
   authMode: z.enum(['email', 'phone']),
@@ -36,18 +37,35 @@ export default function RegisterPage() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const mutation = useRegister();
+  const verifyMutation = useVerifyEmailRegister();
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: { authMode: 'email', email: '', phone: '', password: '', accountType: 'customer' }
   });
 
   async function onSubmit(values: RegisterInput) {
-    await mutation.mutateAsync({
+    const response = await mutation.mutateAsync({
       email: values.authMode === 'email' ? values.email : undefined,
       phone: values.authMode === 'phone' ? values.phone : undefined,
       password: values.password,
       roles: [values.accountType]
     });
+    if (response.verificationRequired && response.channel === 'email' && response.identifier) {
+      setPendingEmail(response.identifier);
+      setInfoMessage('Verification code sent to your email. Please enter code to finish registration.');
+      return;
+    }
+    router.push(`/${locale}/search`);
+  }
+
+  async function onVerifyEmailCode() {
+    if (!pendingEmail || !verificationCode.trim()) {
+      return;
+    }
+    await verifyMutation.mutateAsync({ email: pendingEmail, code: verificationCode.trim() });
     router.push(`/${locale}/search`);
   }
 
@@ -78,7 +96,28 @@ export default function RegisterPage() {
           Register
         </button>
         {mutation.error ? <p className="text-xs text-rose-600">{mutation.error.message}</p> : null}
+        {infoMessage ? <p className="text-xs text-emerald-700">{infoMessage}</p> : null}
       </form>
+      {pendingEmail ? (
+        <section className="grid gap-2 rounded-2xl bg-white p-5 shadow-sm">
+          <p className="text-sm">Email verification for: {pendingEmail}</p>
+          <input
+            className="rounded-xl border p-3"
+            placeholder="Verification code"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+          />
+          <button
+            type="button"
+            className="rounded-xl bg-slate-900 p-3 font-medium text-white disabled:opacity-50"
+            disabled={verifyMutation.isPending || !verificationCode.trim()}
+            onClick={onVerifyEmailCode}
+          >
+            {verifyMutation.isPending ? 'Verifying...' : 'Verify and complete registration'}
+          </button>
+          {verifyMutation.error ? <p className="text-xs text-rose-600">{verifyMutation.error.message}</p> : null}
+        </section>
+      ) : null}
       <Link href={`/${locale}/auth/login`} className="text-sm text-brand-700">
         Back to login
       </Link>

@@ -11,7 +11,16 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { AuthService } from './auth.service';
-import { AuthMeDto, LoginDto, LogoutDto, PhoneSendCodeDto, PhoneVerifyDto, RefreshDto, RegisterDto } from './dto/auth.dto';
+import {
+  AuthMeDto,
+  LoginDto,
+  LogoutDto,
+  PhoneSendCodeDto,
+  PhoneVerifyDto,
+  RefreshDto,
+  RegisterDto,
+  RegisterVerifyEmailDto
+} from './dto/auth.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 
 @ApiTags('Auth')
@@ -32,6 +41,13 @@ export class AuthController {
       country: body.country,
       locale: body.locale
     });
+  }
+
+  @Post('register/verify-email')
+  @ApiBody({ type: RegisterVerifyEmailDto })
+  @ApiOkResponse({ type: AuthResponseDto })
+  verifyEmailRegister(@Body() body: RegisterVerifyEmailDto) {
+    return this.authService.verifyEmailRegistration(body.email, body.code);
   }
 
   @Post('login')

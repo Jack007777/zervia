@@ -47,6 +47,17 @@ export class RegisterDto {
   locale: (typeof SUPPORTED_LANGUAGES)[number] = 'de';
 }
 
+export class RegisterVerifyEmailDto {
+  @ApiProperty({ example: 'owner@zervia.eu' })
+  @IsEmail()
+  email!: string;
+
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @MinLength(4)
+  code!: string;
+}
+
 export class LoginDto {
   @ApiProperty({ example: 'owner@zervia.eu or +4917612345678' })
   @IsString()

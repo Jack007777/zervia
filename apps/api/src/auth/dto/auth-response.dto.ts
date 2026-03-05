@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthTokensDto {
   @ApiProperty()
@@ -9,9 +10,18 @@ export class AuthTokensDto {
 }
 
 export class AuthResponseDto {
-  @ApiProperty()
-  userId!: string;
+  @ApiPropertyOptional()
+  userId?: string;
 
-  @ApiProperty({ type: AuthTokensDto })
-  tokens!: AuthTokensDto;
+  @ApiPropertyOptional({ type: AuthTokensDto })
+  tokens?: AuthTokensDto;
+
+  @ApiPropertyOptional()
+  verificationRequired?: boolean;
+
+  @ApiPropertyOptional()
+  channel?: 'email';
+
+  @ApiPropertyOptional()
+  identifier?: string;
 }

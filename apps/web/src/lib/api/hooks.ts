@@ -114,7 +114,27 @@ export function useVerifyPhoneCode() {
 export function useRegister() {
   return useMutation({
     mutationFn: (payload: { email?: string; phone?: string; password: string; roles: string[] }) =>
-      apiClient<{ tokens: { accessToken: string; refreshToken: string } }>('/auth/register', {
+      apiClient<{
+        tokens?: { accessToken: string; refreshToken: string };
+        verificationRequired?: boolean;
+        channel?: 'email';
+        identifier?: string;
+      }>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }),
+    onSuccess: (data) => {
+      if (data.tokens) {
+        setTokens(data.tokens);
+      }
+    }
+  });
+}
+
+export function useVerifyEmailRegister() {
+  return useMutation({
+    mutationFn: (payload: { email: string; code: string }) =>
+      apiClient<{ tokens: { accessToken: string; refreshToken: string } }>('/auth/register/verify-email', {
         method: 'POST',
         body: JSON.stringify(payload)
       }),

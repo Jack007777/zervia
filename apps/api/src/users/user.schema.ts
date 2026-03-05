@@ -17,6 +17,9 @@ export class UserEntity {
   @Prop({ required: false, unique: true, sparse: true, lowercase: true, trim: true })
   email?: string;
 
+  @Prop({ default: false })
+  emailVerified!: boolean;
+
   @Prop({ trim: true })
   displayName?: string;
 
@@ -40,6 +43,12 @@ export class UserEntity {
 
   @Prop({ default: false })
   phoneVerified!: boolean;
+
+  @Prop()
+  emailVerificationCodeHash?: string;
+
+  @Prop({ type: Date })
+  emailVerificationExpiresAt?: Date;
 
   @Prop()
   phoneVerificationCodeHash?: string;
