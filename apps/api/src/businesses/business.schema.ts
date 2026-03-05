@@ -61,6 +61,9 @@ export class BusinessEntity {
   @Prop({ type: Number })
   rating?: number;
 
+  @Prop({ default: 'instant', enum: ['instant', 'request'] })
+  bookingMode!: 'instant' | 'request';
+
   @Prop({ default: true })
   isActive!: boolean;
 

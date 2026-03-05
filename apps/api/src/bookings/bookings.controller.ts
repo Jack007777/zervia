@@ -15,10 +15,13 @@ import { RolesGuard } from '../common/guards/roles.guard';
 
 import { BookingsService } from './bookings.service';
 import {
+  AcceptCounterProposalDto,
   CancelBookingDto,
   ConfirmBookingDto,
+  CounterProposalDto,
   CreateBookingDto,
-  ListBookingsQueryDto
+  ListBookingsQueryDto,
+  RejectBookingDto
 } from './dto/create-booking.dto';
 
 @ApiTags('Booking')
@@ -71,5 +74,38 @@ export class BookingsController {
   @ApiOkResponse({ description: 'Confirm booking (business)' })
   confirm(@Param('id') bookingId: string, @Body() body: ConfirmBookingDto) {
     return this.bookingsService.confirm(bookingId, body);
+  }
+
+  @Patch('bookings/:id/counter')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiParam({ name: 'id', example: 'booking_123' })
+  @ApiBody({ type: CounterProposalDto })
+  @ApiOkResponse({ description: 'Counter propose booking time (business)' })
+  counter(@Param('id') bookingId: string, @Body() body: CounterProposalDto) {
+    return this.bookingsService.proposeCounter(bookingId, body);
+  }
+
+  @Patch('bookings/:id/accept-counter')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('customer', 'business', 'admin')
+  @ApiParam({ name: 'id', example: 'booking_123' })
+  @ApiBody({ type: AcceptCounterProposalDto })
+  @ApiOkResponse({ description: 'Accept counter proposal' })
+  acceptCounter(@Param('id') bookingId: string, @Body() body: AcceptCounterProposalDto) {
+    return this.bookingsService.acceptCounter(bookingId, body);
+  }
+
+  @Patch('bookings/:id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiParam({ name: 'id', example: 'booking_123' })
+  @ApiBody({ type: RejectBookingDto })
+  @ApiOkResponse({ description: 'Reject booking request' })
+  reject(@Param('id') bookingId: string, @Body() body: RejectBookingDto) {
+    return this.bookingsService.reject(bookingId, body);
   }
 }

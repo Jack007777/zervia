@@ -6,7 +6,7 @@ export class SmsService {
 
   async sendBookingUpdate(input: {
     toPhone: string;
-    event: 'created' | 'confirmed' | 'cancelled';
+    event: 'created' | 'confirmed' | 'cancelled' | 'counter_proposed' | 'rejected';
     bookingId: string;
     startTime: string;
   }) {
@@ -17,4 +17,3 @@ export class SmsService {
     return { ok: true };
   }
 }
-

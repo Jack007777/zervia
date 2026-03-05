@@ -41,16 +41,21 @@ export interface BusinessProfile extends BaseEntity {
   timezone: typeof TIMEZONE;
   defaultCurrency: CurrencyCode;
   vatNumber?: string;
+  bookingMode?: 'instant' | 'request';
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type BookingStatus = 'pending' | 'counter_proposed' | 'confirmed' | 'rejected' | 'cancelled' | 'completed';
 
 export interface Booking extends BaseEntity {
   customerUserId: string;
   businessId: string;
   startsAt: string;
   endsAt: string;
+  mode?: 'instant' | 'request';
   status: BookingStatus;
+  requestedStartTime?: string;
+  counterProposedStartTime?: string;
+  counterProposedEndTime?: string;
   notes?: string;
   currency?: CurrencyCode;
   vatRate?: number;

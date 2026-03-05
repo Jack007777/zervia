@@ -114,7 +114,7 @@ export class BusinessesService {
       .find()
       .sort({ createdAt: -1 })
       .limit(limit)
-      .select('name category country city addressLine rating priceMin priceMax isActive isVirtual virtualSeedBatch ownerUserId createdAt')
+      .select('name category country city addressLine rating priceMin priceMax bookingMode isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
   }
@@ -126,6 +126,7 @@ export class BusinessesService {
       category?: string;
       city?: string;
       addressLine?: string;
+      bookingMode?: 'instant' | 'request';
       isActive?: boolean;
     }
   ) {
@@ -137,11 +138,12 @@ export class BusinessesService {
           ...(input.category ? { category: input.category } : {}),
           ...(input.city ? { city: input.city } : {}),
           ...(input.addressLine ? { addressLine: input.addressLine } : {}),
+          ...(input.bookingMode ? { bookingMode: input.bookingMode } : {}),
           ...(typeof input.isActive === 'boolean' ? { isActive: input.isActive } : {})
         },
         { new: true }
       )
-      .select('name category country city addressLine rating priceMin priceMax isActive isVirtual virtualSeedBatch ownerUserId createdAt')
+      .select('name category country city addressLine rating priceMin priceMax bookingMode isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
   }

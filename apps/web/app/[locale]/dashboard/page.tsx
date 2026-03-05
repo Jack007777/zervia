@@ -10,6 +10,7 @@ import {
   useAdminUsers,
   useCreateAd,
   useMyAds,
+  useUpdateBusiness,
   useUpdateAdminBusiness,
   useUpdateAdminUser,
   useUpdateAdStatus
@@ -204,18 +205,59 @@ function AdminDashboard() {
 
 function BusinessDashboard() {
   const [businessId, setBusinessId] = useState('');
+  const [bookingMode, setBookingMode] = useState<'instant' | 'request'>('instant');
+  const [modeMessage, setModeMessage] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [landingUrl, setLandingUrl] = useState('');
   const [budgetDaily, setBudgetDaily] = useState('20');
   const createAd = useCreateAd();
   const myAds = useMyAds();
+  const updateBusiness = useUpdateBusiness();
 
   const canSubmit = useMemo(() => businessId.trim() && title.trim(), [businessId, title]);
 
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Business dashboard</h1>
+      <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="mb-3 font-medium">Booking mode</h2>
+        <p className="mb-2 text-xs text-slate-600">
+          Visible only in business dashboard. Instant = customer books visible slots directly. Request = customer sends preferred time, merchant confirms or sends counter proposal.
+        </p>
+        <div className="grid gap-2">
+          <input
+            className="rounded-xl border p-2"
+            placeholder="Business ID"
+            value={businessId}
+            onChange={(e) => setBusinessId(e.target.value)}
+          />
+          <select
+            className="rounded-xl border p-2"
+            value={bookingMode}
+            onChange={(e) => setBookingMode(e.target.value as 'instant' | 'request')}
+          >
+            <option value="instant">Instant booking</option>
+            <option value="request">Request booking (hidden availability)</option>
+          </select>
+          <button
+            type="button"
+            className="rounded-xl bg-slate-900 p-2 text-white disabled:opacity-50"
+            disabled={!businessId.trim() || updateBusiness.isPending}
+            onClick={async () => {
+              await updateBusiness.mutateAsync({
+                businessId: businessId.trim(),
+                bookingMode
+              });
+              setModeMessage(`Updated booking mode to "${bookingMode}"`);
+            }}
+          >
+            {updateBusiness.isPending ? 'Saving...' : 'Save booking mode'}
+          </button>
+          {modeMessage ? <p className="text-xs text-emerald-700">{modeMessage}</p> : null}
+        </div>
+      </section>
+
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Publish ad</h2>
         <div className="grid gap-2">

@@ -45,6 +45,7 @@ export type Business = {
   defaultCurrency?: string;
   vatNumber?: string;
   vatRate?: number;
+  bookingMode?: 'instant' | 'request';
   isVirtual?: boolean;
   virtualSeedBatch?: string;
 };
@@ -66,7 +67,11 @@ export type Booking = {
   staffId: string;
   startTime: string;
   endTime: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  mode?: 'instant' | 'request';
+  status: 'pending' | 'counter_proposed' | 'confirmed' | 'rejected' | 'cancelled' | 'completed';
+  requestedStartTime?: string;
+  counterProposedStartTime?: string;
+  counterProposedEndTime?: string;
   notes?: string;
   country?: string;
   currency?: string;
@@ -134,6 +139,7 @@ export type AdminBusiness = {
   rating?: number;
   priceMin?: number;
   priceMax?: number;
+  bookingMode?: 'instant' | 'request';
   isActive: boolean;
   isVirtual?: boolean;
   virtualSeedBatch?: string;

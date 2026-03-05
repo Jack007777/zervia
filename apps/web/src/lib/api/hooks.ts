@@ -94,6 +94,9 @@ export function useCreateBooking() {
       serviceId: string;
       startTime: string;
       staffId?: string;
+      notes?: string;
+      guestName?: string;
+      guestPhone?: string;
       country?: string;
     }) =>
       apiClient<Booking>('/bookings', {
@@ -185,6 +188,7 @@ export function useUpdateAdminBusiness() {
       category?: string;
       city?: string;
       addressLine?: string;
+      bookingMode?: 'instant' | 'request';
       isActive?: boolean;
     }) =>
       apiClient<AdminBusiness>(`/admin/businesses/${payload.businessId}`, {
@@ -194,7 +198,36 @@ export function useUpdateAdminBusiness() {
           category: payload.category,
           city: payload.city,
           addressLine: payload.addressLine,
+          bookingMode: payload.bookingMode,
           isActive: payload.isActive
+        }),
+        auth: true
+      })
+  });
+}
+
+export function useUpdateBusiness() {
+  return useMutation({
+    mutationFn: (payload: {
+      businessId: string;
+      bookingMode?: 'instant' | 'request';
+      name?: string;
+      category?: string;
+      description?: string;
+      priceMin?: number;
+      priceMax?: number;
+      rating?: number;
+    }) =>
+      apiClient<Business>(`/business/${payload.businessId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          bookingMode: payload.bookingMode,
+          name: payload.name,
+          category: payload.category,
+          description: payload.description,
+          priceMin: payload.priceMin,
+          priceMax: payload.priceMax,
+          rating: payload.rating
         }),
         auth: true
       })

@@ -63,6 +63,31 @@ export class ConfirmBookingDto {
   note?: string;
 }
 
+export class CounterProposalDto {
+  @ApiProperty({ example: '2026-03-20T10:30:00+01:00' })
+  @IsDateString()
+  proposedStartTime!: string;
+
+  @ApiPropertyOptional({ example: 'Could you do 10:30 instead?' })
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+export class AcceptCounterProposalDto {
+  @ApiPropertyOptional({ example: 'Confirmed by customer' })
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+export class RejectBookingDto {
+  @ApiPropertyOptional({ example: 'No staff available at requested time' })
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
+
 export class ListBookingsQueryDto {
   @ApiPropertyOptional({ enum: SUPPORTED_COUNTRIES, example: 'DE' })
   @IsOptional()

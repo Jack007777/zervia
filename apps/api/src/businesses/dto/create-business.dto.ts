@@ -15,6 +15,8 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 import { SUPPORTED_COUNTRIES, SUPPORTED_CURRENCIES } from '@zervia/shared';
 
+const SUPPORTED_BOOKING_MODES = ['instant', 'request'] as const;
+
 export class LocationDto {
   @ApiProperty({ example: 52.52 })
   @IsNumber()
@@ -65,6 +67,11 @@ export class CreateBusinessDto {
   @Min(0)
   @Max(5)
   rating?: number;
+
+  @ApiPropertyOptional({ enum: SUPPORTED_BOOKING_MODES, example: 'instant' })
+  @IsOptional()
+  @IsEnum(SUPPORTED_BOOKING_MODES)
+  bookingMode?: (typeof SUPPORTED_BOOKING_MODES)[number];
 
   @ApiPropertyOptional({ example: '+49301234567' })
   @IsOptional()

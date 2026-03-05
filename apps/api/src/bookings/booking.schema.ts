@@ -40,8 +40,20 @@ export class BookingEntity {
   @Prop({ type: Date, required: true, index: true })
   endTime!: Date;
 
-  @Prop({ default: 'pending', enum: ['pending', 'confirmed', 'cancelled', 'completed'] })
-  status!: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  @Prop({ default: 'instant', enum: ['instant', 'request'] })
+  mode!: 'instant' | 'request';
+
+  @Prop({ type: Date })
+  requestedStartTime?: Date;
+
+  @Prop({ type: Date })
+  counterProposedStartTime?: Date;
+
+  @Prop({ type: Date })
+  counterProposedEndTime?: Date;
+
+  @Prop({ default: 'pending', enum: ['pending', 'counter_proposed', 'confirmed', 'rejected', 'cancelled', 'completed'] })
+  status!: 'pending' | 'counter_proposed' | 'confirmed' | 'rejected' | 'cancelled' | 'completed';
 
   @Prop()
   notes?: string;
