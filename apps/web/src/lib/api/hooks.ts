@@ -4,7 +4,17 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiClient } from './client';
 import { setTokens } from './token-storage';
-import type { AdRecord, AdminBusiness, AdminUser, AuthMe, Booking, Business, SearchParams, Service } from './types';
+import type {
+  AdRecord,
+  AdminBusiness,
+  AdminUser,
+  AuthMe,
+  Booking,
+  Business,
+  MyBusiness,
+  SearchParams,
+  Service
+} from './types';
 
 function toSearchQuery(params: SearchParams) {
   const search = new URLSearchParams();
@@ -58,6 +68,13 @@ export function useMyBookings(country = 'DE') {
   return useQuery({
     queryKey: ['my-bookings', country],
     queryFn: () => apiClient<Booking[]>(`/bookings/me?country=${country}`, { auth: true })
+  });
+}
+
+export function useMyBusinesses(country = 'DE') {
+  return useQuery({
+    queryKey: ['my-businesses', country],
+    queryFn: () => apiClient<MyBusiness[]>(`/businesses/me?country=${country}`, { auth: true })
   });
 }
 

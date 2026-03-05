@@ -28,16 +28,27 @@ export class BusinessesService {
     @InjectModel(BusinessEntity.name) private readonly businessModel: Model<BusinessDocument>
   ) {}
 
-  create(input: CreateBusinessDto) {
+  create(ownerUserId: string, input: CreateBusinessDto) {
     return this.businessModel.create({
       ...input,
       city: input.location.addressLine,
       addressLine: input.location.addressLine,
-      ownerUserId: 'from-jwt-user',
+      ownerUserId,
       lat: input.location.lat,
       lng: input.location.lng,
       timezone: TIMEZONE
     });
+  }
+
+  listMine(ownerUserId: string, country = 'DE') {
+    return this.businessModel
+      .find({ ownerUserId, country })
+      .sort({ createdAt: -1 })
+      .select(
+        'name category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt'
+      )
+      .lean()
+      .exec();
   }
 
   getById(id: string, country: 'DE' = 'DE') {

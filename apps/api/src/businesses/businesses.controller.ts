@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -25,8 +25,17 @@ export class BusinessesController {
   @ApiBearerAuth('bearer')
   @Roles('business')
   @ApiBody({ type: CreateBusinessDto })
-  create(@Body() body: CreateBusinessDto) {
-    return this.businessesService.create(body);
+  create(@Req() req: { user: { sub: string } }, @Body() body: CreateBusinessDto) {
+    return this.businessesService.create(req.user.sub, body);
+  }
+
+  @Get('businesses/me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiQuery({ name: 'country', required: false, example: 'DE' })
+  myBusinesses(@Req() req: { user: { sub: string } }, @Query('country') country = 'DE') {
+    return this.businessesService.listMine(req.user.sub, country);
   }
 
   @Get('business/:id')

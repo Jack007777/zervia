@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AuthGuard } from '../../../src/components/AuthGuard';
 import {
@@ -12,6 +12,7 @@ import {
   useConfirmBooking,
   useCounterProposeBooking,
   useCreateAd,
+  useMyBusinesses,
   useMyAds,
   useRejectBooking,
   useUpdateBusiness,
@@ -234,7 +235,9 @@ function AdminDashboard() {
 }
 
 function BusinessDashboard() {
-  const [businessId, setBusinessId] = useState('');
+  const myBusinesses = useMyBusinesses('DE');
+  const [selectedBusinessId, setSelectedBusinessId] = useState('');
+  const [manualBusinessId, setManualBusinessId] = useState('');
   const [bookingMode, setBookingMode] = useState<'instant' | 'request'>('instant');
   const [requireVerifiedPhoneForBooking, setRequireVerifiedPhoneForBooking] = useState(false);
   const [modeMessage, setModeMessage] = useState('');
@@ -247,28 +250,67 @@ function BusinessDashboard() {
   const createAd = useCreateAd();
   const myAds = useMyAds();
   const updateBusiness = useUpdateBusiness();
-  const businessBookings = useBusinessBookings(businessId.trim(), 'DE');
+  const activeBusinessId = selectedBusinessId || manualBusinessId.trim();
+  const activeBusiness = useMemo(
+    () => (myBusinesses.data ?? []).find((item) => item._id === selectedBusinessId),
+    [myBusinesses.data, selectedBusinessId]
+  );
+  const businessBookings = useBusinessBookings(activeBusinessId, 'DE');
   const confirmBooking = useConfirmBooking();
   const counterProposeBooking = useCounterProposeBooking();
   const rejectBooking = useRejectBooking();
 
-  const canSubmit = useMemo(() => businessId.trim() && title.trim(), [businessId, title]);
+  const canSubmit = useMemo(() => Boolean(activeBusinessId && title.trim()), [activeBusinessId, title]);
+
+  useEffect(() => {
+    if (!activeBusiness) {
+      return;
+    }
+    setBookingMode(activeBusiness.bookingMode ?? 'instant');
+    setRequireVerifiedPhoneForBooking(Boolean(activeBusiness.requireVerifiedPhoneForBooking));
+  }, [activeBusiness]);
 
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Business dashboard</h1>
+      <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="mb-3 font-medium">My branches</h2>
+        {myBusinesses.isLoading ? <p className="text-sm text-slate-600">Loading branches...</p> : null}
+        {(myBusinesses.data ?? []).length ? (
+          <select
+            className="w-full rounded-xl border p-2"
+            value={selectedBusinessId}
+            onChange={(e) => setSelectedBusinessId(e.target.value)}
+          >
+            <option value="">Select branch</option>
+            {(myBusinesses.data ?? []).map((item) => (
+              <option key={item._id} value={item._id}>
+                {item.name} - {item.city} {item.isVirtual ? '(Virtual)' : ''}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-sm text-slate-600">
+            No branch assigned yet. Create one via API first, then it appears here.
+          </p>
+        )}
+        <p className="mt-2 text-xs text-slate-500">
+          You can still paste a Business ID manually if needed.
+        </p>
+        <input
+          className="mt-2 w-full rounded-xl border p-2"
+          placeholder="Manual Business ID (optional)"
+          value={manualBusinessId}
+          onChange={(e) => setManualBusinessId(e.target.value)}
+        />
+      </section>
+
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Booking mode</h2>
         <p className="mb-2 text-xs text-slate-600">
           Visible only in business dashboard. Instant = customer books visible slots directly. Request = customer sends preferred time, merchant confirms or sends counter proposal.
         </p>
         <div className="grid gap-2">
-          <input
-            className="rounded-xl border p-2"
-            placeholder="Business ID"
-            value={businessId}
-            onChange={(e) => setBusinessId(e.target.value)}
-          />
           <select
             className="rounded-xl border p-2"
             value={bookingMode}
@@ -288,10 +330,10 @@ function BusinessDashboard() {
           <button
             type="button"
             className="rounded-xl bg-slate-900 p-2 text-white disabled:opacity-50"
-            disabled={!businessId.trim() || updateBusiness.isPending}
+            disabled={!activeBusinessId || updateBusiness.isPending}
             onClick={async () => {
               await updateBusiness.mutateAsync({
-                businessId: businessId.trim(),
+                businessId: activeBusinessId,
                 bookingMode,
                 requireVerifiedPhoneForBooking
               });
@@ -309,12 +351,6 @@ function BusinessDashboard() {
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Publish ad</h2>
         <div className="grid gap-2">
-          <input
-            className="rounded-xl border p-2"
-            placeholder="Business ID"
-            value={businessId}
-            onChange={(e) => setBusinessId(e.target.value)}
-          />
           <input className="rounded-xl border p-2" placeholder="Ad title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <textarea
             className="rounded-xl border p-2"
@@ -342,7 +378,7 @@ function BusinessDashboard() {
             disabled={!canSubmit || createAd.isPending}
             onClick={async () => {
               await createAd.mutateAsync({
-                businessId: businessId.trim(),
+                businessId: activeBusinessId,
                 title: title.trim(),
                 description: description.trim() || undefined,
                 landingUrl: landingUrl.trim() || undefined,
@@ -362,9 +398,9 @@ function BusinessDashboard() {
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Booking requests</h2>
         <p className="mb-2 text-xs text-slate-600">
-          Enter Business ID above. In request mode, customers send preferred time and you can confirm, reject, or send a counter proposal.
+          Select a branch above. In request mode, customers send preferred time and you can confirm, reject, or send a counter proposal.
         </p>
-        {!businessId.trim() ? <p className="text-sm text-slate-500">Please enter Business ID first.</p> : null}
+        {!activeBusinessId ? <p className="text-sm text-slate-500">Please select a branch or provide a Business ID first.</p> : null}
         {businessBookings.isLoading ? <p className="text-sm text-slate-600">Loading bookings...</p> : null}
         {bookingMessage ? <p className="mb-2 text-xs text-emerald-700">{bookingMessage}</p> : null}
         <div className="space-y-2">

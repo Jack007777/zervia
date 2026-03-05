@@ -154,6 +154,25 @@ export type AdminBusiness = {
   createdAt: string;
 };
 
+export type MyBusiness = {
+  _id: string;
+  ownerUserId: string;
+  name: string;
+  category?: string;
+  country: string;
+  city: string;
+  addressLine: string;
+  rating?: number;
+  priceMin?: number;
+  priceMax?: number;
+  bookingMode?: 'instant' | 'request';
+  requireVerifiedPhoneForBooking?: boolean;
+  isActive: boolean;
+  isVirtual?: boolean;
+  virtualSeedBatch?: string;
+  createdAt: string;
+};
+
 export type AuthMe = {
   userId: string;
   email?: string;
