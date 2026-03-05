@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -10,10 +10,12 @@ import { getSessionUser } from '../lib/auth/session';
 type Props = {
   locale: string;
 };
+const AUTH_ROLE_STORAGE_KEY = 'zervia_auth_preferred_role';
 
 export function LoginEntry({ locale }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [preferredRole, setPreferredRole] = useState<'customer' | 'business'>('customer');
   const [, setSessionVersion] = useState(0);
   const session = getSessionUser();
 
@@ -26,6 +28,15 @@ export function LoginEntry({ locale }: Props) {
       window.removeEventListener('storage', onAuthChange);
     };
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(AUTH_ROLE_STORAGE_KEY);
+      setPreferredRole(raw === 'business' ? 'business' : 'customer');
+    } catch {
+      setPreferredRole('customer');
+    }
+  }, [open]);
 
   async function onLogout() {
     if (loading) {
@@ -75,29 +86,55 @@ export function LoginEntry({ locale }: Props) {
       {open ? (
         <div className="absolute right-0 top-9 z-20 min-w-[240px] rounded-xl border bg-white p-2 shadow-lg">
           {!session ? (
-            <div className="flex gap-2">
-              <Link
-                href={`/${locale}/auth/login?role=customer`}
-                className="flex flex-1 items-center justify-center gap-1 rounded-lg border px-2 py-1 text-xs text-slate-700"
-                onClick={() => setOpen(false)}
-              >
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <circle cx="12" cy="8" r="3.5" />
-                  <path d="M5 20c1.8-3 4-4.5 7-4.5s5.2 1.5 7 4.5" />
-                </svg>
-                Customer
-              </Link>
-              <Link
-                href={`/${locale}/auth/login?role=business`}
-                className="flex flex-1 items-center justify-center gap-1 rounded-lg border px-2 py-1 text-xs text-slate-700"
-                onClick={() => setOpen(false)}
-              >
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M4 19h16M6 19V8l6-3 6 3v11M10 12h4M10 15h4" />
-                </svg>
-                Business
-              </Link>
-            </div>
+            <>
+              <div className="flex gap-2">
+                <Link
+                  href={`/${locale}/auth/login?role=customer`}
+                  className={`flex flex-1 items-center justify-center gap-1 rounded-lg border px-2 py-1 text-xs ${
+                    preferredRole === 'customer' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'text-slate-700'
+                  }`}
+                  onClick={() => {
+                    try {
+                      window.localStorage.setItem(AUTH_ROLE_STORAGE_KEY, 'customer');
+                      setPreferredRole('customer');
+                    } catch {
+                      // ignore storage errors
+                    }
+                    setOpen(false);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <circle cx="12" cy="8" r="3.5" />
+                    <path d="M5 20c1.8-3 4-4.5 7-4.5s5.2 1.5 7 4.5" />
+                  </svg>
+                  Customer
+                </Link>
+                <Link
+                  href={`/${locale}/auth/login?role=business`}
+                  className={`flex flex-1 items-center justify-center gap-1 rounded-lg border px-2 py-1 text-xs ${
+                    preferredRole === 'business' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'text-slate-700'
+                  }`}
+                  onClick={() => {
+                    try {
+                      window.localStorage.setItem(AUTH_ROLE_STORAGE_KEY, 'business');
+                      setPreferredRole('business');
+                    } catch {
+                      // ignore storage errors
+                    }
+                    setOpen(false);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M4 19h16M6 19V8l6-3 6 3v11M10 12h4M10 15h4" />
+                  </svg>
+                  Business
+                </Link>
+              </div>
+              <p className="mt-2 text-center text-[11px] text-slate-500">
+                {locale === 'de' ? 'Zuletzt gewählt:' : 'Last selected:'}{' '}
+                <span className="font-medium text-slate-700">{preferredRole === 'business' ? 'Business' : 'Customer'}</span>
+              </p>
+            </>
           ) : (
             <div className="space-y-2">
               <div className="rounded-lg bg-slate-50 p-2 text-xs">
