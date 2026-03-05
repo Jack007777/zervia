@@ -415,7 +415,19 @@ export default function HomePage() {
                   </button>
                 </li>
               ))}
-              <li className="pt-1 font-semibold text-slate-900">{current.allLabel}</li>
+              <li className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubCategory('');
+                    setCategoryTouched(true);
+                    setServiceError('');
+                  }}
+                  className="w-full rounded-lg border border-transparent px-2 py-2 text-left font-semibold text-slate-900 hover:border-slate-200 hover:bg-white"
+                >
+                  {current.allLabel}
+                </button>
+              </li>
             </ul>
           </div>
         ) : (
