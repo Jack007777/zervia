@@ -8,8 +8,12 @@ import {
   useAdminAds,
   useAdminBusinesses,
   useAdminUsers,
+  useBusinessBookings,
+  useConfirmBooking,
+  useCounterProposeBooking,
   useCreateAd,
   useMyAds,
+  useRejectBooking,
   useUpdateBusiness,
   useUpdateAdminBusiness,
   useUpdateAdminUser,
@@ -207,6 +211,8 @@ function BusinessDashboard() {
   const [businessId, setBusinessId] = useState('');
   const [bookingMode, setBookingMode] = useState<'instant' | 'request'>('instant');
   const [modeMessage, setModeMessage] = useState('');
+  const [counterTimes, setCounterTimes] = useState<Record<string, string>>({});
+  const [bookingMessage, setBookingMessage] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [landingUrl, setLandingUrl] = useState('');
@@ -214,6 +220,10 @@ function BusinessDashboard() {
   const createAd = useCreateAd();
   const myAds = useMyAds();
   const updateBusiness = useUpdateBusiness();
+  const businessBookings = useBusinessBookings(businessId.trim(), 'DE');
+  const confirmBooking = useConfirmBooking();
+  const counterProposeBooking = useCounterProposeBooking();
+  const rejectBooking = useRejectBooking();
 
   const canSubmit = useMemo(() => businessId.trim() && title.trim(), [businessId, title]);
 
@@ -308,6 +318,99 @@ function BusinessDashboard() {
           >
             {createAd.isPending ? 'Submitting...' : 'Submit ad'}
           </button>
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="mb-3 font-medium">Booking requests</h2>
+        <p className="mb-2 text-xs text-slate-600">
+          Enter Business ID above. In request mode, customers send preferred time and you can confirm, reject, or send a counter proposal.
+        </p>
+        {!businessId.trim() ? <p className="text-sm text-slate-500">Please enter Business ID first.</p> : null}
+        {businessBookings.isLoading ? <p className="text-sm text-slate-600">Loading bookings...</p> : null}
+        {bookingMessage ? <p className="mb-2 text-xs text-emerald-700">{bookingMessage}</p> : null}
+        <div className="space-y-2">
+          {(businessBookings.data ?? []).map((booking) => (
+            <article key={booking._id} className="rounded-xl border p-3 text-sm">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="font-medium">
+                  {booking.mode === 'request' ? 'Request booking' : 'Instant booking'} | {booking.status}
+                </p>
+                <span className="text-xs text-slate-500">{booking.country ?? 'DE'}</span>
+              </div>
+              <p className="text-slate-700">Booking ID: {booking._id}</p>
+              <p className="text-slate-700">Service: {booking.serviceId}</p>
+              <p className="text-slate-700">Customer: {booking.guestName ?? booking.customerUserId ?? 'N/A'}</p>
+              <p className="text-slate-700">Phone: {booking.guestPhone ?? 'N/A'}</p>
+              <p className="text-slate-700">Start: {new Date(booking.startTime).toLocaleString('de-DE')}</p>
+              {booking.requestedStartTime ? (
+                <p className="text-slate-700">Requested: {new Date(booking.requestedStartTime).toLocaleString('de-DE')}</p>
+              ) : null}
+              {booking.counterProposedStartTime ? (
+                <p className="text-slate-700">
+                  Counter: {new Date(booking.counterProposedStartTime).toLocaleString('de-DE')}
+                </p>
+              ) : null}
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg border px-2 py-1"
+                  onClick={async () => {
+                    await confirmBooking.mutateAsync({ bookingId: booking._id });
+                    setBookingMessage(`Confirmed ${booking._id}`);
+                    await businessBookings.refetch();
+                  }}
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg border px-2 py-1"
+                  onClick={async () => {
+                    await rejectBooking.mutateAsync({ bookingId: booking._id, reason: 'Rejected by merchant' });
+                    setBookingMessage(`Rejected ${booking._id}`);
+                    await businessBookings.refetch();
+                  }}
+                >
+                  Reject
+                </button>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input
+                  type="datetime-local"
+                  className="rounded-lg border px-2 py-1"
+                  value={counterTimes[booking._id] ?? ''}
+                  onChange={(e) =>
+                    setCounterTimes((prev) => ({
+                      ...prev,
+                      [booking._id]: e.target.value
+                    }))
+                  }
+                />
+                <button
+                  type="button"
+                  className="rounded-lg border px-2 py-1"
+                  onClick={async () => {
+                    const value = counterTimes[booking._id];
+                    if (!value) {
+                      setBookingMessage('Please select counter proposal time.');
+                      return;
+                    }
+                    await counterProposeBooking.mutateAsync({
+                      bookingId: booking._id,
+                      proposedStartTime: new Date(value).toISOString(),
+                      note: 'Counter proposal from merchant'
+                    });
+                    setBookingMessage(`Counter proposed for ${booking._id}`);
+                    await businessBookings.refetch();
+                  }}
+                >
+                  Send counter proposal
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 

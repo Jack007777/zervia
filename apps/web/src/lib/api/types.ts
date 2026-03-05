@@ -62,6 +62,10 @@ export type Service = {
 
 export type Booking = {
   _id: string;
+  customerUserId?: string;
+  isGuest?: boolean;
+  guestName?: string;
+  guestPhone?: string;
   businessId: string;
   serviceId: string;
   staffId: string;

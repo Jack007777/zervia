@@ -61,6 +61,14 @@ export function useMyBookings(country = 'DE') {
   });
 }
 
+export function useBusinessBookings(businessId: string, country = 'DE') {
+  return useQuery({
+    queryKey: ['business-bookings', businessId, country],
+    queryFn: () => apiClient<Booking[]>(`/business/${businessId}/bookings?country=${country}`, { auth: true }),
+    enabled: Boolean(businessId)
+  });
+}
+
 export function useLogin() {
   return useMutation({
     mutationFn: (payload: { identifier: string; password: string }) =>
@@ -102,6 +110,47 @@ export function useCreateBooking() {
       apiClient<Booking>('/bookings', {
         method: 'POST',
         body: JSON.stringify(payload),
+        auth: true
+      })
+  });
+}
+
+export function useConfirmBooking() {
+  return useMutation({
+    mutationFn: (payload: { bookingId: string; staffId?: string; note?: string }) =>
+      apiClient<Booking>(`/bookings/${payload.bookingId}/confirm`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          staffId: payload.staffId,
+          note: payload.note
+        }),
+        auth: true
+      })
+  });
+}
+
+export function useCounterProposeBooking() {
+  return useMutation({
+    mutationFn: (payload: { bookingId: string; proposedStartTime: string; note?: string }) =>
+      apiClient<Booking>(`/bookings/${payload.bookingId}/counter`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          proposedStartTime: payload.proposedStartTime,
+          note: payload.note
+        }),
+        auth: true
+      })
+  });
+}
+
+export function useRejectBooking() {
+  return useMutation({
+    mutationFn: (payload: { bookingId: string; reason?: string }) =>
+      apiClient<Booking>(`/bookings/${payload.bookingId}/reject`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          reason: payload.reason
+        }),
         auth: true
       })
   });
