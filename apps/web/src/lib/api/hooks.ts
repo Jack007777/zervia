@@ -9,6 +9,7 @@ import type {
   AdminBusiness,
   AdminUser,
   AuthMe,
+  BusinessCustomerListEntry,
   Booking,
   Business,
   MyBusiness,
@@ -344,5 +345,54 @@ export function useUpdateBusiness() {
         }),
         auth: true
       })
+  });
+}
+
+export function useBusinessCustomerList(businessId: string, country = 'DE') {
+  return useQuery({
+    queryKey: ['business-customer-list', businessId, country],
+    queryFn: () =>
+      apiClient<BusinessCustomerListEntry[]>(
+        `/business/${businessId}/customers?country=${encodeURIComponent(country)}`,
+        { auth: true }
+      ),
+    enabled: Boolean(businessId)
+  });
+}
+
+export function useUpsertBusinessCustomerListEntry() {
+  return useMutation({
+    mutationFn: (payload: {
+      businessId: string;
+      phone: string;
+      listType?: 'none' | 'whitelist' | 'blacklist';
+      customName?: string;
+      note?: string;
+      country?: string;
+    }) =>
+      apiClient<BusinessCustomerListEntry>(`/business/${payload.businessId}/customers`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          phone: payload.phone,
+          listType: payload.listType ?? 'none',
+          customName: payload.customName,
+          note: payload.note,
+          country: payload.country ?? 'DE'
+        }),
+        auth: true
+      })
+  });
+}
+
+export function useDeleteBusinessCustomerListEntry() {
+  return useMutation({
+    mutationFn: (payload: { businessId: string; phone: string; country?: string }) =>
+      apiClient<{ success: boolean }>(
+        `/business/${payload.businessId}/customers?phone=${encodeURIComponent(payload.phone)}&country=${encodeURIComponent(payload.country ?? 'DE')}`,
+        {
+          method: 'DELETE',
+          auth: true
+        }
+      )
   });
 }

@@ -182,3 +182,15 @@ export type AuthMe = {
   locale: string;
   phoneVerified: boolean;
 };
+
+export type BusinessCustomerListEntry = {
+  _id: string;
+  businessId: string;
+  phone: string;
+  customName?: string;
+  listType: 'none' | 'whitelist' | 'blacklist';
+  note?: string;
+  country: string;
+  createdAt: string;
+  updatedAt: string;
+};

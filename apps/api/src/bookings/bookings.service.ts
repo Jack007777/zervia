@@ -5,6 +5,7 @@ import { Connection, Model } from 'mongoose';
 
 import { AvailabilityEntity, type AvailabilityDocument } from '../availability/availability.schema';
 import { BusinessEntity, type BusinessDocument } from '../businesses/business.schema';
+import { BusinessCustomerListEntity, type BusinessCustomerListDocument } from '../businesses/customer-list.schema';
 import { SmsService } from '../notifications/sms.service';
 import { ServiceEntity, type ServiceDocument } from '../services/service.schema';
 import { UserEntity, type UserDocument } from '../users/user.schema';
@@ -26,6 +27,8 @@ export class BookingsService {
     @InjectModel(BusinessEntity.name) private readonly businessModel: Model<BusinessDocument>,
     @InjectModel(ServiceEntity.name) private readonly serviceModel: Model<ServiceDocument>,
     @InjectModel(AvailabilityEntity.name) private readonly availabilityModel: Model<AvailabilityDocument>,
+    @InjectModel(BusinessCustomerListEntity.name)
+    private readonly customerListModel: Model<BusinessCustomerListDocument>,
     @InjectModel(UserEntity.name) private readonly userModel: Model<UserDocument>,
     private readonly smsService: SmsService
   ) {}
@@ -78,6 +81,44 @@ export class BookingsService {
             throw new BadRequestException({
               errorCode: 'PHONE_VERIFICATION_REQUIRED',
               message: 'Please verify your phone number before booking this business'
+            });
+          }
+        }
+
+        let customerPhoneForPolicy = input.guestPhone?.trim();
+        if (!customerPhoneForPolicy && customerUserId) {
+          const customer = await this.userModel
+            .findById(customerUserId)
+            .select('phone')
+            .session(session)
+            .exec();
+          customerPhoneForPolicy = customer?.phone?.trim();
+        }
+        if (customerPhoneForPolicy) {
+          const policy = await this.evaluateCustomerListPolicy(
+            input.businessId,
+            customerPhoneForPolicy,
+            input.country ?? 'DE',
+            session
+          );
+          if (!policy.allowed) {
+            throw new BadRequestException({
+              errorCode: policy.reason,
+              message:
+                policy.reason === 'PHONE_BLACKLISTED'
+                  ? 'This phone number is blocked by the merchant'
+                  : 'This merchant accepts bookings only from approved phone numbers'
+            });
+          }
+        } else {
+          const whitelistCount = await this.customerListModel
+            .countDocuments({ businessId: input.businessId, country: input.country ?? 'DE', listType: 'whitelist' })
+            .session(session)
+            .exec();
+          if (whitelistCount > 0) {
+            throw new BadRequestException({
+              errorCode: 'PHONE_REQUIRED_FOR_WHITELIST',
+              message: 'Please add and verify your phone number to book this merchant'
             });
           }
         }
@@ -398,5 +439,32 @@ export class BookingsService {
   private toDateTime(dayStart: DateTime, hhmm: string): DateTime {
     const [h, m] = hhmm.split(':');
     return dayStart.set({ hour: Number(h), minute: Number(m), second: 0, millisecond: 0 });
+  }
+
+  private async evaluateCustomerListPolicy(
+    businessId: string,
+    phone: string,
+    country: string,
+    session: Awaited<ReturnType<Connection['startSession']>>
+  ) {
+    const [entry, whitelistCount] = await Promise.all([
+      this.customerListModel
+        .findOne({ businessId, phone, country })
+        .session(session)
+        .lean()
+        .exec(),
+      this.customerListModel
+        .countDocuments({ businessId, country, listType: 'whitelist' })
+        .session(session)
+        .exec()
+    ]);
+
+    if (entry?.listType === 'blacklist') {
+      return { allowed: false as const, reason: 'PHONE_BLACKLISTED' as const };
+    }
+    if (whitelistCount > 0 && entry?.listType !== 'whitelist') {
+      return { allowed: false as const, reason: 'PHONE_NOT_WHITELISTED' as const };
+    }
+    return { allowed: true as const };
   }
 }

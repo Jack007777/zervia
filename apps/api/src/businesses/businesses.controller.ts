@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -13,7 +13,12 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 
 import { BusinessesService } from './businesses.service';
-import { CreateBusinessDto, SearchQueryDto, UpdateBusinessDto } from './dto/create-business.dto';
+import {
+  CreateBusinessDto,
+  SearchQueryDto,
+  UpdateBusinessDto,
+  UpsertBusinessCustomerListDto
+} from './dto/create-business.dto';
 
 @ApiTags('Business')
 @Controller()
@@ -53,6 +58,63 @@ export class BusinessesController {
   @ApiBody({ type: UpdateBusinessDto })
   update(@Param('id') id: string, @Body() body: UpdateBusinessDto) {
     return this.businessesService.update(id, body);
+  }
+
+  @Get('business/:id/customers')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiQuery({ name: 'country', required: false, example: 'DE' })
+  listCustomerList(
+    @Param('id') businessId: string,
+    @Req() req: { user: { sub: string; roles?: string[] } },
+    @Query('country') country = 'DE'
+  ) {
+    return this.businessesService.listCustomerList(
+      businessId,
+      req.user.sub,
+      Boolean(req.user.roles?.includes('admin')),
+      country
+    );
+  }
+
+  @Put('business/:id/customers')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiBody({ type: UpsertBusinessCustomerListDto })
+  upsertCustomerListEntry(
+    @Param('id') businessId: string,
+    @Req() req: { user: { sub: string; roles?: string[] } },
+    @Body() body: UpsertBusinessCustomerListDto
+  ) {
+    return this.businessesService.upsertCustomerListEntry(
+      businessId,
+      req.user.sub,
+      body,
+      Boolean(req.user.roles?.includes('admin'))
+    );
+  }
+
+  @Delete('business/:id/customers')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiQuery({ name: 'phone', required: true, example: '+4915112345678' })
+  @ApiQuery({ name: 'country', required: false, example: 'DE' })
+  deleteCustomerListEntry(
+    @Param('id') businessId: string,
+    @Req() req: { user: { sub: string; roles?: string[] } },
+    @Query('phone') phone: string,
+    @Query('country') country = 'DE'
+  ) {
+    return this.businessesService.deleteCustomerListEntry(
+      businessId,
+      req.user.sub,
+      phone,
+      Boolean(req.user.roles?.includes('admin')),
+      country
+    );
   }
 
   @Get('search')

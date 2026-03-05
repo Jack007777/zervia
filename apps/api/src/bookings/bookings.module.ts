@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { AvailabilityEntity, AvailabilitySchema } from '../availability/availability.schema';
 import { BusinessEntity, BusinessSchema } from '../businesses/business.schema';
+import { BusinessCustomerListEntity, BusinessCustomerListSchema } from '../businesses/customer-list.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ServiceEntity, ServiceSchema } from '../services/service.schema';
 import { UserEntity, UserSchema } from '../users/user.schema';
@@ -17,6 +18,7 @@ import { BookingsService } from './bookings.service';
       { name: BusinessEntity.name, schema: BusinessSchema },
       { name: ServiceEntity.name, schema: ServiceSchema },
       { name: AvailabilityEntity.name, schema: AvailabilitySchema },
+      { name: BusinessCustomerListEntity.name, schema: BusinessCustomerListSchema },
       { name: UserEntity.name, schema: UserSchema }
     ]),
     NotificationsModule

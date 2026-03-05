@@ -1,11 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { TIMEZONE } from '@zervia/shared';
 
 import { BusinessEntity, type BusinessDocument } from './business.schema';
-import type { CreateBusinessDto, SearchQueryDto, UpdateBusinessDto } from './dto/create-business.dto';
+import { BusinessCustomerListEntity, type BusinessCustomerListDocument } from './customer-list.schema';
+import type {
+  CreateBusinessDto,
+  SearchQueryDto,
+  UpdateBusinessDto,
+  UpsertBusinessCustomerListDto
+} from './dto/create-business.dto';
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -25,7 +31,9 @@ function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 @Injectable()
 export class BusinessesService {
   constructor(
-    @InjectModel(BusinessEntity.name) private readonly businessModel: Model<BusinessDocument>
+    @InjectModel(BusinessEntity.name) private readonly businessModel: Model<BusinessDocument>,
+    @InjectModel(BusinessCustomerListEntity.name)
+    private readonly customerListModel: Model<BusinessCustomerListDocument>
   ) {}
 
   create(ownerUserId: string, input: CreateBusinessDto) {
@@ -57,6 +65,86 @@ export class BusinessesService {
 
   update(id: string, input: UpdateBusinessDto) {
     return this.businessModel.findByIdAndUpdate(id, input, { new: true }).exec();
+  }
+
+  async listCustomerList(
+    businessId: string,
+    ownerUserId: string,
+    isAdmin = false,
+    country = 'DE'
+  ) {
+    await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
+    return this.customerListModel
+      .find({ businessId, country })
+      .sort({ updatedAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  async upsertCustomerListEntry(
+    businessId: string,
+    ownerUserId: string,
+    input: UpsertBusinessCustomerListDto,
+    isAdmin = false
+  ) {
+    await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
+    const phone = input.phone.trim();
+    return this.customerListModel
+      .findOneAndUpdate(
+        { businessId, phone },
+        {
+          phone,
+          country: input.country ?? 'DE',
+          listType: input.listType ?? 'none',
+          customName: input.customName?.trim() || undefined,
+          note: input.note?.trim() || undefined
+        },
+        { upsert: true, new: true }
+      )
+      .lean()
+      .exec();
+  }
+
+  async deleteCustomerListEntry(
+    businessId: string,
+    ownerUserId: string,
+    phone: string,
+    isAdmin = false,
+    country = 'DE'
+  ) {
+    await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
+    const normalizedPhone = phone.trim();
+    await this.customerListModel.deleteOne({ businessId, phone: normalizedPhone, country }).exec();
+    return { success: true };
+  }
+
+  async evaluateCustomerPhonePolicy(businessId: string, phone: string, country = 'DE') {
+    const normalizedPhone = phone.trim();
+    const [entry, whitelistCount] = await Promise.all([
+      this.customerListModel
+        .findOne({ businessId, phone: normalizedPhone, country })
+        .lean()
+        .exec(),
+      this.customerListModel.countDocuments({ businessId, country, listType: 'whitelist' }).exec()
+    ]);
+
+    if (entry?.listType === 'blacklist') {
+      return {
+        allowed: false,
+        reason: 'PHONE_BLACKLISTED'
+      } as const;
+    }
+
+    if (whitelistCount > 0 && entry?.listType !== 'whitelist') {
+      return {
+        allowed: false,
+        reason: 'PHONE_NOT_WHITELISTED'
+      } as const;
+    }
+
+    return {
+      allowed: true
+    } as const;
   }
 
   search(query: SearchQueryDto) {
@@ -161,5 +249,22 @@ export class BusinessesService {
       .select('name category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
+  }
+
+  private async assertOwnerOrAdmin(businessId: string, ownerUserId: string, isAdmin: boolean) {
+    if (isAdmin) {
+      return;
+    }
+    const business = await this.businessModel
+      .findOne({ _id: businessId, ownerUserId })
+      .select('_id')
+      .lean()
+      .exec();
+    if (!business) {
+      throw new ForbiddenException({
+        errorCode: 'BUSINESS_NOT_OWNED',
+        message: 'You can only manage your own branches'
+      });
+    }
   }
 }
