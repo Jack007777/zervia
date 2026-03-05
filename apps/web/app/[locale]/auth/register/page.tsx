@@ -36,6 +36,7 @@ type RegisterInput = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
+  const manualApprovalPhone = process.env.NEXT_PUBLIC_MANUAL_REGISTRATION_PHONE ?? '+49XXXXXXXXXX';
   const mutation = useRegister();
   const verifyMutation = useVerifyEmailRegister();
   const [pendingEmail, setPendingEmail] = useState('');
@@ -56,6 +57,13 @@ export default function RegisterPage() {
     if (response.verificationRequired && response.channel === 'email' && response.identifier) {
       setPendingEmail(response.identifier);
       setInfoMessage('Verification code sent to your email. Please enter code to finish registration.');
+      return;
+    }
+    if (response.verificationRequired && response.channel === 'phone_manual') {
+      const reviewPhone = response.identifier ?? values.phone ?? '';
+      setInfoMessage(
+        `Please send SMS "REG" from ${reviewPhone} to ${manualApprovalPhone}. Your account will be activated after manual review.`
+      );
       return;
     }
     router.push(`/${locale}/search`);

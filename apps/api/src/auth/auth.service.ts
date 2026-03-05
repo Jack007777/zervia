@@ -78,9 +78,16 @@ export class AuthService {
       passwordHash,
       roles: input.roles,
       country: input.country,
-      locale: input.locale
+      locale: input.locale,
+      isActive: false,
+      phoneVerified: false,
+      manualPhoneApprovalPending: true
     });
-    return this.issueTokens(user.id, user.email ?? user.phone ?? 'user', user.roles, user.country);
+    return {
+      verificationRequired: true,
+      channel: 'phone_manual' as const,
+      identifier: user.phone
+    };
   }
 
   async login(identifier: string, password: string) {
@@ -92,6 +99,14 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isActive && user.manualPhoneApprovalPending) {
+      throw new UnauthorizedException('PHONE_REGISTRATION_PENDING_REVIEW');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('ACCOUNT_DISABLED');
     }
 
     if (user.email && !user.emailVerified) {

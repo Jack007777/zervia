@@ -81,12 +81,38 @@ function AdminDashboard() {
             <article key={user._id} className="rounded-xl border p-3 text-sm">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="font-medium">{user.email ?? user.phone ?? 'no-identifier'}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${user.isActive ? 'bg-emerald-100' : 'bg-rose-100'}`}>
-                  {user.isActive ? 'Active' : 'Disabled'}
-                </span>
+                <div className="flex items-center gap-1">
+                  {user.manualPhoneApprovalPending ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">
+                      Pending SMS review
+                    </span>
+                  ) : null}
+                  <span className={`rounded-full px-2 py-1 text-xs ${user.isActive ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                    {user.isActive ? 'Active' : 'Disabled'}
+                  </span>
+                </div>
               </div>
-              <p className="mb-2 text-slate-600">Roles: {user.roles.join(', ')}</p>
+              <p className="mb-2 text-slate-600">
+                Roles: {user.roles.join(', ')} | Phone verified: {user.phoneVerified ? 'Yes' : 'No'}
+              </p>
               <div className="flex flex-wrap gap-2">
+                {user.manualPhoneApprovalPending ? (
+                  <button
+                    type="button"
+                    className="rounded-lg border px-2 py-1"
+                    onClick={async () => {
+                      await updateUser.mutateAsync({
+                        userId: user._id,
+                        isActive: true,
+                        phoneVerified: true,
+                        manualPhoneApprovalPending: false
+                      });
+                      await usersQuery.refetch();
+                    }}
+                  >
+                    Approve SMS registration
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="rounded-lg border px-2 py-1"

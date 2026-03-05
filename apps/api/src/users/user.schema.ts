@@ -44,6 +44,9 @@ export class UserEntity {
   @Prop({ default: false })
   phoneVerified!: boolean;
 
+  @Prop({ default: false })
+  manualPhoneApprovalPending!: boolean;
+
   @Prop()
   emailVerificationCodeHash?: string;
 

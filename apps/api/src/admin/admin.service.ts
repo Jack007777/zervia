@@ -40,8 +40,15 @@ export class AdminService {
     return this.usersService.listForAdmin();
   }
 
-  updateUser(userId: string, input: { roles?: ('customer' | 'business' | 'admin')[]; isActive?: boolean }) {
+  updateUser(
+    userId: string,
+    input: {
+      roles?: ('customer' | 'business' | 'admin')[];
+      isActive?: boolean;
+      phoneVerified?: boolean;
+      manualPhoneApprovalPending?: boolean;
+    }
+  ) {
     return this.usersService.updateAdminUser(userId, input);
   }
 }
-

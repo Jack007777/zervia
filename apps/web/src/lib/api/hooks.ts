@@ -117,7 +117,7 @@ export function useRegister() {
       apiClient<{
         tokens?: { accessToken: string; refreshToken: string };
         verificationRequired?: boolean;
-        channel?: 'email';
+        channel?: 'email' | 'phone_manual';
         identifier?: string;
       }>('/auth/register', {
         method: 'POST',
@@ -218,10 +218,17 @@ export function useUpdateAdminUser() {
       userId: string;
       roles?: Array<'customer' | 'business' | 'admin'>;
       isActive?: boolean;
+      phoneVerified?: boolean;
+      manualPhoneApprovalPending?: boolean;
     }) =>
       apiClient<AdminUser>(`/admin/users/${payload.userId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ roles: payload.roles, isActive: payload.isActive }),
+        body: JSON.stringify({
+          roles: payload.roles,
+          isActive: payload.isActive,
+          phoneVerified: payload.phoneVerified,
+          manualPhoneApprovalPending: payload.manualPhoneApprovalPending
+        }),
         auth: true
       })
   });

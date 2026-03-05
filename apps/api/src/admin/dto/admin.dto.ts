@@ -14,5 +14,14 @@ export class UpdateAdminUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-}
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  phoneVerified?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  manualPhoneApprovalPending?: boolean;
+}

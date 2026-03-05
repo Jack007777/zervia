@@ -18,6 +18,9 @@ export class UsersService {
     roles: Role[];
     country: CountryCode;
     locale: LanguageCode;
+    isActive?: boolean;
+    phoneVerified?: boolean;
+    manualPhoneApprovalPending?: boolean;
   }) {
     return this.userModel.create(input);
   }
@@ -51,22 +54,29 @@ export class UsersService {
       .find()
       .sort({ createdAt: -1 })
       .limit(limit)
-      .select('email roles country locale isActive displayName phone createdAt updatedAt')
+      .select('email roles country locale isActive displayName phone phoneVerified manualPhoneApprovalPending createdAt updatedAt')
       .lean()
       .exec();
   }
 
-  async updateAdminUser(userId: string, input: { roles?: Role[]; isActive?: boolean }) {
+  async updateAdminUser(
+    userId: string,
+    input: { roles?: Role[]; isActive?: boolean; phoneVerified?: boolean; manualPhoneApprovalPending?: boolean }
+  ) {
     return this.userModel
       .findByIdAndUpdate(
         userId,
         {
           ...(input.roles ? { roles: input.roles } : {}),
-          ...(typeof input.isActive === 'boolean' ? { isActive: input.isActive } : {})
+          ...(typeof input.isActive === 'boolean' ? { isActive: input.isActive } : {}),
+          ...(typeof input.phoneVerified === 'boolean' ? { phoneVerified: input.phoneVerified } : {}),
+          ...(typeof input.manualPhoneApprovalPending === 'boolean'
+            ? { manualPhoneApprovalPending: input.manualPhoneApprovalPending }
+            : {})
         },
         { new: true }
       )
-      .select('email roles country locale isActive displayName phone createdAt updatedAt')
+      .select('email roles country locale isActive displayName phone phoneVerified manualPhoneApprovalPending createdAt updatedAt')
       .lean()
       .exec();
   }

@@ -113,6 +113,8 @@ export type AdminUser = {
   country: string;
   locale: string;
   isActive: boolean;
+  phoneVerified?: boolean;
+  manualPhoneApprovalPending?: boolean;
   createdAt: string;
 };
 
