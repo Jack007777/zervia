@@ -79,6 +79,37 @@ export function useMyBusinesses(country = 'DE') {
   });
 }
 
+export function useCreateBusiness() {
+  return useMutation({
+    mutationFn: (payload: {
+      name: string;
+      description?: string;
+      category: string;
+      location: {
+        lat: number;
+        lng: number;
+        addressLine: string;
+      };
+      priceMin?: number;
+      priceMax?: number;
+      rating?: number;
+      bookingMode?: 'instant' | 'request';
+      requireVerifiedPhoneForBooking?: boolean;
+      contactPhone?: string;
+      supportedLanguages?: string[];
+      defaultCurrency?: 'EUR';
+      vatNumber?: string;
+      vatRate?: number;
+      country?: string;
+    }) =>
+      apiClient<Business>('/business', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        auth: true
+      })
+  });
+}
+
 export function useBusinessBookings(businessId: string, country = 'DE') {
   return useQuery({
     queryKey: ['business-bookings', businessId, country],
@@ -330,6 +361,7 @@ export function useUpdateBusiness() {
       priceMin?: number;
       priceMax?: number;
       rating?: number;
+      contactPhone?: string;
     }) =>
       apiClient<Business>(`/business/${payload.businessId}`, {
         method: 'PATCH',
@@ -341,7 +373,8 @@ export function useUpdateBusiness() {
           description: payload.description,
           priceMin: payload.priceMin,
           priceMax: payload.priceMax,
-          rating: payload.rating
+          rating: payload.rating,
+          contactPhone: payload.contactPhone
         }),
         auth: true
       })

@@ -12,6 +12,7 @@ import {
   useBusinessCustomerList,
   useConfirmBooking,
   useCounterProposeBooking,
+  useCreateBusiness,
   useCreateAd,
   useDeleteBusinessCustomerListEntry,
   useMyBusinesses,
@@ -255,7 +256,21 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [customerNote, setCustomerNote] = useState('');
   const [customerListType, setCustomerListType] = useState<'none' | 'whitelist' | 'blacklist'>('whitelist');
   const [customerListMessage, setCustomerListMessage] = useState('');
+  const [branchName, setBranchName] = useState('');
+  const [branchCategory, setBranchCategory] = useState('massage');
+  const [branchAddressLine, setBranchAddressLine] = useState('');
+  const [branchLat, setBranchLat] = useState('52.520008');
+  const [branchLng, setBranchLng] = useState('13.404954');
+  const [branchPriceMin, setBranchPriceMin] = useState('');
+  const [branchPriceMax, setBranchPriceMax] = useState('');
+  const [branchCreateMessage, setBranchCreateMessage] = useState('');
+  const [branchEditName, setBranchEditName] = useState('');
+  const [branchEditCategory, setBranchEditCategory] = useState('massage');
+  const [branchEditPriceMin, setBranchEditPriceMin] = useState('');
+  const [branchEditPriceMax, setBranchEditPriceMax] = useState('');
+  const [branchEditMessage, setBranchEditMessage] = useState('');
   const createAd = useCreateAd();
+  const createBusiness = useCreateBusiness();
   const myAds = useMyAds();
   const updateBusiness = useUpdateBusiness();
   const activeBusinessId = selectedBusinessId || manualBusinessId.trim();
@@ -281,6 +296,20 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
     setRequireVerifiedPhoneForBooking(Boolean(activeBusiness.requireVerifiedPhoneForBooking));
   }, [activeBusiness]);
 
+  useEffect(() => {
+    if (!activeBusiness) {
+      setBranchEditName('');
+      setBranchEditCategory('massage');
+      setBranchEditPriceMin('');
+      setBranchEditPriceMax('');
+      return;
+    }
+    setBranchEditName(activeBusiness.name ?? '');
+    setBranchEditCategory(activeBusiness.category ?? 'massage');
+    setBranchEditPriceMin(activeBusiness.priceMin !== undefined ? String(activeBusiness.priceMin) : '');
+    setBranchEditPriceMax(activeBusiness.priceMax !== undefined ? String(activeBusiness.priceMax) : '');
+  }, [activeBusiness]);
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Business dashboard</h1>
@@ -301,19 +330,180 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
             ))}
           </select>
         ) : (
-          <p className="text-sm text-slate-600">
-            No branch assigned yet. Create one via API first, then it appears here.
-          </p>
+          <p className="text-sm text-slate-600">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
         )}
-        <p className="mt-2 text-xs text-slate-500">
-          You can still paste a Business ID manually if needed.
-        </p>
+        <p className="mt-2 text-xs text-slate-500">{locale === 'de' ? 'Du kannst optional auch eine Business ID manuell einfügen.' : 'You can still paste a Business ID manually if needed.'}</p>
         <input
           className="mt-2 w-full rounded-xl border p-2"
           placeholder="Manual Business ID (optional)"
           value={manualBusinessId}
           onChange={(e) => setManualBusinessId(e.target.value)}
         />
+
+        <div className="mt-4 rounded-xl border p-3">
+          <h3 className="mb-2 text-sm font-semibold">{locale === 'de' ? 'Neue Filiale anlegen' : 'Create new branch'}</h3>
+          <div className="grid gap-2">
+            <input
+              className="rounded-xl border p-2"
+              placeholder={locale === 'de' ? 'Filialname' : 'Branch name'}
+              value={branchName}
+              onChange={(e) => setBranchName(e.target.value)}
+            />
+            <input
+              className="rounded-xl border p-2"
+              placeholder={locale === 'de' ? 'Kategorie (z. B. massage)' : 'Category (e.g. massage)'}
+              value={branchCategory}
+              onChange={(e) => setBranchCategory(e.target.value)}
+            />
+            <input
+              className="rounded-xl border p-2"
+              placeholder={locale === 'de' ? 'Adresse / Straße' : 'Address / street'}
+              value={branchAddressLine}
+              onChange={(e) => setBranchAddressLine(e.target.value)}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                className="rounded-xl border p-2"
+                placeholder="Lat"
+                value={branchLat}
+                onChange={(e) => setBranchLat(e.target.value)}
+              />
+              <input
+                className="rounded-xl border p-2"
+                placeholder="Lng"
+                value={branchLng}
+                onChange={(e) => setBranchLng(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                className="rounded-xl border p-2"
+                type="number"
+                min="0"
+                placeholder={locale === 'de' ? 'Preis min' : 'Price min'}
+                value={branchPriceMin}
+                onChange={(e) => setBranchPriceMin(e.target.value)}
+              />
+              <input
+                className="rounded-xl border p-2"
+                type="number"
+                min="0"
+                placeholder={locale === 'de' ? 'Preis max' : 'Price max'}
+                value={branchPriceMax}
+                onChange={(e) => setBranchPriceMax(e.target.value)}
+              />
+            </div>
+            <button
+              type="button"
+              className="rounded-xl bg-brand-500 p-2 text-white disabled:opacity-50"
+              disabled={!branchName.trim() || !branchCategory.trim() || !branchAddressLine.trim() || createBusiness.isPending}
+              onClick={async () => {
+                setBranchCreateMessage('');
+                try {
+                  const created = await createBusiness.mutateAsync({
+                    name: branchName.trim(),
+                    category: branchCategory.trim(),
+                    location: {
+                      addressLine: branchAddressLine.trim(),
+                      lat: Number(branchLat) || 52.520008,
+                      lng: Number(branchLng) || 13.404954
+                    },
+                    priceMin: branchPriceMin ? Number(branchPriceMin) : undefined,
+                    priceMax: branchPriceMax ? Number(branchPriceMax) : undefined,
+                    country: 'DE'
+                  });
+                  setBranchCreateMessage(locale === 'de' ? 'Filiale wurde erstellt.' : 'Branch created successfully.');
+                  setSelectedBusinessId(created._id);
+                  setManualBusinessId('');
+                  setBranchName('');
+                  setBranchAddressLine('');
+                  setBranchPriceMin('');
+                  setBranchPriceMax('');
+                  await myBusinesses.refetch();
+                } catch (error) {
+                  setBranchCreateMessage(error instanceof Error ? error.message : locale === 'de' ? 'Erstellen fehlgeschlagen.' : 'Failed to create branch.');
+                }
+              }}
+            >
+              {createBusiness.isPending
+                ? locale === 'de'
+                  ? 'Erstelle Filiale...'
+                  : 'Creating branch...'
+                : locale === 'de'
+                  ? 'Filiale erstellen'
+                  : 'Create branch'}
+            </button>
+            {branchCreateMessage ? <p className="text-xs text-slate-700">{branchCreateMessage}</p> : null}
+          </div>
+        </div>
+
+        {activeBusinessId ? (
+          <div className="mt-4 rounded-xl border p-3">
+            <h3 className="mb-2 text-sm font-semibold">{locale === 'de' ? 'Ausgewählte Filiale bearbeiten' : 'Edit selected branch'}</h3>
+            <div className="grid gap-2">
+              <input
+                className="rounded-xl border p-2"
+                placeholder={locale === 'de' ? 'Filialname' : 'Branch name'}
+                value={branchEditName}
+                onChange={(e) => setBranchEditName(e.target.value)}
+              />
+              <input
+                className="rounded-xl border p-2"
+                placeholder={locale === 'de' ? 'Kategorie' : 'Category'}
+                value={branchEditCategory}
+                onChange={(e) => setBranchEditCategory(e.target.value)}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  className="rounded-xl border p-2"
+                  type="number"
+                  min="0"
+                  placeholder={locale === 'de' ? 'Preis min' : 'Price min'}
+                  value={branchEditPriceMin}
+                  onChange={(e) => setBranchEditPriceMin(e.target.value)}
+                />
+                <input
+                  className="rounded-xl border p-2"
+                  type="number"
+                  min="0"
+                  placeholder={locale === 'de' ? 'Preis max' : 'Price max'}
+                  value={branchEditPriceMax}
+                  onChange={(e) => setBranchEditPriceMax(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                className="rounded-xl bg-slate-900 p-2 text-white disabled:opacity-50"
+                disabled={!activeBusinessId || !branchEditName.trim() || updateBusiness.isPending}
+                onClick={async () => {
+                  setBranchEditMessage('');
+                  try {
+                    await updateBusiness.mutateAsync({
+                      businessId: activeBusinessId,
+                      name: branchEditName.trim(),
+                      category: branchEditCategory.trim(),
+                      priceMin: branchEditPriceMin ? Number(branchEditPriceMin) : undefined,
+                      priceMax: branchEditPriceMax ? Number(branchEditPriceMax) : undefined
+                    });
+                    setBranchEditMessage(locale === 'de' ? 'Filiale aktualisiert.' : 'Branch updated.');
+                    await myBusinesses.refetch();
+                  } catch (error) {
+                    setBranchEditMessage(error instanceof Error ? error.message : locale === 'de' ? 'Aktualisierung fehlgeschlagen.' : 'Update failed.');
+                  }
+                }}
+              >
+                {updateBusiness.isPending
+                  ? locale === 'de'
+                    ? 'Speichere...'
+                    : 'Saving...'
+                  : locale === 'de'
+                    ? 'Filiale speichern'
+                    : 'Save branch'}
+              </button>
+              {branchEditMessage ? <p className="text-xs text-slate-700">{branchEditMessage}</p> : null}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
