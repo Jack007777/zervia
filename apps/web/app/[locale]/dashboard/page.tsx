@@ -26,6 +26,13 @@ import {
 } from '../../../src/lib/api/hooks';
 import { getSessionUser } from '../../../src/lib/auth/session';
 
+type BranchAddressSuggestion = {
+  placeId: string;
+  label: string;
+  lat: number;
+  lng: number;
+};
+
 export default function DashboardPage() {
   const { locale } = useParams<{ locale: 'de' | 'en' }>();
   const session = getSessionUser();
@@ -261,6 +268,9 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [branchAddressLine, setBranchAddressLine] = useState('');
   const [branchLat, setBranchLat] = useState('52.520008');
   const [branchLng, setBranchLng] = useState('13.404954');
+  const [branchAddressSuggestions, setBranchAddressSuggestions] = useState<BranchAddressSuggestion[]>([]);
+  const [showBranchAddressSuggestions, setShowBranchAddressSuggestions] = useState(false);
+  const [branchAddressLookupLoading, setBranchAddressLookupLoading] = useState(false);
   const [branchPriceMin, setBranchPriceMin] = useState('');
   const [branchPriceMax, setBranchPriceMax] = useState('');
   const [branchCreateMessage, setBranchCreateMessage] = useState('');
@@ -295,6 +305,59 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
     setBookingMode(activeBusiness.bookingMode ?? 'instant');
     setRequireVerifiedPhoneForBooking(Boolean(activeBusiness.requireVerifiedPhoneForBooking));
   }, [activeBusiness]);
+
+  useEffect(() => {
+    const query = branchAddressLine.trim();
+    if (query.length < 3) {
+      setBranchAddressSuggestions([]);
+      setShowBranchAddressSuggestions(false);
+      setBranchAddressLookupLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setBranchAddressLookupLoading(true);
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=de&limit=6&q=${encodeURIComponent(query)}`;
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            'accept-language': locale === 'de' ? 'de' : 'en'
+          }
+        });
+        if (!response.ok) {
+          setBranchAddressSuggestions([]);
+          setShowBranchAddressSuggestions(false);
+          return;
+        }
+        const payload = (await response.json()) as Array<{
+          place_id: number | string;
+          display_name: string;
+          lat: string;
+          lon: string;
+        }>;
+        const next = payload.map((item) => ({
+          placeId: String(item.place_id),
+          label: item.display_name,
+          lat: Number(item.lat),
+          lng: Number(item.lon)
+        }));
+        setBranchAddressSuggestions(next);
+        setShowBranchAddressSuggestions(true);
+      } catch {
+        setBranchAddressSuggestions([]);
+        setShowBranchAddressSuggestions(false);
+      } finally {
+        setBranchAddressLookupLoading(false);
+      }
+    }, 260);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [branchAddressLine, locale]);
 
   useEffect(() => {
     if (!activeBusiness) {
@@ -360,7 +423,40 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
               placeholder={locale === 'de' ? 'Adresse / Straße' : 'Address / street'}
               value={branchAddressLine}
               onChange={(e) => setBranchAddressLine(e.target.value)}
+              onFocus={() => {
+                if (branchAddressSuggestions.length > 0) {
+                  setShowBranchAddressSuggestions(true);
+                }
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowBranchAddressSuggestions(false), 120);
+              }}
             />
+            {branchAddressLookupLoading ? (
+              <p className="text-xs text-slate-500">
+                {locale === 'de' ? 'Suche Adressen ...' : 'Searching addresses ...'}
+              </p>
+            ) : null}
+            {showBranchAddressSuggestions && branchAddressSuggestions.length > 0 ? (
+              <div className="max-h-56 overflow-auto rounded-xl border bg-white shadow-sm">
+                {branchAddressSuggestions.map((suggestion) => (
+                  <button
+                    key={suggestion.placeId}
+                    type="button"
+                    className="block w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setBranchAddressLine(suggestion.label);
+                      setBranchLat(String(Number(suggestion.lat.toFixed(6))));
+                      setBranchLng(String(Number(suggestion.lng.toFixed(6))));
+                      setShowBranchAddressSuggestions(false);
+                    }}
+                  >
+                    {suggestion.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <div className="grid grid-cols-2 gap-2">
               <input
                 className="rounded-xl border p-2"
