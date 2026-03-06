@@ -26,7 +26,11 @@ async function bootstrap() {
     })
   );
 
-  const corsAllowedOrigins = (process.env.CORS_ORIGINS ?? process.env.WEB_ORIGIN ?? 'http://localhost:3000')
+  const corsAllowedOrigins = (
+    process.env.CORS_ORIGINS ??
+    process.env.WEB_ORIGIN ??
+    'http://localhost:3000,https://zervia.eu,https://www.zervia.eu'
+  )
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
