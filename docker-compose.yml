@@ -9,6 +9,8 @@ services:
     restart: unless-stopped
     expose:
       - "4000"
+    ports:
+      - "127.0.0.1:4100:4000"
     networks:
       - zervia
 

@@ -114,3 +114,26 @@ Cron example (`crontab -e`):
 2. For pure static export you must adapt app to static-only constraints; otherwise run Next.js server behind nginx.
 3. Add another Nginx server block for `zervia.eu` and proxy to web container/service.
 4. Keep `api.zervia.eu` and `zervia.eu` certificates managed via certbot.
+
+## 7) Quick troubleshooting (API startup + CORS)
+
+If business dashboard actions fail with browser `CORS` errors:
+
+1. Check API container health:
+
+```bash
+docker compose ps
+docker compose logs --tail=100 api
+curl -i http://127.0.0.1:4100/api/v1/health
+```
+
+2. Check preflight response:
+
+```bash
+curl -i -X OPTIONS "https://api.zervia.eu/api/v1/business" \
+  -H "Origin: https://www.zervia.eu" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: content-type,authorization"
+```
+
+Expected result: `204` or `200` with `Access-Control-Allow-Origin`.
