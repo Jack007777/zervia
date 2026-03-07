@@ -742,8 +742,8 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 onClick={async () => {
                   const confirmed = window.confirm(
                     locale === 'de'
-                      ? 'Diese Filiale aus deiner Liste entfernen? Bestehende Daten bleiben intern erhalten, die Filiale wird aber deaktiviert.'
-                      : 'Remove this branch from your list? Existing data stays internal, but the branch will be archived.'
+                      ? 'Diese Filiale endgültig löschen? Zugehörige Services, Buchungen, Kundenlisten und Anzeigen werden ebenfalls entfernt.'
+                      : 'Delete this branch permanently? Related services, bookings, customer lists and ads will be removed too.'
                   );
                   if (!confirmed) {
                     return;
@@ -762,7 +762,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       remaining[0];
                     setSelectedBusinessId(nextBusiness?._id ?? '');
                     setManualBusinessId('');
-                    setBranchEditMessage(locale === 'de' ? 'Filiale entfernt.' : 'Branch removed.');
+                    setBranchEditMessage(locale === 'de' ? 'Filiale endgültig gelöscht.' : 'Branch deleted permanently.');
                   } catch (error) {
                     setBranchEditMessage(
                       error instanceof Error

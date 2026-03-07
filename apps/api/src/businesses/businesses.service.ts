@@ -4,6 +4,10 @@ import { Model } from 'mongoose';
 
 import { TIMEZONE } from '@zervia/shared';
 
+import { AdEntity, type AdDocument } from '../ads/ad.schema';
+import { AvailabilityEntity, type AvailabilityDocument } from '../availability/availability.schema';
+import { BookingEntity, type BookingDocument } from '../bookings/booking.schema';
+import { ServiceEntity, type ServiceDocument } from '../services/service.schema';
 import { BusinessEntity, type BusinessDocument } from './business.schema';
 import { BusinessCustomerListEntity, type BusinessCustomerListDocument } from './customer-list.schema';
 import type {
@@ -33,7 +37,11 @@ export class BusinessesService {
   constructor(
     @InjectModel(BusinessEntity.name) private readonly businessModel: Model<BusinessDocument>,
     @InjectModel(BusinessCustomerListEntity.name)
-    private readonly customerListModel: Model<BusinessCustomerListDocument>
+    private readonly customerListModel: Model<BusinessCustomerListDocument>,
+    @InjectModel(ServiceEntity.name) private readonly serviceModel: Model<ServiceDocument>,
+    @InjectModel(BookingEntity.name) private readonly bookingModel: Model<BookingDocument>,
+    @InjectModel(AvailabilityEntity.name) private readonly availabilityModel: Model<AvailabilityDocument>,
+    @InjectModel(AdEntity.name) private readonly adModel: Model<AdDocument>
   ) {}
 
   create(ownerUserId: string, input: CreateBusinessDto) {
@@ -69,16 +77,14 @@ export class BusinessesService {
 
   async archive(businessId: string, ownerUserId: string, isAdmin = false) {
     await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
-    await this.businessModel
-      .findByIdAndUpdate(
-        businessId,
-        {
-          isActive: false
-        },
-        { new: true }
-      )
-      .lean()
-      .exec();
+    await Promise.all([
+      this.bookingModel.deleteMany({ businessId }).exec(),
+      this.serviceModel.deleteMany({ businessId }).exec(),
+      this.availabilityModel.deleteMany({ businessId }).exec(),
+      this.customerListModel.deleteMany({ businessId }).exec(),
+      this.adModel.deleteMany({ businessId }).exec()
+    ]);
+    await this.businessModel.findByIdAndDelete(businessId).exec();
 
     return { success: true };
   }
