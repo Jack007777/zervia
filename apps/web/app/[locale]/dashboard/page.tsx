@@ -751,7 +751,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
 
                   setBranchEditMessage('');
                   try {
-                    await deleteBusiness.mutateAsync({
+                    const result = await deleteBusiness.mutateAsync({
                       businessId: activeBusinessId
                     });
                     const currentId = activeBusinessId;
@@ -762,7 +762,19 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       remaining[0];
                     setSelectedBusinessId(nextBusiness?._id ?? '');
                     setManualBusinessId('');
-                    setBranchEditMessage(locale === 'de' ? 'Filiale endgültig gelöscht.' : 'Branch deleted permanently.');
+                    setBranchEditMessage(
+                      result.mode === 'archived'
+                        ? locale === 'de'
+                          ? `Filiale archiviert. Endgültige Löschung nach dem ${new Date(
+                              result.deletionScheduledAt ?? ''
+                            ).toLocaleDateString('de-DE')}.`
+                          : `Branch archived. Permanent deletion after ${new Date(
+                              result.deletionScheduledAt ?? ''
+                            ).toLocaleDateString('en-GB')}.`
+                        : locale === 'de'
+                          ? 'Filiale endgültig gelöscht.'
+                          : 'Branch deleted permanently.'
+                    );
                   } catch (error) {
                     setBranchEditMessage(
                       error instanceof Error

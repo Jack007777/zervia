@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -33,7 +33,9 @@ function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 }
 
 @Injectable()
-export class BusinessesService {
+export class BusinessesService implements OnModuleInit, OnModuleDestroy {
+  private cleanupTimer?: NodeJS.Timeout;
+
   constructor(
     @InjectModel(BusinessEntity.name) private readonly businessModel: Model<BusinessDocument>,
     @InjectModel(BusinessCustomerListEntity.name)
@@ -43,6 +45,19 @@ export class BusinessesService {
     @InjectModel(AvailabilityEntity.name) private readonly availabilityModel: Model<AvailabilityDocument>,
     @InjectModel(AdEntity.name) private readonly adModel: Model<AdDocument>
   ) {}
+
+  async onModuleInit() {
+    await this.cleanupExpiredArchivedBusinesses();
+    this.cleanupTimer = setInterval(() => {
+      void this.cleanupExpiredArchivedBusinesses();
+    }, 12 * 60 * 60 * 1000);
+  }
+
+  onModuleDestroy() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+  }
 
   create(ownerUserId: string, input: CreateBusinessDto) {
     return this.businessModel.create({
@@ -77,16 +92,35 @@ export class BusinessesService {
 
   async archive(businessId: string, ownerUserId: string, isAdmin = false) {
     await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
-    await Promise.all([
-      this.bookingModel.deleteMany({ businessId }).exec(),
-      this.serviceModel.deleteMany({ businessId }).exec(),
-      this.availabilityModel.deleteMany({ businessId }).exec(),
-      this.customerListModel.deleteMany({ businessId }).exec(),
-      this.adModel.deleteMany({ businessId }).exec()
-    ]);
-    await this.businessModel.findByIdAndDelete(businessId).exec();
+    const bookingCount = await this.bookingModel.countDocuments({ businessId }).exec();
 
-    return { success: true };
+    if (bookingCount > 0) {
+      const archivedAt = new Date();
+      const deletionScheduledAt = new Date(archivedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+      await this.businessModel
+        .findByIdAndUpdate(
+          businessId,
+          {
+            isActive: false,
+            archivedAt,
+            deletionScheduledAt
+          },
+          { new: true }
+        )
+        .exec();
+
+      return {
+        success: true,
+        mode: 'archived' as const,
+        deletionScheduledAt
+      };
+    }
+
+    await this.deleteBusinessData(businessId);
+    return {
+      success: true,
+      mode: 'deleted' as const
+    };
   }
 
   async listCustomerList(
@@ -271,6 +305,34 @@ export class BusinessesService {
       .select('name category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
+  }
+
+  private async cleanupExpiredArchivedBusinesses() {
+    const expiredBusinesses = await this.businessModel
+      .find({
+        isActive: false,
+        deletionScheduledAt: { $lte: new Date() }
+      })
+      .select('_id')
+      .lean()
+      .exec();
+
+    if (expiredBusinesses.length === 0) {
+      return;
+    }
+
+    await Promise.all(expiredBusinesses.map((business) => this.deleteBusinessData(String(business._id))));
+  }
+
+  private async deleteBusinessData(businessId: string) {
+    await Promise.all([
+      this.bookingModel.deleteMany({ businessId }).exec(),
+      this.serviceModel.deleteMany({ businessId }).exec(),
+      this.availabilityModel.deleteMany({ businessId }).exec(),
+      this.customerListModel.deleteMany({ businessId }).exec(),
+      this.adModel.deleteMany({ businessId }).exec()
+    ]);
+    await this.businessModel.findByIdAndDelete(businessId).exec();
   }
 
   private async assertOwnerOrAdmin(businessId: string, ownerUserId: string, isAdmin: boolean) {

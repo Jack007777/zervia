@@ -384,7 +384,9 @@ export function useUpdateBusiness() {
 export function useDeleteBusiness() {
   return useMutation({
     mutationFn: (payload: { businessId: string }) =>
-      apiClient<{ success: boolean }>(`/business/${payload.businessId}`, {
+      apiClient<{ success: boolean; mode: 'archived' | 'deleted'; deletionScheduledAt?: string }>(
+        `/business/${payload.businessId}`,
+        {
         method: 'DELETE',
         auth: true
       })

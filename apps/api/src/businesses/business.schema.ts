@@ -70,6 +70,12 @@ export class BusinessEntity {
   @Prop({ default: true })
   isActive!: boolean;
 
+  @Prop({ type: Date })
+  archivedAt?: Date;
+
+  @Prop({ type: Date, index: true })
+  deletionScheduledAt?: Date;
+
   @Prop({ default: false, index: true })
   isVirtual!: boolean;
 
