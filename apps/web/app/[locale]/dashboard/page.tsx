@@ -15,6 +15,7 @@ import {
   useCreateBusiness,
   useCreateAd,
   useDeleteBusinessCustomerListEntry,
+  useDeleteBusiness,
   useMyBusinesses,
   useMyAds,
   useRejectBooking,
@@ -284,6 +285,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [branchEditMessage, setBranchEditMessage] = useState('');
   const createAd = useCreateAd();
   const createBusiness = useCreateBusiness();
+  const deleteBusiness = useDeleteBusiness();
   const myAds = useMyAds();
   const updateBusiness = useUpdateBusiness();
   const activeBusinessId = selectedBusinessId || manualBusinessId.trim();
@@ -732,6 +734,53 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   : locale === 'de'
                     ? 'Filiale speichern'
                     : 'Save branch'}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-rose-200 p-2 text-rose-700 disabled:opacity-50"
+                disabled={!activeBusinessId || deleteBusiness.isPending}
+                onClick={async () => {
+                  const confirmed = window.confirm(
+                    locale === 'de'
+                      ? 'Diese Filiale aus deiner Liste entfernen? Bestehende Daten bleiben intern erhalten, die Filiale wird aber deaktiviert.'
+                      : 'Remove this branch from your list? Existing data stays internal, but the branch will be archived.'
+                  );
+                  if (!confirmed) {
+                    return;
+                  }
+
+                  setBranchEditMessage('');
+                  try {
+                    await deleteBusiness.mutateAsync({
+                      businessId: activeBusinessId
+                    });
+                    const currentId = activeBusinessId;
+                    const refreshed = await myBusinesses.refetch();
+                    const remaining = refreshed.data ?? [];
+                    const nextBusiness =
+                      remaining.find((item) => item._id !== currentId) ??
+                      remaining[0];
+                    setSelectedBusinessId(nextBusiness?._id ?? '');
+                    setManualBusinessId('');
+                    setBranchEditMessage(locale === 'de' ? 'Filiale entfernt.' : 'Branch removed.');
+                  } catch (error) {
+                    setBranchEditMessage(
+                      error instanceof Error
+                        ? error.message
+                        : locale === 'de'
+                          ? 'Löschen fehlgeschlagen.'
+                          : 'Delete failed.'
+                    );
+                  }
+                }}
+              >
+                {deleteBusiness.isPending
+                  ? locale === 'de'
+                    ? 'Entferne...'
+                    : 'Removing...'
+                  : locale === 'de'
+                    ? 'Filiale löschen'
+                    : 'Delete branch'}
               </button>
               {branchEditMessage ? <p className="text-xs text-slate-700">{branchEditMessage}</p> : null}
             </div>

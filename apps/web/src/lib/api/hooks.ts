@@ -381,6 +381,16 @@ export function useUpdateBusiness() {
   });
 }
 
+export function useDeleteBusiness() {
+  return useMutation({
+    mutationFn: (payload: { businessId: string }) =>
+      apiClient<{ success: boolean }>(`/business/${payload.businessId}`, {
+        method: 'DELETE',
+        auth: true
+      })
+  });
+}
+
 export function useBusinessCustomerList(businessId: string, country = 'DE') {
   return useQuery({
     queryKey: ['business-customer-list', businessId, country],

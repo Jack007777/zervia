@@ -60,6 +60,22 @@ export class BusinessesController {
     return this.businessesService.update(id, body);
   }
 
+  @Delete('business/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiParam({ name: 'id', example: 'biz_123' })
+  archive(
+    @Param('id') id: string,
+    @Req() req: { user: { sub: string; roles?: string[] } }
+  ) {
+    return this.businessesService.archive(
+      id,
+      req.user.sub,
+      Boolean(req.user.roles?.includes('admin'))
+    );
+  }
+
   @Get('business/:id/customers')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth('bearer')

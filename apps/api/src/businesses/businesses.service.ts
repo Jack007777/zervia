@@ -50,7 +50,7 @@ export class BusinessesService {
 
   listMine(ownerUserId: string, country = 'DE') {
     return this.businessModel
-      .find({ ownerUserId, country })
+      .find({ ownerUserId, country, isActive: true })
       .sort({ createdAt: -1 })
       .select(
         'name category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt'
@@ -65,6 +65,22 @@ export class BusinessesService {
 
   update(id: string, input: UpdateBusinessDto) {
     return this.businessModel.findByIdAndUpdate(id, input, { new: true }).exec();
+  }
+
+  async archive(businessId: string, ownerUserId: string, isAdmin = false) {
+    await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
+    await this.businessModel
+      .findByIdAndUpdate(
+        businessId,
+        {
+          isActive: false
+        },
+        { new: true }
+      )
+      .lean()
+      .exec();
+
+    return { success: true };
   }
 
   async listCustomerList(
