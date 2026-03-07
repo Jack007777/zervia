@@ -14,10 +14,9 @@ FROM base AS runner
 ENV NODE_ENV=production
 ENV PORT=4000
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/packages/shared ./packages/shared
+# Keep the full workspace layout so pnpm-linked runtime dependencies
+# resolve correctly inside the container.
+COPY --from=builder /app /app
 
 EXPOSE 4000
 CMD ["node", "apps/api/dist/apps/api/src/main.js"]
