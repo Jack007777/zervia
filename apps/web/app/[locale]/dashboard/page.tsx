@@ -267,6 +267,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [customerNote, setCustomerNote] = useState('');
   const [customerListType, setCustomerListType] = useState<'none' | 'whitelist' | 'blacklist'>('whitelist');
   const [customerListMessage, setCustomerListMessage] = useState('');
+  const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
   const [branchName, setBranchName] = useState('');
   const [branchCategory, setBranchCategory] = useState('massage');
   const [branchAddressLine, setBranchAddressLine] = useState('');
@@ -543,133 +544,158 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
         />
 
         <div className="mt-4 rounded-xl border p-3">
-          <h3 className="mb-2 text-sm font-semibold">{locale === 'de' ? 'Neue Filiale anlegen' : 'Create new branch'}</h3>
-          <div className="grid gap-2">
-            <input
-              className="rounded-xl border p-2"
-              placeholder={locale === 'de' ? 'Filialname' : 'Branch name'}
-              value={branchName}
-              onChange={(e) => setBranchName(e.target.value)}
-            />
-            <input
-              className="rounded-xl border p-2"
-              placeholder={locale === 'de' ? 'Kategorie (z. B. massage)' : 'Category (e.g. massage)'}
-              value={branchCategory}
-              onChange={(e) => setBranchCategory(e.target.value)}
-            />
-            <input
-              className="rounded-xl border p-2"
-              placeholder={locale === 'de' ? 'Adresse / Straße' : 'Address / street'}
-              value={branchAddressLine}
-              onChange={(e) => setBranchAddressLine(e.target.value)}
-              onFocus={() => {
-                if (branchAddressSuggestions.length > 0) {
-                  setShowBranchAddressSuggestions(true);
-                }
-              }}
-              onBlur={() => {
-                setTimeout(() => setShowBranchAddressSuggestions(false), 120);
-              }}
-            />
-            {branchAddressLookupLoading ? (
-              <p className="text-xs text-slate-500">
-                {locale === 'de' ? 'Suche Adressen ...' : 'Searching addresses ...'}
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold">{locale === 'de' ? 'Neue Filiale anlegen' : 'Create new branch'}</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                {locale === 'de'
+                  ? 'Standardm??ig eingeklappt, damit dein Dashboard ?bersichtlich bleibt.'
+                  : 'Collapsed by default to keep your workspace focused.'}
               </p>
-            ) : null}
-            {showBranchAddressSuggestions && branchAddressSuggestions.length > 0 ? (
-              <div className="max-h-56 overflow-auto rounded-xl border bg-white shadow-sm">
-                {branchAddressSuggestions.map((suggestion) => (
-                  <button
-                    key={suggestion.placeId}
-                    type="button"
-                    className="block w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setBranchAddressLine(suggestion.label);
-                      setBranchLat(String(Number(suggestion.lat.toFixed(6))));
-                      setBranchLng(String(Number(suggestion.lng.toFixed(6))));
-                      setShowBranchAddressSuggestions(false);
-                    }}
-                  >
-                    {suggestion.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                className="rounded-xl border p-2"
-                placeholder="Lat"
-                value={branchLat}
-                onChange={(e) => setBranchLat(e.target.value)}
-              />
-              <input
-                className="rounded-xl border p-2"
-                placeholder="Lng"
-                value={branchLng}
-                onChange={(e) => setBranchLng(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                className="rounded-xl border p-2"
-                type="number"
-                min="0"
-                placeholder={locale === 'de' ? 'Preis min' : 'Price min'}
-                value={branchPriceMin}
-                onChange={(e) => setBranchPriceMin(e.target.value)}
-              />
-              <input
-                className="rounded-xl border p-2"
-                type="number"
-                min="0"
-                placeholder={locale === 'de' ? 'Preis max' : 'Price max'}
-                value={branchPriceMax}
-                onChange={(e) => setBranchPriceMax(e.target.value)}
-              />
             </div>
             <button
               type="button"
-              className="rounded-xl bg-brand-500 p-2 text-white disabled:opacity-50"
-              disabled={!branchName.trim() || !branchCategory.trim() || !branchAddressLine.trim() || createBusiness.isPending}
-              onClick={async () => {
-                setBranchCreateMessage('');
-                try {
-                  const created = await createBusiness.mutateAsync({
-                    name: branchName.trim(),
-                    category: branchCategory.trim(),
-                    location: {
-                      addressLine: branchAddressLine.trim(),
-                      lat: Number(branchLat) || 52.520008,
-                      lng: Number(branchLng) || 13.404954
-                    },
-                    priceMin: branchPriceMin ? Number(branchPriceMin) : undefined,
-                    priceMax: branchPriceMax ? Number(branchPriceMax) : undefined,
-                    country: 'DE'
-                  });
-                  setBranchCreateMessage(locale === 'de' ? 'Filiale wurde erstellt.' : 'Branch created successfully.');
-                  setSelectedBusinessId(created._id);
-                  setManualBusinessId('');
-                  setBranchName('');
-                  setBranchAddressLine('');
-                  setBranchPriceMin('');
-                  setBranchPriceMax('');
-                  await myBusinesses.refetch();
-                } catch (error) {
-                  setBranchCreateMessage(error instanceof Error ? error.message : locale === 'de' ? 'Erstellen fehlgeschlagen.' : 'Failed to create branch.');
-                }
-              }}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
+              onClick={() => setIsCreateBranchOpen((prev) => !prev)}
             >
-              {createBusiness.isPending
+              {isCreateBranchOpen
                 ? locale === 'de'
-                  ? 'Erstelle Filiale...'
-                  : 'Creating branch...'
+                  ? 'Schlie?en'
+                  : 'Close'
                 : locale === 'de'
-                  ? 'Filiale erstellen'
-                  : 'Create branch'}
+                  ? 'Neue Filiale'
+                  : 'New branch'}
             </button>
-            {branchCreateMessage ? <p className="text-xs text-slate-700">{branchCreateMessage}</p> : null}
           </div>
+          {isCreateBranchOpen ? (
+            <div className="mt-3 grid gap-2">
+              <input
+                className="rounded-xl border p-2"
+                placeholder={locale === 'de' ? 'Filialname' : 'Branch name'}
+                value={branchName}
+                onChange={(e) => setBranchName(e.target.value)}
+              />
+              <input
+                className="rounded-xl border p-2"
+                placeholder={locale === 'de' ? 'Kategorie (z. B. massage)' : 'Category (e.g. massage)'}
+                value={branchCategory}
+                onChange={(e) => setBranchCategory(e.target.value)}
+              />
+              <input
+                className="rounded-xl border p-2"
+                placeholder={locale === 'de' ? 'Adresse / Stra?e' : 'Address / street'}
+                value={branchAddressLine}
+                onChange={(e) => setBranchAddressLine(e.target.value)}
+                onFocus={() => {
+                  if (branchAddressSuggestions.length > 0) {
+                    setShowBranchAddressSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowBranchAddressSuggestions(false), 120);
+                }}
+              />
+              {branchAddressLookupLoading ? (
+                <p className="text-xs text-slate-500">
+                  {locale === 'de' ? 'Suche Adressen ...' : 'Searching addresses ...'}
+                </p>
+              ) : null}
+              {showBranchAddressSuggestions && branchAddressSuggestions.length > 0 ? (
+                <div className="max-h-56 overflow-auto rounded-xl border bg-white shadow-sm">
+                  {branchAddressSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.placeId}
+                      type="button"
+                      className="block w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setBranchAddressLine(suggestion.label);
+                        setBranchLat(String(Number(suggestion.lat.toFixed(6))));
+                        setBranchLng(String(Number(suggestion.lng.toFixed(6))));
+                        setShowBranchAddressSuggestions(false);
+                      }}
+                    >
+                      {suggestion.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  className="rounded-xl border p-2"
+                  placeholder="Lat"
+                  value={branchLat}
+                  onChange={(e) => setBranchLat(e.target.value)}
+                />
+                <input
+                  className="rounded-xl border p-2"
+                  placeholder="Lng"
+                  value={branchLng}
+                  onChange={(e) => setBranchLng(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  className="rounded-xl border p-2"
+                  type="number"
+                  min="0"
+                  placeholder={locale === 'de' ? 'Preis min' : 'Price min'}
+                  value={branchPriceMin}
+                  onChange={(e) => setBranchPriceMin(e.target.value)}
+                />
+                <input
+                  className="rounded-xl border p-2"
+                  type="number"
+                  min="0"
+                  placeholder={locale === 'de' ? 'Preis max' : 'Price max'}
+                  value={branchPriceMax}
+                  onChange={(e) => setBranchPriceMax(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                className="rounded-xl bg-brand-500 p-2 text-white disabled:opacity-50"
+                disabled={!branchName.trim() || !branchCategory.trim() || !branchAddressLine.trim() || createBusiness.isPending}
+                onClick={async () => {
+                  setBranchCreateMessage('');
+                  try {
+                    const created = await createBusiness.mutateAsync({
+                      name: branchName.trim(),
+                      category: branchCategory.trim(),
+                      location: {
+                        addressLine: branchAddressLine.trim(),
+                        lat: Number(branchLat) || 52.520008,
+                        lng: Number(branchLng) || 13.404954
+                      },
+                      priceMin: branchPriceMin ? Number(branchPriceMin) : undefined,
+                      priceMax: branchPriceMax ? Number(branchPriceMax) : undefined,
+                      country: 'DE'
+                    });
+                    setBranchCreateMessage(locale === 'de' ? 'Filiale wurde erstellt.' : 'Branch created successfully.');
+                    setSelectedBusinessId(created._id);
+                    setManualBusinessId('');
+                    setBranchName('');
+                    setBranchAddressLine('');
+                    setBranchPriceMin('');
+                    setBranchPriceMax('');
+                    setIsCreateBranchOpen(false);
+                    await myBusinesses.refetch();
+                  } catch (error) {
+                    setBranchCreateMessage(error instanceof Error ? error.message : locale === 'de' ? 'Erstellen fehlgeschlagen.' : 'Failed to create branch.');
+                  }
+                }}
+              >
+                {createBusiness.isPending
+                  ? locale === 'de'
+                    ? 'Erstelle Filiale...'
+                    : 'Creating branch...'
+                  : locale === 'de'
+                    ? 'Filiale erstellen'
+                    : 'Create branch'}
+              </button>
+              {branchCreateMessage ? <p className="text-xs text-slate-700">{branchCreateMessage}</p> : null}
+            </div>
+          ) : null}
         </div>
 
         {activeBusinessId ? (
