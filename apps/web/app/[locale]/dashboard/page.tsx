@@ -509,18 +509,36 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
               {locale === 'de' ? 'Arbeitsbereich' : 'Workspace'}
             </p>
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+              <button
+                type="button"
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 transition ${
+                  activeTab === 'branches' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+                onClick={() => handleTabChange('branches')}
+              >
                 <DashboardIcon name="branch" className="h-4 w-4" />
                 {locale === 'de' ? 'Filialen' : 'Branches'}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+              </button>
+              <button
+                type="button"
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 transition ${
+                  activeTab === 'bookings' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+                onClick={() => handleTabChange('bookings')}
+              >
                 <DashboardIcon name="bookings" className="h-4 w-4" />
                 {locale === 'de' ? 'Buchungen' : 'Bookings'}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+              </button>
+              <button
+                type="button"
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 transition ${
+                  activeTab === 'customers' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+                onClick={() => handleTabChange('customers')}
+              >
                 <DashboardIcon name="customers" className="h-4 w-4" />
                 {locale === 'de' ? 'Kunden' : 'Customers'}
-              </span>
+              </button>
             </div>
           </div>
           <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900">
