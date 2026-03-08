@@ -468,15 +468,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
     <div className="space-y-4">
       <section className="overflow-hidden rounded-[28px] bg-slate-900 p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="min-w-0 flex-1 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Merchant workspace</p>
-            <h1 className="text-2xl font-semibold">{locale === 'de' ? 'Gesch\u00e4fts\u00fcbersicht' : 'Business overview'}</h1>
-            <p className="max-w-2xl text-sm text-slate-300">
-              {locale === 'de'
-                ? 'Arbeite wie in einem echten Backoffice: Filialen verwalten, Buchungen pr\u00fcfen, bekannte Kunden markieren und Kampagnen steuern.'
-                : 'Run your day from one place: manage branches, review bookings, label repeat customers and launch campaigns.'}
-            </p>
-          </div>
+          <div className="hidden min-w-0 flex-1 md:block" />
           <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl bg-white/10 p-3 text-sm text-slate-100 md:max-w-[320px] md:flex-none">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
               <DashboardIcon name="branch" className="h-4 w-4" />
