@@ -404,10 +404,27 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 : 'Run your day from one place: manage branches, review bookings, label repeat customers and launch campaigns.'}
             </p>
           </div>
-          <div className="rounded-2xl bg-white/10 p-3 text-sm text-slate-100">
-            <p className="font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gewÃ¤hlt' : 'No branch selected')}</p>
+          <div className="rounded-2xl bg-white/10 p-3 text-sm text-slate-100 md:min-w-[320px]">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">{locale === 'de' ? 'Aktive Filiale' : 'Active branch'}</p>
+            {(myBusinesses.data ?? []).length ? (
+              <select
+                className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/30 p-2 text-sm text-white outline-none"
+                value={selectedBusinessId}
+                onChange={(e) => setSelectedBusinessId(e.target.value)}
+              >
+                <option value="">{locale === 'de' ? 'Filiale auswÃ¤hlen' : 'Select branch'}</option>
+                {(myBusinesses.data ?? []).map((item) => (
+                  <option key={item._id} value={item._id} className="text-slate-900">
+                    {item.name} - {item.city} {item.isVirtual ? '(Virtual)' : ''}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="mt-2 text-slate-300">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
+            )}
+            <p className="mt-3 font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gewÃ¤hlt' : 'No branch selected')}</p>
             <p className="text-slate-300">
-              {activeBusiness ? `${activeBusiness.city}, ${activeBusiness.country}` : locale === 'de' ? 'WÃ¤hle unten eine Filiale aus.' : 'Select a branch below.'}
+              {activeBusiness ? `${activeBusiness.city}, ${activeBusiness.country}` : locale === 'de' ? 'WÃ¤hle hier oben eine Filiale aus.' : 'Select a branch above.'}
             </p>
           </div>
         </div>
@@ -518,23 +535,15 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       {(activeTab === 'branches' || activeTab === 'overview') ? (
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">My branches</h2>
-        {myBusinesses.isLoading ? <p className="text-sm text-slate-600">Loading branches...</p> : null}
-        {(myBusinesses.data ?? []).length ? (
-          <select
-            className="w-full rounded-xl border p-2"
-            value={selectedBusinessId}
-            onChange={(e) => setSelectedBusinessId(e.target.value)}
-          >
-            <option value="">Select branch</option>
-            {(myBusinesses.data ?? []).map((item) => (
-              <option key={item._id} value={item._id}>
-                {item.name} - {item.city} {item.isVirtual ? '(Virtual)' : ''}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <p className="text-sm text-slate-600">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
-        )}
+        <p className="text-sm text-slate-600">
+          {activeBusiness
+            ? locale === 'de'
+              ? `Aktuell bearbeitest du ${activeBusiness.name}.`
+              : `You are currently editing ${activeBusiness.name}.`
+            : locale === 'de'
+              ? 'WÃ¤hle oben im Workspace zuerst eine Filiale aus oder nutze unten eine Business ID.'
+              : 'Select a branch from the workspace card above or use a Business ID below.'}
+        </p>
         <p className="mt-2 text-xs text-slate-500">{locale === 'de' ? 'Du kannst optional auch eine Business ID manuell einfÃ¼gen.' : 'You can still paste a Business ID manually if needed.'}</p>
         <input
           className="mt-2 w-full rounded-xl border p-2"
@@ -1203,4 +1212,5 @@ function DashboardPanelButton({
     </button>
   );
 }
+
 
