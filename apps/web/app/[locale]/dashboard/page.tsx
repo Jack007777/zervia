@@ -331,6 +331,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [customerListMessage, setCustomerListMessage] = useState('');
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
   const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false);
+  const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false);
   const [branchName, setBranchName] = useState('');
   const [branchCategory, setBranchCategory] = useState('massage');
   const [branchDescription, setBranchDescription] = useState('');
@@ -390,6 +391,49 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const settingsSectionRef = useRef<HTMLElement | null>(null);
   const createGalleryPreview = useMemo(() => parseGalleryImages(branchGalleryImagesText), [branchGalleryImagesText]);
   const editGalleryPreview = useMemo(() => parseGalleryImages(branchEditGalleryImagesText), [branchEditGalleryImagesText]);
+  const workspaceNavigation: Array<{
+    key: 'overview' | 'branches' | 'bookings' | 'customers' | 'marketing' | 'settings';
+    label: string;
+    hint: string;
+    icon: DashboardIconName;
+  }> = [
+    {
+      key: 'overview',
+      label: locale === 'de' ? 'Übersicht' : 'Overview',
+      hint: locale === 'de' ? 'Kennzahlen und Tagesfokus' : 'Metrics and daily focus',
+      icon: 'overview'
+    },
+    {
+      key: 'branches',
+      label: locale === 'de' ? 'Filialen' : 'Branches',
+      hint: locale === 'de' ? 'Filialen anlegen und bearbeiten' : 'Create and edit branches',
+      icon: 'branch'
+    },
+    {
+      key: 'bookings',
+      label: locale === 'de' ? 'Buchungen' : 'Bookings',
+      hint: locale === 'de' ? 'Anfragen bestätigen oder verschieben' : 'Confirm or counter requests',
+      icon: 'bookings'
+    },
+    {
+      key: 'customers',
+      label: locale === 'de' ? 'Kunden' : 'Customers',
+      hint: locale === 'de' ? 'Whitelist, Blacklist, Notizen' : 'Whitelist, blacklist, notes',
+      icon: 'customers'
+    },
+    {
+      key: 'marketing',
+      label: locale === 'de' ? 'Marketing' : 'Marketing',
+      hint: locale === 'de' ? 'Anzeigen einreichen und prüfen' : 'Submit ads and review performance',
+      icon: 'marketing'
+    },
+    {
+      key: 'settings',
+      label: locale === 'de' ? 'Einstellungen' : 'Settings',
+      hint: locale === 'de' ? 'Buchungsmodus und Regeln' : 'Booking mode and policy',
+      icon: 'settings'
+    }
+  ];
 
   useEffect(() => {
     if (!selectedBusinessId && businesses.length > 0) {
@@ -508,6 +552,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
 
   const handleTabChange = (tab: 'overview' | 'branches' | 'bookings' | 'customers' | 'marketing' | 'settings') => {
     setActiveTab(tab);
+    setIsWorkspaceMenuOpen(false);
     if (tab !== 'overview') {
       scrollToSection(tab);
     }
@@ -551,43 +596,83 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
 
   return (
     <div className="space-y-4">
+      {isWorkspaceMenuOpen ? (
+        <div className="fixed inset-0 z-40 bg-slate-950/35" onClick={() => setIsWorkspaceMenuOpen(false)}>
+          <aside
+            className="flex h-full w-[min(84vw,320px)] flex-col gap-4 bg-white p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                  {locale === 'de' ? 'Navigation' : 'Navigation'}
+                </p>
+                <p className="mt-1 text-lg font-semibold text-slate-900">
+                  {locale === 'de' ? 'Arbeitsbereiche' : 'Workspace areas'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600"
+                onClick={() => setIsWorkspaceMenuOpen(false)}
+                aria-label={locale === 'de' ? 'Menü schließen' : 'Close menu'}
+              >
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
+            <div className="space-y-2">
+              {workspaceNavigation.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`block w-full rounded-2xl border px-4 py-3 text-left transition ${
+                    activeTab === item.key
+                      ? 'border-brand-200 bg-brand-50 text-brand-700'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                  onClick={() => handleTabChange(item.key)}
+                >
+                  <span className="flex items-center gap-3">
+                    <DashboardIcon name={item.icon} className="h-4 w-4" />
+                    <span>
+                      <span className="block text-sm font-semibold">{item.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">{item.hint}</span>
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        </div>
+      ) : null}
       <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
         <div className="space-y-4">
-          <div className="min-w-0 flex-1 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-              {locale === 'de' ? 'Arbeitsbereich' : 'Workspace'}
-            </p>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-              <button
-                type="button"
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 transition ${
-                  activeTab === 'branches' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-                onClick={() => handleTabChange('branches')}
-              >
-                <DashboardIcon name="branch" className="h-4 w-4" />
-                {locale === 'de' ? 'Filialen' : 'Branches'}
-              </button>
-              <button
-                type="button"
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 transition ${
-                  activeTab === 'bookings' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-                onClick={() => handleTabChange('bookings')}
-              >
-                <DashboardIcon name="bookings" className="h-4 w-4" />
-                {locale === 'de' ? 'Buchungen' : 'Bookings'}
-              </button>
-              <button
-                type="button"
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 transition ${
-                  activeTab === 'customers' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-                onClick={() => handleTabChange('customers')}
-              >
-                <DashboardIcon name="customers" className="h-4 w-4" />
-                {locale === 'de' ? 'Kunden' : 'Customers'}
-              </button>
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white"
+              onClick={() => setIsWorkspaceMenuOpen(true)}
+              aria-label={locale === 'de' ? 'Arbeitsbereiche öffnen' : 'Open workspace areas'}
+            >
+              <span className="flex flex-col gap-1">
+                <span className="block h-0.5 w-5 rounded-full bg-current" />
+                <span className="block h-0.5 w-5 rounded-full bg-current" />
+                <span className="block h-0.5 w-5 rounded-full bg-current" />
+              </span>
+            </button>
+            <div className="min-w-0 flex-1 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                {locale === 'de' ? 'Arbeitsbereich' : 'Workspace'}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                <span className="rounded-full bg-brand-50 px-3 py-1 font-medium text-brand-700">
+                  {workspaceNavigation.find((item) => item.key === activeTab)?.label ?? (locale === 'de' ? 'Übersicht' : 'Overview')}
+                </span>
+                <span className="text-slate-400">•</span>
+                <span className="truncate">
+                  {workspaceNavigation.find((item) => item.key === activeTab)?.hint}
+                </span>
+              </div>
             </div>
           </div>
           <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900">
@@ -675,18 +760,6 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
           hint={locale === 'de' ? 'Laufende oder freigegebene Kampagnen' : 'Ads currently approved or running'}
           onClick={() => handleTabChange('marketing')}
         />
-      </section>
-
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">{locale === 'de' ? 'Schnellzugriff' : 'Quick access'}</h2>
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          <DashboardPanelButton active={activeTab === 'overview'} icon="overview" label={locale === 'de' ? 'Übersicht' : 'Overview'} hint={locale === 'de' ? 'Kennzahlen und Tagesfokus' : 'Metrics and daily focus'} onClick={() => handleTabChange('overview')} />
-          <DashboardPanelButton active={activeTab === 'branches'} icon="branch" label={locale === 'de' ? 'Filialen' : 'Branches'} hint={locale === 'de' ? 'Filialen anlegen und bearbeiten' : 'Create and edit branches'} onClick={() => handleTabChange('branches')} />
-          <DashboardPanelButton active={activeTab === 'bookings'} icon="bookings" label={locale === 'de' ? 'Buchungen' : 'Bookings'} hint={locale === 'de' ? 'Anfragen bestätigen oder verschieben' : 'Confirm or counter requests'} onClick={() => handleTabChange('bookings')} />
-          <DashboardPanelButton active={activeTab === 'customers'} icon="customers" label={locale === 'de' ? 'Kunden' : 'Customers'} hint={locale === 'de' ? 'Whitelist, Blacklist, Notizen' : 'Whitelist, blacklist, notes'} onClick={() => handleTabChange('customers')} />
-          <DashboardPanelButton active={activeTab === 'marketing'} icon="marketing" label={locale === 'de' ? 'Marketing' : 'Marketing'} hint={locale === 'de' ? 'Anzeigen einreichen und prüfen' : 'Submit ads and review performance'} onClick={() => handleTabChange('marketing')} />
-          <DashboardPanelButton active={activeTab === 'settings'} icon="settings" label={locale === 'de' ? 'Einstellungen' : 'Settings'} hint={locale === 'de' ? 'Buchungsmodus und Regeln' : 'Booking mode and policy'} onClick={() => handleTabChange('settings')} />
-        </div>
       </section>
 
       {activeTab === 'overview' ? (
@@ -1729,38 +1802,3 @@ function BranchGalleryPreview({ images }: { images: string[] }) {
     </div>
   );
 }
-
-function DashboardPanelButton({
-  active,
-  icon,
-  label,
-  hint,
-  onClick
-}: {
-  active: boolean;
-  icon: DashboardIconName;
-  label: string;
-  hint: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-2xl border p-3 text-left transition ${
-        active ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-      }`}
-    >
-      <p className="flex items-center gap-2 text-sm font-semibold">
-        <DashboardIcon name={icon} className="h-4 w-4" />
-        {label}
-      </p>
-      <p className="mt-1 text-xs text-slate-500">{hint}</p>
-    </button>
-  );
-}
-
-
-
-
-
