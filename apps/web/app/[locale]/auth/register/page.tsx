@@ -10,9 +10,9 @@ import { z } from 'zod';
 import { useRegister, useVerifyEmailRegister } from '../../../../src/lib/api/hooks';
 
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  confirmPassword: z.string().min(8),
+  email: z.string().email('Please enter a valid email address.'),
+  password: z.string().min(8, 'Password must contain at least 8 characters.'),
+  confirmPassword: z.string().min(8, 'Please repeat the password with at least 8 characters.'),
   accountType: z.enum(['customer', 'business'])
 }).refine((values) => values.password === values.confirmPassword, {
   message: 'Passwords do not match',
@@ -45,6 +45,7 @@ export default function RegisterPage() {
   const [pendingRegisterInput, setPendingRegisterInput] = useState<RegisterInput | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: { email: '', password: '', confirmPassword: '', accountType: 'customer' }
@@ -79,6 +80,7 @@ export default function RegisterPage() {
   }, [form]);
 
   async function onSubmit(values: RegisterInput) {
+    setSubmitError('');
     const response = await mutation.mutateAsync({
       email: values.email,
       password: values.password,
@@ -91,6 +93,10 @@ export default function RegisterPage() {
       return;
     }
     router.push(`/${locale}/search`);
+  }
+
+  function onInvalid() {
+    setSubmitError('Please check the highlighted fields before continuing. Both passwords must match and contain at least 8 characters.');
   }
 
   async function onVerifyEmailCode() {
@@ -119,22 +125,28 @@ export default function RegisterPage() {
   return (
     <main className="mx-auto max-w-md space-y-4 py-10">
       <h1 className="text-2xl font-semibold">Create account</h1>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-3 rounded-2xl bg-white p-5 shadow-sm">
-        <input className="rounded-xl border p-3" placeholder="Email" {...form.register('email')} />
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="grid gap-3 rounded-2xl bg-white p-5 shadow-sm">
+        {submitError ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">{submitError}</p> : null}
+        <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <span>Email</span>
+          <input className="rounded-xl border p-3 font-normal" placeholder="name@example.com" {...form.register('email')} />
+        </label>
         {form.formState.errors.email ? <p className="text-xs text-rose-600">{form.formState.errors.email.message}</p> : null}
-        <div className="relative">
-          <input
-            className="w-full rounded-xl border p-3 pr-12"
-            placeholder="Password"
-            type={showPassword ? 'text' : 'password'}
-            {...form.register('password')}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-          >
+        <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <span>Password (min. 8 characters)</span>
+          <div className="relative">
+            <input
+              className="w-full rounded-xl border p-3 pr-12 font-normal"
+              placeholder="Enter password"
+              type={showPassword ? 'text' : 'password'}
+              {...form.register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
             {showPassword ? (
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M3 3l18 18" />
@@ -148,17 +160,21 @@ export default function RegisterPage() {
                 <circle cx="12" cy="12" r="3" />
               </svg>
             )}
-          </button>
-        </div>
+            </button>
+          </div>
+        </label>
         {form.formState.errors.password ? (
           <p className="text-xs text-rose-600">{form.formState.errors.password.message}</p>
         ) : null}
-        <input
-          className="rounded-xl border p-3"
-          placeholder="Confirm password"
-          type={showPassword ? 'text' : 'password'}
-          {...form.register('confirmPassword')}
-        />
+        <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <span>Repeat password</span>
+          <input
+            className="rounded-xl border p-3 font-normal"
+            placeholder="Repeat password"
+            type={showPassword ? 'text' : 'password'}
+            {...form.register('confirmPassword')}
+          />
+        </label>
         {form.formState.errors.confirmPassword ? (
           <p className="text-xs text-rose-600">{form.formState.errors.confirmPassword.message}</p>
         ) : null}
