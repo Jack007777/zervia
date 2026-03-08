@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AuthGuard } from '../../../src/components/AuthGuard';
 import {
@@ -61,6 +61,14 @@ function parseGalleryImages(value: string) {
     .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function getBranchSummaryLabel(branch: { name?: string; city?: string; addressLine?: string }) {
+  const fallback = branch.name?.trim() || branch.addressLine?.trim() || 'Branch';
+  if (branch.city?.trim()) {
+    return `${fallback} · ${branch.city.trim()}`;
+  }
+  return fallback;
 }
 
 export default function DashboardPage() {
@@ -305,6 +313,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [customerListType, setCustomerListType] = useState<'none' | 'whitelist' | 'blacklist'>('whitelist');
   const [customerListMessage, setCustomerListMessage] = useState('');
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
+  const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false);
   const [branchName, setBranchName] = useState('');
   const [branchCategory, setBranchCategory] = useState('massage');
   const [branchDescription, setBranchDescription] = useState('');
@@ -350,12 +359,26 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const adItems = myAds.data ?? [];
   const pendingBookingsCount = bookingItems.filter((booking) => booking.status === 'pending').length;
   const activeAdsCount = adItems.filter((ad) => ['active', 'approved'].includes(ad.status)).length;
+  const branchMenuRef = useRef<HTMLDivElement | null>(null);
+  const createGalleryPreview = useMemo(() => parseGalleryImages(branchGalleryImagesText), [branchGalleryImagesText]);
+  const editGalleryPreview = useMemo(() => parseGalleryImages(branchEditGalleryImagesText), [branchEditGalleryImagesText]);
 
   useEffect(() => {
     if (!selectedBusinessId && businesses.length > 0) {
       setSelectedBusinessId(businesses[0]._id);
     }
   }, [businesses, selectedBusinessId]);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (branchMenuRef.current && !branchMenuRef.current.contains(event.target as Node)) {
+        setIsBranchMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, []);
 
   useEffect(() => {
     if (!activeBusiness) {
@@ -438,41 +461,69 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-[28px] bg-slate-900 p-5 text-white shadow-sm">
+      <section className="overflow-hidden rounded-[28px] bg-slate-900 p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Merchant workspace</p>
-            <h1 className="text-2xl font-semibold">{locale === 'de' ? 'Geschäftsübersicht' : 'Business overview'}</h1>
+            <h1 className="text-2xl font-semibold">{locale === 'de' ? 'Gesch\u00e4fts\u00fcbersicht' : 'Business overview'}</h1>
             <p className="max-w-2xl text-sm text-slate-300">
               {locale === 'de'
-                ? 'Arbeite wie in einem echten Backoffice: Filialen verwalten, Buchungen prüfen, bekannte Kunden markieren und Kampagnen steuern.'
+                ? 'Arbeite wie in einem echten Backoffice: Filialen verwalten, Buchungen pr\u00fcfen, bekannte Kunden markieren und Kampagnen steuern.'
                 : 'Run your day from one place: manage branches, review bookings, label repeat customers and launch campaigns.'}
             </p>
           </div>
-          <div className="rounded-2xl bg-white/10 p-3 text-sm text-slate-100 md:min-w-[320px]">
+          <div ref={branchMenuRef} className="relative rounded-2xl bg-white/10 p-3 text-sm text-slate-100 md:min-w-[320px] md:max-w-[360px]">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
               <DashboardIcon name="branch" className="h-4 w-4" />
               {locale === 'de' ? 'Aktive Filiale' : 'Active branch'}
             </p>
             {(myBusinesses.data ?? []).length ? (
-              <select
-                className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/30 p-2 text-sm text-white outline-none"
-                value={selectedBusinessId}
-                onChange={(e) => setSelectedBusinessId(e.target.value)}
-              >
-                <option value="">{locale === 'de' ? 'Filiale auswählen' : 'Select branch'}</option>
-                {(myBusinesses.data ?? []).map((item) => (
-                  <option key={item._id} value={item._id} className="text-slate-900">
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/15 bg-slate-950/30 px-3 py-2 text-left text-sm text-white outline-none transition hover:bg-slate-950/40"
+                  onClick={() => setIsBranchMenuOpen((prev) => !prev)}
+                >
+                  <span className="truncate">
+                    {activeBusiness ? getBranchSummaryLabel(activeBusiness) : locale === 'de' ? 'Filiale ausw\u00e4hlen' : 'Select branch'}
+                  </span>
+                  <span className={`shrink-0 text-slate-300 transition ${isBranchMenuOpen ? 'rotate-180' : ''}`}>⌄</span>
+                </button>
+                {isBranchMenuOpen ? (
+                  <div className="absolute left-3 right-3 top-[72px] z-20 max-h-72 overflow-auto rounded-2xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl backdrop-blur">
+                    {(myBusinesses.data ?? []).map((item) => {
+                      const isActiveBranch = item._id === selectedBusinessId;
+                      return (
+                        <button
+                          key={item._id}
+                          type="button"
+                          className={`block w-full rounded-xl px-3 py-2 text-left transition ${
+                            isActiveBranch ? 'bg-brand-500/20 text-white' : 'text-slate-200 hover:bg-white/10'
+                          }`}
+                          onClick={() => {
+                            setSelectedBusinessId(item._id);
+                            setManualBusinessId('');
+                            setIsBranchMenuOpen(false);
+                          }}
+                        >
+                          <p className="truncate font-medium">{getBranchSummaryLabel(item)}</p>
+                          <p className="mt-1 line-clamp-2 text-xs text-slate-300">{item.addressLine}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <p className="mt-2 text-slate-300">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
             )}
-            <p className="mt-3 font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gewählt' : 'No branch selected')}</p>
-            <p className="text-slate-300">
-              {activeBusiness ? `${activeBusiness.city}, ${activeBusiness.country}` : locale === 'de' ? 'Wähle hier oben eine Filiale aus.' : 'Select a branch above.'}
+            <p className="mt-3 break-words font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gew\u00e4hlt' : 'No branch selected')}</p>
+            <p className="break-words text-slate-300">
+              {activeBusiness
+                ? `${activeBusiness.addressLine}, ${activeBusiness.city}, ${activeBusiness.country}`
+                : locale === 'de'
+                  ? 'W\u00e4hle hier oben eine Filiale aus.'
+                  : 'Select a branch above.'}
             </p>
           </div>
         </div>
@@ -484,12 +535,14 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
           label={locale === 'de' ? 'Filialen' : 'Branches'}
           value={String(businesses.length)}
           hint={locale === 'de' ? 'Aktive Standorte in deinem Konto' : 'Locations linked to your account'}
+          onClick={() => setActiveTab('branches')}
         />
         <DashboardMetricCard
           icon="bookings"
           label={locale === 'de' ? 'Offene Anfragen' : 'Pending requests'}
           value={String(pendingBookingsCount)}
           hint={locale === 'de' ? 'Buchungen, die deine Antwort brauchen' : 'Bookings waiting for your response'}
+          onClick={() => setActiveTab('bookings')}
         />
         <DashboardMetricCard
           icon="customers"
@@ -502,6 +555,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
           label={locale === 'de' ? 'Aktive Anzeigen' : 'Active ads'}
           value={String(activeAdsCount)}
           hint={locale === 'de' ? 'Laufende oder freigegebene Kampagnen' : 'Ads currently approved or running'}
+          onClick={() => setActiveTab('marketing')}
         />
       </section>
 
@@ -569,10 +623,10 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 <p className="mt-1 text-sm font-medium text-slate-900">
                   {requireVerifiedPhoneForBooking
                     ? locale === 'de'
-                      ? 'Nur telefonverifizierte Kunden dÃ¼rfen buchen'
+                      ? 'Nur telefonverifizierte Kunden d\u00fcrfen buchen'
                       : 'Only phone-verified users can book'
                     : locale === 'de'
-                      ? 'Alle registrierten Kunden dÃ¼rfen buchen'
+                      ? 'Alle registrierten Kunden d\u00fcrfen buchen'
                       : 'All registered users can book'}
                 </p>
               </article>
@@ -685,6 +739,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   onChange={(e) => setBranchGalleryImagesText(e.target.value)}
                 />
               </label>
+              <BranchGalleryPreview images={createGalleryPreview} />
               <label className="grid gap-1 text-xs font-medium text-slate-600">
                 <span className="flex items-center gap-2">
                   <DashboardIcon name="address" className="h-4 w-4" />
@@ -890,6 +945,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   onChange={(e) => setBranchEditGalleryImagesText(e.target.value)}
                 />
               </label>
+              <BranchGalleryPreview images={editGalleryPreview} />
               <div className="grid grid-cols-2 gap-2">
                 <label className="grid gap-1 text-xs font-medium text-slate-600">
                   <span className="flex items-center gap-2">
@@ -1438,16 +1494,53 @@ function DashboardIcon({ name, className = 'h-4 w-4' }: { name: DashboardIconNam
   }
 }
 
-function DashboardMetricCard({ label, value, hint, icon }: { label: string; value: string; hint: string; icon: DashboardIconName }) {
+function DashboardMetricCard({
+  label,
+  value,
+  hint,
+  icon,
+  onClick
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  icon: DashboardIconName;
+  onClick?: () => void;
+}) {
   return (
-    <article className="rounded-2xl bg-white p-4 shadow-sm">
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-2xl bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50"
+    >
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         <DashboardIcon name={icon} className="h-4 w-4" />
         {label}
       </p>
       <p className="mt-2 text-3xl font-semibold text-slate-900">{value}</p>
       <p className="mt-1 text-sm text-slate-500">{hint}</p>
-    </article>
+    </button>
+  );
+}
+
+function BranchGalleryPreview({ images }: { images: string[] }) {
+  if (!images.length) {
+    return null;
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+      {images.slice(0, 6).map((image, index) => (
+        <div key={`${image}-${index}`} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <img
+            src={image}
+            alt={`Branch gallery ${index + 1}`}
+            className="h-20 w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      ))}
+    </div>
   );
 }
 
