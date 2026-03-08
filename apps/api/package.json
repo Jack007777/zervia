@@ -14,6 +14,7 @@
     "seed:virtual:de:purge": "node scripts/seed-virtual-businesses.js --count 200 --purge-virtual"
   },
   "dependencies": {
+    "express": "^5.2.1",
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
     "@nestjs/common": "^11.0.11",
