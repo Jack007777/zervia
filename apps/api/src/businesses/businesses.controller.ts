@@ -41,6 +41,13 @@ import {
   UpsertBusinessCustomerListDto
 } from './dto/create-business.dto';
 
+type UploadedBranchImageFile = {
+  buffer: Buffer;
+  mimetype: string;
+  size: number;
+  originalname?: string;
+};
+
 @ApiTags('Business')
 @Controller()
 export class BusinessesController {
@@ -90,7 +97,7 @@ export class BusinessesController {
   async uploadImage(
     @Param('id') id: string,
     @Req() req: { user: { sub: string; roles?: string[] } },
-    @UploadedFile() file?: Express.Multer.File
+    @UploadedFile() file?: UploadedBranchImageFile
   ) {
     if (!file) {
       throw new BadRequestException({
