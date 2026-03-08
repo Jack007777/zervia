@@ -19,8 +19,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger({ instance: logger })
   });
+  const expressApp = app.getHttpAdapter().getInstance();
+  const trustProxy = process.env.TRUST_PROXY ?? '1';
   const uploadsDir = join(process.cwd(), 'uploads');
   mkdirSync(uploadsDir, { recursive: true });
+
+  expressApp.set('trust proxy', trustProxy === 'true' ? true : trustProxy);
 
   app.use(helmet());
   app.use('/uploads', express.static(uploadsDir));
