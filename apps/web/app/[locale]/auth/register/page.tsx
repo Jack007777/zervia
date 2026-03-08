@@ -12,7 +12,11 @@ import { useRegister, useVerifyEmailRegister } from '../../../../src/lib/api/hoo
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  confirmPassword: z.string().min(8),
   accountType: z.enum(['customer', 'business'])
+}).refine((values) => values.password === values.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword']
 });
 
 type RegisterInput = z.infer<typeof registerSchema>;
@@ -43,7 +47,7 @@ export default function RegisterPage() {
   const [infoMessage, setInfoMessage] = useState('');
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { email: '', password: '', accountType: 'customer' }
+    defaultValues: { email: '', password: '', confirmPassword: '', accountType: 'customer' }
   });
 
   useEffect(() => {
@@ -148,6 +152,15 @@ export default function RegisterPage() {
         </div>
         {form.formState.errors.password ? (
           <p className="text-xs text-rose-600">{form.formState.errors.password.message}</p>
+        ) : null}
+        <input
+          className="rounded-xl border p-3"
+          placeholder="Confirm password"
+          type={showPassword ? 'text' : 'password'}
+          {...form.register('confirmPassword')}
+        />
+        {form.formState.errors.confirmPassword ? (
+          <p className="text-xs text-rose-600">{form.formState.errors.confirmPassword.message}</p>
         ) : null}
         <select className="rounded-xl border p-3" {...form.register('accountType')}>
           <option value="customer">Customer</option>
