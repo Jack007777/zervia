@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const mutation = useLogin();
+  const [showPassword, setShowPassword] = useState(false);
   const preferredRole = useMemo<'customer' | 'business'>(() => {
     const role = searchParams.get('role');
     return role === 'business' ? 'business' : 'customer';
@@ -59,7 +60,34 @@ export default function LoginPage() {
         {form.formState.errors.email ? (
           <p className="text-xs text-rose-600">{form.formState.errors.email.message}</p>
         ) : null}
-        <input className="rounded-xl border p-3" placeholder="Password" type="password" {...form.register('password')} />
+        <div className="relative">
+          <input
+            className="w-full rounded-xl border p-3 pr-12"
+            placeholder="Password"
+            type={showPassword ? 'text' : 'password'}
+            {...form.register('password')}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? (
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.7A3 3 0 0 0 13.3 13.4" />
+                <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 9 4.6 10 7-0.4 1-1.3 2.3-2.6 3.6" />
+                <path d="M6.2 6.2C3.8 7.8 2.4 10 2 12c1 2.4 5 7 10 7 1.5 0 2.9-.3 4.2-.9" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </button>
+        </div>
         {form.formState.errors.password ? (
           <p className="text-xs text-rose-600">{form.formState.errors.password.message}</p>
         ) : null}
