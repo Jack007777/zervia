@@ -18,6 +18,16 @@ const registerSchema = z.object({
 type RegisterInput = z.infer<typeof registerSchema>;
 const AUTH_ROLE_STORAGE_KEY = 'zervia_auth_preferred_role';
 const normalizeRole = (role: string | null): 'customer' | 'business' => (role === 'business' ? 'business' : 'customer');
+const maskEmail = (email: string) => {
+  const [localPart, domain = ''] = email.split('@');
+  if (!localPart || !domain) {
+    return email;
+  }
+  if (localPart.length <= 2) {
+    return `${localPart[0] ?? '*'}***@${domain}`;
+  }
+  return `${localPart.slice(0, 2)}***@${domain}`;
+};
 
 export default function RegisterPage() {
   const { locale } = useParams<{ locale: string }>();
@@ -28,6 +38,7 @@ export default function RegisterPage() {
   const verifyMutation = useVerifyEmailRegister();
   const [showPassword, setShowPassword] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
+  const [pendingRegisterInput, setPendingRegisterInput] = useState<RegisterInput | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const form = useForm<RegisterInput>({
@@ -71,7 +82,8 @@ export default function RegisterPage() {
     });
     if (response.verificationRequired && response.channel === 'email' && response.identifier) {
       setPendingEmail(response.identifier);
-      setInfoMessage('Verification code sent to your email. Please enter code to finish registration.');
+      setPendingRegisterInput(values);
+      setInfoMessage('Verification code sent. Please check your inbox and spam folder, then enter the code below.');
       return;
     }
     router.push(`/${locale}/search`);
@@ -83,6 +95,21 @@ export default function RegisterPage() {
     }
     await verifyMutation.mutateAsync({ email: pendingEmail, code: verificationCode.trim() });
     router.push(`/${locale}/search`);
+  }
+
+  async function onResendEmailCode() {
+    if (!pendingRegisterInput) {
+      return;
+    }
+    const response = await mutation.mutateAsync({
+      email: pendingRegisterInput.email,
+      password: pendingRegisterInput.password,
+      roles: [pendingRegisterInput.accountType]
+    });
+    if (response.verificationRequired && response.identifier) {
+      setPendingEmail(response.identifier);
+      setInfoMessage('A new verification code has been sent. Please check your inbox and spam folder.');
+    }
   }
 
   return (
@@ -134,7 +161,10 @@ export default function RegisterPage() {
       </form>
       {pendingEmail ? (
         <section className="grid gap-2 rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm">Email verification for: {pendingEmail}</p>
+          <p className="text-sm">Email verification for: {maskEmail(pendingEmail)}</p>
+          <p className="text-xs text-slate-500">
+            If you do not see the email, please check your spam folder or request a new code.
+          </p>
           <input
             className="rounded-xl border p-3"
             placeholder="Verification code"
@@ -148,6 +178,14 @@ export default function RegisterPage() {
             onClick={onVerifyEmailCode}
           >
             {verifyMutation.isPending ? 'Verifying...' : 'Verify and complete registration'}
+          </button>
+          <button
+            type="button"
+            className="rounded-xl border border-slate-300 p-3 text-sm font-medium text-slate-700 disabled:opacity-50"
+            disabled={mutation.isPending || !pendingRegisterInput}
+            onClick={onResendEmailCode}
+          >
+            {mutation.isPending ? 'Sending...' : 'Resend verification code'}
           </button>
           {verifyMutation.error ? <p className="text-xs text-rose-600">{verifyMutation.error.message}</p> : null}
         </section>
