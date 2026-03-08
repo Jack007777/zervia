@@ -1,12 +1,26 @@
 import { clearTokens, getAccessToken, getRefreshToken, setTokens, type AuthTokens } from './token-storage';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+function getApiBaseUrl() {
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
+
+  if (typeof window !== 'undefined') {
+    const { hostname } = window.location;
+    if (hostname === 'zervia.eu' || hostname === 'www.zervia.eu') {
+      return 'https://api.zervia.eu/api/v1';
+    }
+  }
+
+  return 'http://localhost:4000/api/v1';
+}
 
 type RequestOptions = RequestInit & { auth?: boolean };
 
 let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
+  const apiBaseUrl = getApiBaseUrl();
   if (refreshPromise) {
     return refreshPromise;
   }
@@ -18,7 +32,7 @@ async function refreshAccessToken(): Promise<string | null> {
       return null;
     }
 
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    const response = await fetch(`${apiBaseUrl}/auth/refresh`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken })
@@ -42,6 +56,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const apiBaseUrl = getApiBaseUrl();
   const headers = new Headers(options.headers);
   const isFormDataBody = typeof FormData !== 'undefined' && options.body instanceof FormData;
   if (!isFormDataBody) {
@@ -56,7 +71,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   }
 
   const execute = (overrideToken?: string | null) =>
-    fetch(`${API_BASE_URL}${path}`, {
+    fetch(`${apiBaseUrl}${path}`, {
       ...options,
       headers: (() => {
         const h = new Headers(headers);
@@ -67,11 +82,20 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
       })()
     });
 
-  let response = await execute();
+  let response: Response;
+  try {
+    response = await execute();
+  } catch {
+    throw new Error('Unable to reach the API. Please try again in a few seconds.');
+  }
   if (response.status === 401 && options.auth) {
     const nextToken = await refreshAccessToken();
     if (nextToken) {
-      response = await execute(nextToken);
+      try {
+        response = await execute(nextToken);
+      } catch {
+        throw new Error('Unable to reach the API. Please try again in a few seconds.');
+      }
     }
   }
 
