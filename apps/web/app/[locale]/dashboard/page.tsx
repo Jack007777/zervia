@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -268,6 +268,14 @@ function AdminDashboard() {
 }
 
 function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
+  const branchCategoryOptions = [
+    { value: 'friseur', label: locale === 'de' ? 'Friseur' : 'Hair' },
+    { value: 'naegel', label: locale === 'de' ? 'Nägel' : 'Nails' },
+    { value: 'haarentfernung', label: locale === 'de' ? 'Haarentfernung' : 'Hair removal' },
+    { value: 'kosmetik', label: locale === 'de' ? 'Kosmetik' : 'Beauty' },
+    { value: 'massage', label: locale === 'de' ? 'Massage' : 'Massage' },
+    { value: 'maenner', label: locale === 'de' ? 'Männer' : "Men's grooming" }
+  ];
   const [activeTab, setActiveTab] = useState<'overview' | 'branches' | 'bookings' | 'customers' | 'marketing' | 'settings'>(
     'overview'
   );
@@ -436,10 +444,10 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 value={selectedBusinessId}
                 onChange={(e) => setSelectedBusinessId(e.target.value)}
               >
-                <option value="">{locale === 'de' ? 'Filiale auswÃ¤hlen' : 'Select branch'}</option>
+                <option value="">{locale === 'de' ? 'Filiale auswählen' : 'Select branch'}</option>
                 {(myBusinesses.data ?? []).map((item) => (
                   <option key={item._id} value={item._id} className="text-slate-900">
-                    {item.name} · {item.city}{item.isVirtual ? ' · Virtual' : ''}
+                    {item.name}
                   </option>
                 ))}
               </select>
@@ -629,12 +637,13 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   <DashboardIcon name="category" className="h-4 w-4" />
                   {locale === 'de' ? 'Kategorie / Serviceart' : 'Category / service type'}
                 </span>
-                <input
-                  className="rounded-xl border p-2"
-                  placeholder={locale === 'de' ? 'Kategorie (z. B. massage)' : 'Category (e.g. massage)'}
-                  value={branchCategory}
-                  onChange={(e) => setBranchCategory(e.target.value)}
-                />
+                <select className="rounded-xl border p-2" value={branchCategory} onChange={(e) => setBranchCategory(e.target.value)}>
+                  {branchCategoryOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="grid gap-1 text-xs font-medium text-slate-600">
                 <span className="flex items-center gap-2">
@@ -805,12 +814,13 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   <DashboardIcon name="category" className="h-4 w-4" />
                   {locale === 'de' ? 'Kategorie / Serviceart' : 'Category / service type'}
                 </span>
-                <input
-                  className="rounded-xl border p-2"
-                  placeholder={locale === 'de' ? 'Kategorie' : 'Category'}
-                  value={branchEditCategory}
-                  onChange={(e) => setBranchEditCategory(e.target.value)}
-                />
+                <select className="rounded-xl border p-2" value={branchEditCategory} onChange={(e) => setBranchEditCategory(e.target.value)}>
+                  {branchCategoryOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <label className="grid gap-1 text-xs font-medium text-slate-600">
@@ -1398,6 +1408,8 @@ function DashboardPanelButton({
     </button>
   );
 }
+
+
 
 
 
