@@ -1,7 +1,11 @@
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { WinstonModule } from 'nest-winston';
@@ -15,7 +19,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger({ instance: logger })
   });
+  const uploadsDir = join(process.cwd(), 'uploads');
+  mkdirSync(uploadsDir, { recursive: true });
+
   app.use(helmet());
+  app.use('/uploads', express.static(uploadsDir));
   app.use(
     '/api',
     rateLimit({

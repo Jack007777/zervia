@@ -111,6 +111,20 @@ export function useCreateBusiness() {
   });
 }
 
+export function useUploadBusinessImage() {
+  return useMutation({
+    mutationFn: (payload: { businessId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append('file', payload.file);
+      return apiClient<{ success: boolean; url: string }>(`/business/${payload.businessId}/images`, {
+        method: 'POST',
+        body: formData,
+        auth: true
+      });
+    }
+  });
+}
+
 export function useBusinessBookings(businessId: string, country = 'DE') {
   return useQuery({
     queryKey: ['business-bookings', businessId, country],

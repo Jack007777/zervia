@@ -1,7 +1,28 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { extname, join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiOkResponse,
   ApiParam,
   ApiQuery,
@@ -58,6 +79,72 @@ export class BusinessesController {
   @ApiBody({ type: UpdateBusinessDto })
   update(@Param('id') id: string, @Body() body: UpdateBusinessDto) {
     return this.businessesService.update(id, body);
+  }
+
+  @Post('business/:id/images')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiBearerAuth('bearer')
+  @ApiConsumes('multipart/form-data')
+  @Roles('business', 'admin')
+  async uploadImage(
+    @Param('id') id: string,
+    @Req() req: { user: { sub: string; roles?: string[] } },
+    @UploadedFile() file?: Express.Multer.File
+  ) {
+    if (!file) {
+      throw new BadRequestException({
+        errorCode: 'IMAGE_REQUIRED',
+        message: 'Image file is required'
+      });
+    }
+
+    const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      throw new BadRequestException({
+        errorCode: 'IMAGE_TYPE_INVALID',
+        message: 'Only JPG, PNG and WEBP images are allowed'
+      });
+    }
+
+    const maxBytes = 5 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      throw new BadRequestException({
+        errorCode: 'IMAGE_TOO_LARGE',
+        message: 'Image must be 5MB or smaller'
+      });
+    }
+
+    await this.businessesService.ensureCanManageBusiness(
+      id,
+      req.user.sub,
+      Boolean(req.user.roles?.includes('admin'))
+    );
+
+    const uploadsDir = join(process.cwd(), 'uploads', 'branches');
+    await mkdir(uploadsDir, { recursive: true });
+
+    const extension = extname(file.originalname || '').toLowerCase();
+    const safeExtension =
+      extension && ['.jpg', '.jpeg', '.png', '.webp'].includes(extension)
+        ? extension
+        : file.mimetype === 'image/png'
+          ? '.png'
+          : file.mimetype === 'image/webp'
+            ? '.webp'
+            : '.jpg';
+    const fileName = `${id}-${randomUUID()}${safeExtension}`;
+    const outputPath = join(uploadsDir, fileName);
+    await writeFile(outputPath, file.buffer);
+
+    const publicBaseUrl = (process.env.BASE_URL ?? `http://localhost:${process.env.PORT ?? '4000'}`)
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/$/, '');
+
+    return {
+      success: true,
+      url: `${publicBaseUrl}/uploads/branches/${fileName}`
+    };
   }
 
   @Delete('business/:id')

@@ -11,6 +11,8 @@ services:
       - "4000"
     ports:
       - "127.0.0.1:4100:4000"
+    volumes:
+      - ./uploads:/app/uploads
     networks:
       - zervia
 

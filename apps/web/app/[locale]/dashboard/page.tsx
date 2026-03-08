@@ -20,6 +20,7 @@ import {
   useMyBusinesses,
   useMyAds,
   useRejectBooking,
+  useUploadBusinessImage,
   useUpsertBusinessCustomerListEntry,
   useUpdateBusiness,
   useUpdateAdminBusiness,
@@ -63,6 +64,14 @@ function parseGalleryImages(value: string) {
     .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function appendGalleryImage(currentValue: string, nextUrl: string) {
+  const existing = parseGalleryImages(currentValue);
+  if (existing.includes(nextUrl)) {
+    return currentValue;
+  }
+  return [...existing, nextUrl].join('\n');
 }
 
 function getBranchSummaryLabel(branch: { name?: string; city?: string; addressLine?: string }) {
@@ -326,6 +335,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [branchCategory, setBranchCategory] = useState('massage');
   const [branchDescription, setBranchDescription] = useState('');
   const [branchGalleryImagesText, setBranchGalleryImagesText] = useState('');
+  const [branchGalleryFiles, setBranchGalleryFiles] = useState<File[]>([]);
   const [branchAddressLine, setBranchAddressLine] = useState('');
   const [branchLat, setBranchLat] = useState('52.520008');
   const [branchLng, setBranchLng] = useState('13.404954');
@@ -335,6 +345,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [branchPriceMin, setBranchPriceMin] = useState('');
   const [branchPriceMax, setBranchPriceMax] = useState('');
   const [branchCreateMessage, setBranchCreateMessage] = useState('');
+  const [branchUploadMessage, setBranchUploadMessage] = useState('');
   const [branchEditName, setBranchEditName] = useState('');
   const [branchEditCategory, setBranchEditCategory] = useState('massage');
   const [branchEditDescription, setBranchEditDescription] = useState('');
@@ -342,10 +353,12 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [branchEditPriceMin, setBranchEditPriceMin] = useState('');
   const [branchEditPriceMax, setBranchEditPriceMax] = useState('');
   const [branchEditMessage, setBranchEditMessage] = useState('');
+  const [branchEditUploadMessage, setBranchEditUploadMessage] = useState('');
   const createAd = useCreateAd();
   const updateMyAdStatus = useUpdateMyAdStatus();
   const deleteMyAd = useDeleteMyAd();
   const createBusiness = useCreateBusiness();
+  const uploadBusinessImage = useUploadBusinessImage();
   const deleteBusiness = useDeleteBusiness();
   const myAds = useMyAds();
   const updateBusiness = useUpdateBusiness();
@@ -497,6 +510,42 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
     setActiveTab(tab);
     if (tab !== 'overview') {
       scrollToSection(tab);
+    }
+  };
+
+  const handleBranchImageUpload = async (
+    businessId: string,
+    currentValue: string,
+    files: FileList | null,
+    onUpdateValue: (nextValue: string) => void,
+    onMessage: (message: string) => void
+  ) => {
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    onMessage(locale === 'de' ? 'Bilder werden hochgeladen ...' : 'Uploading images ...');
+
+    try {
+      let nextValue = currentValue;
+      for (const file of Array.from(files)) {
+        const result = await uploadBusinessImage.mutateAsync({ businessId, file });
+        nextValue = appendGalleryImage(nextValue, result.url);
+      }
+      await updateBusiness.mutateAsync({
+        businessId,
+        galleryImages: parseGalleryImages(nextValue)
+      });
+      onUpdateValue(nextValue);
+      onMessage(locale === 'de' ? 'Bild hochgeladen.' : 'Image uploaded.');
+    } catch (error) {
+      onMessage(
+        error instanceof Error
+          ? error.message
+          : locale === 'de'
+            ? 'Bild-Upload fehlgeschlagen.'
+            : 'Image upload failed.'
+      );
     }
   };
 

@@ -43,7 +43,10 @@ async function refreshAccessToken(): Promise<string | null> {
 
 export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  headers.set('content-type', 'application/json');
+  const isFormDataBody = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  if (!isFormDataBody) {
+    headers.set('content-type', 'application/json');
+  }
 
   if (options.auth) {
     const token = getAccessToken();

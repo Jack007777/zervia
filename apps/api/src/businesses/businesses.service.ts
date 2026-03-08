@@ -90,6 +90,10 @@ export class BusinessesService implements OnModuleInit, OnModuleDestroy {
     return this.businessModel.findByIdAndUpdate(id, input, { new: true }).exec();
   }
 
+  async ensureCanManageBusiness(businessId: string, ownerUserId: string, isAdmin = false) {
+    await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
+  }
+
   async archive(businessId: string, ownerUserId: string, isAdmin = false) {
     await this.assertOwnerOrAdmin(businessId, ownerUserId, isAdmin);
     const bookingCount = await this.bookingModel.countDocuments({ businessId }).exec();
