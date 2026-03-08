@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -397,17 +397,17 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Merchant workspace</p>
-            <h1 className="text-2xl font-semibold">{locale === 'de' ? 'Geschäftsübersicht' : 'Business overview'}</h1>
+            <h1 className="text-2xl font-semibold">{locale === 'de' ? 'GeschÃ¤ftsÃ¼bersicht' : 'Business overview'}</h1>
             <p className="max-w-2xl text-sm text-slate-300">
               {locale === 'de'
-                ? 'Arbeite wie in einem echten Backoffice: Filialen verwalten, Buchungen prüfen, bekannte Kunden markieren und Kampagnen steuern.'
+                ? 'Arbeite wie in einem echten Backoffice: Filialen verwalten, Buchungen prÃ¼fen, bekannte Kunden markieren und Kampagnen steuern.'
                 : 'Run your day from one place: manage branches, review bookings, label repeat customers and launch campaigns.'}
             </p>
           </div>
           <div className="rounded-2xl bg-white/10 p-3 text-sm text-slate-100">
-            <p className="font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gewählt' : 'No branch selected')}</p>
+            <p className="font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gewÃ¤hlt' : 'No branch selected')}</p>
             <p className="text-slate-300">
-              {activeBusiness ? `${activeBusiness.city}, ${activeBusiness.country}` : locale === 'de' ? 'Wähle unten eine Filiale aus.' : 'Select a branch below.'}
+              {activeBusiness ? `${activeBusiness.city}, ${activeBusiness.country}` : locale === 'de' ? 'WÃ¤hle unten eine Filiale aus.' : 'Select a branch below.'}
             </p>
           </div>
         </div>
@@ -427,7 +427,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
         <DashboardMetricCard
           label={locale === 'de' ? 'Markierte Kunden' : 'Tagged customers'}
           value={String(customerEntries.length)}
-          hint={locale === 'de' ? 'Whitelist-, Blacklist- und Notiz-Einträge' : 'Whitelist, blacklist and note entries'}
+          hint={locale === 'de' ? 'Whitelist-, Blacklist- und Notiz-EintrÃ¤ge' : 'Whitelist, blacklist and note entries'}
         />
         <DashboardMetricCard
           label={locale === 'de' ? 'Aktive Anzeigen' : 'Active ads'}
@@ -439,11 +439,11 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">{locale === 'de' ? 'Schnellzugriff' : 'Quick access'}</h2>
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          <DashboardPanelButton active={activeTab === 'overview'} label={locale === 'de' ? 'Übersicht' : 'Overview'} hint={locale === 'de' ? 'Kennzahlen und Tagesfokus' : 'Metrics and daily focus'} onClick={() => setActiveTab('overview')} />
+          <DashboardPanelButton active={activeTab === 'overview'} label={locale === 'de' ? 'Ãœbersicht' : 'Overview'} hint={locale === 'de' ? 'Kennzahlen und Tagesfokus' : 'Metrics and daily focus'} onClick={() => setActiveTab('overview')} />
           <DashboardPanelButton active={activeTab === 'branches'} label={locale === 'de' ? 'Filialen' : 'Branches'} hint={locale === 'de' ? 'Filialen anlegen und bearbeiten' : 'Create and edit branches'} onClick={() => setActiveTab('branches')} />
-          <DashboardPanelButton active={activeTab === 'bookings'} label={locale === 'de' ? 'Buchungen' : 'Bookings'} hint={locale === 'de' ? 'Anfragen bestätigen oder verschieben' : 'Confirm or counter requests'} onClick={() => setActiveTab('bookings')} />
+          <DashboardPanelButton active={activeTab === 'bookings'} label={locale === 'de' ? 'Buchungen' : 'Bookings'} hint={locale === 'de' ? 'Anfragen bestÃ¤tigen oder verschieben' : 'Confirm or counter requests'} onClick={() => setActiveTab('bookings')} />
           <DashboardPanelButton active={activeTab === 'customers'} label={locale === 'de' ? 'Kunden' : 'Customers'} hint={locale === 'de' ? 'Whitelist, Blacklist, Notizen' : 'Whitelist, blacklist, notes'} onClick={() => setActiveTab('customers')} />
-          <DashboardPanelButton active={activeTab === 'marketing'} label={locale === 'de' ? 'Marketing' : 'Marketing'} hint={locale === 'de' ? 'Anzeigen einreichen und prüfen' : 'Submit ads and review performance'} onClick={() => setActiveTab('marketing')} />
+          <DashboardPanelButton active={activeTab === 'marketing'} label={locale === 'de' ? 'Marketing' : 'Marketing'} hint={locale === 'de' ? 'Anzeigen einreichen und prÃ¼fen' : 'Submit ads and review performance'} onClick={() => setActiveTab('marketing')} />
           <DashboardPanelButton active={activeTab === 'settings'} label={locale === 'de' ? 'Einstellungen' : 'Settings'} hint={locale === 'de' ? 'Buchungsmodus und Regeln' : 'Booking mode and policy'} onClick={() => setActiveTab('settings')} />
         </div>
       </section>
@@ -454,11 +454,11 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
             <h2 className="text-base font-semibold text-slate-900">{locale === 'de' ? 'Heute wichtig' : 'Today at a glance'}</h2>
             <div className="mt-3 space-y-3">
               <article className="rounded-xl border border-slate-200 p-3">
-                <p className="text-sm font-medium text-slate-900">{locale === 'de' ? 'Buchungen mit Priorität' : 'Priority bookings'}</p>
+                <p className="text-sm font-medium text-slate-900">{locale === 'de' ? 'Buchungen mit PrioritÃ¤t' : 'Priority bookings'}</p>
                 <p className="mt-1 text-sm text-slate-600">
                   {pendingBookingsCount > 0
                     ? locale === 'de'
-                      ? `${pendingBookingsCount} Anfrage(n) warten auf Bestätigung oder Gegenvorschlag.`
+                      ? `${pendingBookingsCount} Anfrage(n) warten auf BestÃ¤tigung oder Gegenvorschlag.`
                       : `${pendingBookingsCount} request(s) are waiting for confirmation or counter proposal.`
                     : locale === 'de'
                       ? 'Aktuell sind keine offenen Buchungsanfragen vorhanden.'
@@ -476,7 +476,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       ? `Aktive Filiale: ${activeBusiness.name}. Kategorie: ${activeBusiness.category ?? 'n/a'}.`
                       : `Current branch: ${activeBusiness.name}. Category: ${activeBusiness.category ?? 'n/a'}.`
                     : locale === 'de'
-                      ? 'Lege eine Filiale an oder wähle eine bestehende aus.'
+                      ? 'Lege eine Filiale an oder wÃ¤hle eine bestehende aus.'
                       : 'Create a branch or select an existing one.'}
                 </p>
                 <button type="button" className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setActiveTab('branches')}>
@@ -492,7 +492,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
               <article className="rounded-xl bg-slate-50 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{locale === 'de' ? 'Buchungsmodus' : 'Booking mode'}</p>
                 <p className="mt-1 text-sm font-medium text-slate-900">
-                  {bookingMode === 'instant' ? (locale === 'de' ? 'Sofort buchbar' : 'Instant booking') : locale === 'de' ? 'Anfrage mit Bestätigung' : 'Request and confirm'}
+                  {bookingMode === 'instant' ? (locale === 'de' ? 'Sofort buchbar' : 'Instant booking') : locale === 'de' ? 'Anfrage mit BestÃ¤tigung' : 'Request and confirm'}
                 </p>
               </article>
               <article className="rounded-xl bg-slate-50 p-3">
@@ -500,15 +500,15 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 <p className="mt-1 text-sm font-medium text-slate-900">
                   {requireVerifiedPhoneForBooking
                     ? locale === 'de'
-                      ? 'Nur telefonverifizierte Kunden dürfen buchen'
+                      ? 'Nur telefonverifizierte Kunden dÃ¼rfen buchen'
                       : 'Only phone-verified users can book'
                     : locale === 'de'
-                      ? 'Alle registrierten Kunden dürfen buchen'
+                      ? 'Alle registrierten Kunden dÃ¼rfen buchen'
                       : 'All registered users can book'}
                 </p>
               </article>
               <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setActiveTab('settings')}>
-                {locale === 'de' ? 'Einstellungen öffnen' : 'Open settings'}
+                {locale === 'de' ? 'Einstellungen Ã¶ffnen' : 'Open settings'}
               </button>
             </div>
           </div>
@@ -535,7 +535,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
         ) : (
           <p className="text-sm text-slate-600">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
         )}
-        <p className="mt-2 text-xs text-slate-500">{locale === 'de' ? 'Du kannst optional auch eine Business ID manuell einfügen.' : 'You can still paste a Business ID manually if needed.'}</p>
+        <p className="mt-2 text-xs text-slate-500">{locale === 'de' ? 'Du kannst optional auch eine Business ID manuell einfÃ¼gen.' : 'You can still paste a Business ID manually if needed.'}</p>
         <input
           className="mt-2 w-full rounded-xl border p-2"
           placeholder="Manual Business ID (optional)"
@@ -700,20 +700,26 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
 
         {activeBusinessId ? (
           <div className="mt-4 rounded-xl border p-3">
-            <h3 className="mb-2 text-sm font-semibold">{locale === 'de' ? 'Ausgewählte Filiale bearbeiten' : 'Edit selected branch'}</h3>
+            <h3 className="mb-2 text-sm font-semibold">{locale === 'de' ? 'AusgewÃ¤hlte Filiale bearbeiten' : 'Edit selected branch'}</h3>
             <div className="grid gap-2">
-              <input
-                className="rounded-xl border p-2"
-                placeholder={locale === 'de' ? 'Filialname' : 'Branch name'}
-                value={branchEditName}
-                onChange={(e) => setBranchEditName(e.target.value)}
-              />
-              <input
-                className="rounded-xl border p-2"
-                placeholder={locale === 'de' ? 'Kategorie' : 'Category'}
-                value={branchEditCategory}
-                onChange={(e) => setBranchEditCategory(e.target.value)}
-              />
+              <label className="grid gap-1 text-xs font-medium text-slate-600">
+                <span>{locale === 'de' ? 'Filialname' : 'Branch name'}</span>
+                <input
+                  className="rounded-xl border p-2"
+                  placeholder={locale === 'de' ? 'Filialname' : 'Branch name'}
+                  value={branchEditName}
+                  onChange={(e) => setBranchEditName(e.target.value)}
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-medium text-slate-600">
+                <span>{locale === 'de' ? 'Kategorie / Serviceart' : 'Category / service type'}</span>
+                <input
+                  className="rounded-xl border p-2"
+                  placeholder={locale === 'de' ? 'Kategorie' : 'Category'}
+                  value={branchEditCategory}
+                  onChange={(e) => setBranchEditCategory(e.target.value)}
+                />
+              </label>
               <div className="grid grid-cols-2 gap-2">
                 <input
                   className="rounded-xl border p-2"
@@ -768,7 +774,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 onClick={async () => {
                   const confirmed = window.confirm(
                     locale === 'de'
-                      ? 'Diese Filiale endgültig löschen? Zugehörige Services, Buchungen, Kundenlisten und Anzeigen werden ebenfalls entfernt.'
+                      ? 'Diese Filiale endgÃ¼ltig lÃ¶schen? ZugehÃ¶rige Services, Buchungen, Kundenlisten und Anzeigen werden ebenfalls entfernt.'
                       : 'Delete this branch permanently? Related services, bookings, customer lists and ads will be removed too.'
                   );
                   if (!confirmed) {
@@ -791,14 +797,14 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                     setBranchEditMessage(
                       result.mode === 'archived'
                         ? locale === 'de'
-                          ? `Filiale archiviert. Endgültige Löschung nach dem ${new Date(
+                          ? `Filiale archiviert. EndgÃ¼ltige LÃ¶schung nach dem ${new Date(
                               result.deletionScheduledAt ?? ''
                             ).toLocaleDateString('de-DE')}.`
                           : `Branch archived. Permanent deletion after ${new Date(
                               result.deletionScheduledAt ?? ''
                             ).toLocaleDateString('en-GB')}.`
                         : locale === 'de'
-                          ? 'Filiale endgültig gelöscht.'
+                          ? 'Filiale endgÃ¼ltig gelÃ¶scht.'
                           : 'Branch deleted permanently.'
                     );
                   } catch (error) {
@@ -806,7 +812,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       error instanceof Error
                         ? error.message
                         : locale === 'de'
-                          ? 'Löschen fehlgeschlagen.'
+                          ? 'LÃ¶schen fehlgeschlagen.'
                           : 'Delete failed.'
                     );
                   }
@@ -817,7 +823,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                     ? 'Entferne...'
                     : 'Removing...'
                   : locale === 'de'
-                    ? 'Filiale löschen'
+                    ? 'Filiale lÃ¶schen'
                     : 'Delete branch'}
               </button>
               {branchEditMessage ? <p className="text-xs text-slate-700">{branchEditMessage}</p> : null}
@@ -933,7 +939,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
         </p>
         {!activeBusinessId ? (
           <p className="text-sm text-slate-500">
-            {locale === 'de' ? 'Bitte zuerst eine Filiale auswählen.' : 'Select a branch first.'}
+            {locale === 'de' ? 'Bitte zuerst eine Filiale auswÃ¤hlen.' : 'Select a branch first.'}
           </p>
         ) : (
           <div className="space-y-3">
@@ -1197,3 +1203,4 @@ function DashboardPanelButton({
     </button>
   );
 }
+
