@@ -14,6 +14,7 @@ import {
   useCounterProposeBooking,
   useCreateBusiness,
   useCreateAd,
+  useDeleteMyAd,
   useDeleteBusinessCustomerListEntry,
   useDeleteBusiness,
   useMyBusinesses,
@@ -22,6 +23,7 @@ import {
   useUpsertBusinessCustomerListEntry,
   useUpdateBusiness,
   useUpdateAdminBusiness,
+  useUpdateMyAdStatus,
   useUpdateAdminUser,
   useUpdateAdStatus
 } from '../../../src/lib/api/hooks';
@@ -312,6 +314,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [description, setDescription] = useState('');
   const [landingUrl, setLandingUrl] = useState('');
   const [budgetDaily, setBudgetDaily] = useState('20');
+  const [adMessage, setAdMessage] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerNote, setCustomerNote] = useState('');
@@ -340,6 +343,8 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [branchEditPriceMax, setBranchEditPriceMax] = useState('');
   const [branchEditMessage, setBranchEditMessage] = useState('');
   const createAd = useCreateAd();
+  const updateMyAdStatus = useUpdateMyAdStatus();
+  const deleteMyAd = useDeleteMyAd();
   const createBusiness = useCreateBusiness();
   const deleteBusiness = useDeleteBusiness();
   const myAds = useMyAds();
@@ -1434,14 +1439,82 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       {activeTab === 'marketing' ? (
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">My ad records</h2>
+        {adMessage ? <p className="mb-3 text-xs text-emerald-700">{adMessage}</p> : null}
         {myAds.isLoading ? <p className="text-sm text-slate-600">Loading...</p> : null}
         <div className="space-y-2">
           {(myAds.data ?? []).map((ad) => (
             <article key={ad._id} className="rounded-xl border p-3 text-sm">
-              <p className="font-medium">{ad.title}</p>
-              <p className="text-slate-600">
-                {ad.status} | {ad.budgetDaily} {ad.currency} | Impr: {ad.impressions} | Clicks: {ad.clicks}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium">{ad.title}</p>
+                  <p className="text-slate-600">
+                    {ad.budgetDaily} {ad.currency} | Impr: {ad.impressions} | Clicks: {ad.clicks}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
+                    ad.status === 'active'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : ad.status === 'paused'
+                        ? 'bg-amber-100 text-amber-700'
+                        : ad.status === 'rejected'
+                          ? 'bg-rose-100 text-rose-700'
+                          : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  {ad.status}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ad.status !== 'active' ? (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700"
+                    disabled={updateMyAdStatus.isPending}
+                    onClick={async () => {
+                      await updateMyAdStatus.mutateAsync({ adId: ad._id, status: 'active' });
+                      setAdMessage(locale === 'de' ? 'Anzeige aktiviert.' : 'Ad activated.');
+                      await myAds.refetch();
+                    }}
+                  >
+                    <DashboardIcon name="confirm" className="h-4 w-4" />
+                    {locale === 'de' ? 'Aktivieren' : 'Activate'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700"
+                    disabled={updateMyAdStatus.isPending}
+                    onClick={async () => {
+                      await updateMyAdStatus.mutateAsync({ adId: ad._id, status: 'paused' });
+                      setAdMessage(locale === 'de' ? 'Anzeige pausiert.' : 'Ad paused.');
+                      await myAds.refetch();
+                    }}
+                  >
+                    <DashboardIcon name="settings" className="h-4 w-4" />
+                    {locale === 'de' ? 'Pausieren' : 'Pause'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-700"
+                  disabled={deleteMyAd.isPending}
+                  onClick={async () => {
+                    const confirmed = window.confirm(
+                      locale === 'de' ? 'Diese Anzeige wirklich löschen?' : 'Delete this ad permanently?'
+                    );
+                    if (!confirmed) {
+                      return;
+                    }
+                    await deleteMyAd.mutateAsync({ adId: ad._id });
+                    setAdMessage(locale === 'de' ? 'Anzeige gelöscht.' : 'Ad deleted.');
+                    await myAds.refetch();
+                  }}
+                >
+                  <DashboardIcon name="delete" className="h-4 w-4" />
+                  {locale === 'de' ? 'Löschen' : 'Delete'}
+                </button>
+              </div>
             </article>
           ))}
         </div>

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../common/decorators/roles.decorator';
@@ -28,6 +28,23 @@ export class AdsController {
   @Roles('business', 'admin')
   listMine(@Req() req: { user: { sub: string } }) {
     return this.adsService.listMine(req.user.sub);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  @ApiBody({ type: UpdateAdStatusDto })
+  updateOwnStatus(@Req() req: { user: { sub: string } }, @Param('id') id: string, @Body() body: UpdateAdStatusDto) {
+    return this.adsService.updateStatusForOwner(req.user.sub, id, body.status as 'pending' | 'paused' | 'active');
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('bearer')
+  @Roles('business', 'admin')
+  removeOwn(@Req() req: { user: { sub: string } }, @Param('id') id: string) {
+    return this.adsService.deleteForOwner(req.user.sub, id);
   }
 
   @Get('admin')

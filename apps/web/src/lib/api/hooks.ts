@@ -298,6 +298,27 @@ export function useMyAds() {
   });
 }
 
+export function useUpdateMyAdStatus() {
+  return useMutation({
+    mutationFn: (payload: { adId: string; status: 'pending' | 'paused' | 'active' }) =>
+      apiClient<AdRecord>(`/ads/${payload.adId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: payload.status }),
+        auth: true
+      })
+  });
+}
+
+export function useDeleteMyAd() {
+  return useMutation({
+    mutationFn: (payload: { adId: string }) =>
+      apiClient<{ success: true; adId: string }>(`/ads/${payload.adId}`, {
+        method: 'DELETE',
+        auth: true
+      })
+  });
+}
+
 export function useCreateAd() {
   return useMutation({
     mutationFn: (payload: {
