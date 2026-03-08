@@ -466,11 +466,29 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
 
   return (
     <div className="space-y-4">
-      <section className="overflow-hidden rounded-[28px] bg-slate-900 p-5 text-white shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="hidden min-w-0 flex-1 md:block" />
-          <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl bg-white/10 p-3 text-sm text-slate-100 md:max-w-[320px] md:flex-none">
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
+      <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 flex-1 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              {locale === 'de' ? 'Arbeitsbereich' : 'Workspace'}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                <DashboardIcon name="branch" className="h-4 w-4" />
+                {locale === 'de' ? 'Filialen' : 'Branches'}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                <DashboardIcon name="bookings" className="h-4 w-4" />
+                {locale === 'de' ? 'Buchungen' : 'Bookings'}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                <DashboardIcon name="customers" className="h-4 w-4" />
+                {locale === 'de' ? 'Kunden' : 'Customers'}
+              </span>
+            </div>
+          </div>
+          <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 md:max-w-[320px] md:flex-none">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <DashboardIcon name="branch" className="h-4 w-4" />
               {locale === 'de' ? 'Aktive Filiale' : 'Active branch'}
             </p>
@@ -478,16 +496,16 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
               <div className="mt-2">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/15 bg-slate-950/30 px-3 py-2 text-left text-sm text-white outline-none transition hover:bg-slate-950/40"
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-900 outline-none transition hover:border-slate-300 hover:bg-slate-50"
                   onClick={() => setIsBranchMenuOpen((prev) => !prev)}
                 >
                   <span className="min-w-0 truncate">
                     {activeBusiness ? getBranchSummaryLabel(activeBusiness) : locale === 'de' ? 'Filiale ausw\u00e4hlen' : 'Select branch'}
                   </span>
-                  <span className={`shrink-0 text-slate-300 transition ${isBranchMenuOpen ? 'rotate-180' : ''}`}>{"\u25be"}</span>
+                  <span className={`shrink-0 text-slate-500 transition ${isBranchMenuOpen ? 'rotate-180' : ''}`}>{"\u25be"}</span>
                 </button>
                 {isBranchMenuOpen ? (
-                  <div className="absolute left-3 right-3 top-[72px] z-20 max-h-72 overflow-auto rounded-2xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl backdrop-blur">
+                  <div className="absolute left-3 right-3 top-[72px] z-20 max-h-72 overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
                     {(myBusinesses.data ?? []).map((item) => {
                       const isActiveBranch = item._id === selectedBusinessId;
                       return (
@@ -495,7 +513,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                           key={item._id}
                           type="button"
                           className={`block w-full rounded-xl px-3 py-2 text-left transition ${
-                            isActiveBranch ? 'bg-brand-500/20 text-white' : 'text-slate-200 hover:bg-white/10'
+                            isActiveBranch ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-50'
                           }`}
                           onClick={() => {
                             setSelectedBusinessId(item._id);
@@ -512,10 +530,10 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 ) : null}
               </div>
             ) : (
-              <p className="mt-2 text-slate-300">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
+              <p className="mt-2 text-slate-500">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
             )}
-            <p className="mt-3 truncate font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gew\u00e4hlt' : 'No branch selected')}</p>
-            <p className="truncate text-slate-300">
+            <p className="mt-3 truncate font-medium text-slate-900">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gew\u00e4hlt' : 'No branch selected')}</p>
+            <p className="truncate text-slate-500">
               {activeBusiness
                 ? getBranchMetaLabel(activeBusiness) || activeBusiness.addressLine
                 : locale === 'de'
