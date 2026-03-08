@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
@@ -33,19 +33,24 @@ export class EmailService {
         : `Your Zervia verification code is: ${input.code}. Valid for 10 minutes.`;
 
     if (!this.fromAddress) {
-      this.logger.warn(`SMTP_FROM missing. Verification code for ${input.toEmail}: ${input.code}`);
-      return { ok: true, mocked: true };
+      this.logger.error(`SMTP_FROM missing. Cannot send verification code to ${input.toEmail}.`);
+      throw new ServiceUnavailableException('EMAIL_SERVICE_NOT_CONFIGURED');
     }
 
-    await this.transporter.sendMail({
-      from: this.fromAddress,
-      to: input.toEmail,
-      subject,
-      text
-    });
+    try {
+      await this.transporter.sendMail({
+        from: this.fromAddress,
+        to: input.toEmail,
+        subject,
+        text
+      });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to send verification code to ${input.toEmail}: ${reason}`);
+      throw new ServiceUnavailableException('EMAIL_DELIVERY_FAILED');
+    }
 
     this.logger.log(`Email verification sent to ${input.toEmail}`);
     return { ok: true };
   }
 }
-
