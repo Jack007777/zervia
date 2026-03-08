@@ -370,6 +370,11 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const pendingBookingsCount = bookingItems.filter((booking) => booking.status === 'pending').length;
   const activeAdsCount = adItems.filter((ad) => ['active', 'approved'].includes(ad.status)).length;
   const branchMenuRef = useRef<HTMLDivElement | null>(null);
+  const branchesSectionRef = useRef<HTMLElement | null>(null);
+  const bookingsSectionRef = useRef<HTMLElement | null>(null);
+  const customersSectionRef = useRef<HTMLElement | null>(null);
+  const marketingSectionRef = useRef<HTMLElement | null>(null);
+  const settingsSectionRef = useRef<HTMLElement | null>(null);
   const createGalleryPreview = useMemo(() => parseGalleryImages(branchGalleryImagesText), [branchGalleryImagesText]);
   const editGalleryPreview = useMemo(() => parseGalleryImages(branchEditGalleryImagesText), [branchEditGalleryImagesText]);
 
@@ -469,6 +474,32 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
     setBranchEditPriceMax(activeBusiness.priceMax !== undefined ? String(activeBusiness.priceMax) : '');
   }, [activeBusiness]);
 
+  const scrollToSection = (tab: 'overview' | 'branches' | 'bookings' | 'customers' | 'marketing' | 'settings') => {
+    const refMap = {
+      overview: null,
+      branches: branchesSectionRef,
+      bookings: bookingsSectionRef,
+      customers: customersSectionRef,
+      marketing: marketingSectionRef,
+      settings: settingsSectionRef
+    } as const;
+
+    const targetRef = refMap[tab];
+    window.requestAnimationFrame(() => {
+      targetRef?.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
+  };
+
+  const handleTabChange = (tab: 'overview' | 'branches' | 'bookings' | 'customers' | 'marketing' | 'settings') => {
+    setActiveTab(tab);
+    if (tab !== 'overview') {
+      scrollToSection(tab);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
@@ -555,14 +586,14 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
           label={locale === 'de' ? 'Filialen' : 'Branches'}
           value={String(businesses.length)}
           hint={locale === 'de' ? 'Aktive Standorte in deinem Konto' : 'Locations linked to your account'}
-          onClick={() => setActiveTab('branches')}
+          onClick={() => handleTabChange('branches')}
         />
         <DashboardMetricCard
           icon="bookings"
           label={locale === 'de' ? 'Offene Anfragen' : 'Pending requests'}
           value={String(pendingBookingsCount)}
           hint={locale === 'de' ? 'Buchungen, die deine Antwort brauchen' : 'Bookings waiting for your response'}
-          onClick={() => setActiveTab('bookings')}
+          onClick={() => handleTabChange('bookings')}
         />
         <DashboardMetricCard
           icon="customers"
@@ -575,19 +606,19 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
           label={locale === 'de' ? 'Aktive Anzeigen' : 'Active ads'}
           value={String(activeAdsCount)}
           hint={locale === 'de' ? 'Laufende oder freigegebene Kampagnen' : 'Ads currently approved or running'}
-          onClick={() => setActiveTab('marketing')}
+          onClick={() => handleTabChange('marketing')}
         />
       </section>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">{locale === 'de' ? 'Schnellzugriff' : 'Quick access'}</h2>
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          <DashboardPanelButton active={activeTab === 'overview'} icon="overview" label={locale === 'de' ? 'Übersicht' : 'Overview'} hint={locale === 'de' ? 'Kennzahlen und Tagesfokus' : 'Metrics and daily focus'} onClick={() => setActiveTab('overview')} />
-          <DashboardPanelButton active={activeTab === 'branches'} icon="branch" label={locale === 'de' ? 'Filialen' : 'Branches'} hint={locale === 'de' ? 'Filialen anlegen und bearbeiten' : 'Create and edit branches'} onClick={() => setActiveTab('branches')} />
-          <DashboardPanelButton active={activeTab === 'bookings'} icon="bookings" label={locale === 'de' ? 'Buchungen' : 'Bookings'} hint={locale === 'de' ? 'Anfragen bestätigen oder verschieben' : 'Confirm or counter requests'} onClick={() => setActiveTab('bookings')} />
-          <DashboardPanelButton active={activeTab === 'customers'} icon="customers" label={locale === 'de' ? 'Kunden' : 'Customers'} hint={locale === 'de' ? 'Whitelist, Blacklist, Notizen' : 'Whitelist, blacklist, notes'} onClick={() => setActiveTab('customers')} />
-          <DashboardPanelButton active={activeTab === 'marketing'} icon="marketing" label={locale === 'de' ? 'Marketing' : 'Marketing'} hint={locale === 'de' ? 'Anzeigen einreichen und prüfen' : 'Submit ads and review performance'} onClick={() => setActiveTab('marketing')} />
-          <DashboardPanelButton active={activeTab === 'settings'} icon="settings" label={locale === 'de' ? 'Einstellungen' : 'Settings'} hint={locale === 'de' ? 'Buchungsmodus und Regeln' : 'Booking mode and policy'} onClick={() => setActiveTab('settings')} />
+          <DashboardPanelButton active={activeTab === 'overview'} icon="overview" label={locale === 'de' ? 'Übersicht' : 'Overview'} hint={locale === 'de' ? 'Kennzahlen und Tagesfokus' : 'Metrics and daily focus'} onClick={() => handleTabChange('overview')} />
+          <DashboardPanelButton active={activeTab === 'branches'} icon="branch" label={locale === 'de' ? 'Filialen' : 'Branches'} hint={locale === 'de' ? 'Filialen anlegen und bearbeiten' : 'Create and edit branches'} onClick={() => handleTabChange('branches')} />
+          <DashboardPanelButton active={activeTab === 'bookings'} icon="bookings" label={locale === 'de' ? 'Buchungen' : 'Bookings'} hint={locale === 'de' ? 'Anfragen bestätigen oder verschieben' : 'Confirm or counter requests'} onClick={() => handleTabChange('bookings')} />
+          <DashboardPanelButton active={activeTab === 'customers'} icon="customers" label={locale === 'de' ? 'Kunden' : 'Customers'} hint={locale === 'de' ? 'Whitelist, Blacklist, Notizen' : 'Whitelist, blacklist, notes'} onClick={() => handleTabChange('customers')} />
+          <DashboardPanelButton active={activeTab === 'marketing'} icon="marketing" label={locale === 'de' ? 'Marketing' : 'Marketing'} hint={locale === 'de' ? 'Anzeigen einreichen und prüfen' : 'Submit ads and review performance'} onClick={() => handleTabChange('marketing')} />
+          <DashboardPanelButton active={activeTab === 'settings'} icon="settings" label={locale === 'de' ? 'Einstellungen' : 'Settings'} hint={locale === 'de' ? 'Buchungsmodus und Regeln' : 'Booking mode and policy'} onClick={() => handleTabChange('settings')} />
         </div>
       </section>
 
@@ -607,7 +638,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       ? 'Aktuell sind keine offenen Buchungsanfragen vorhanden.'
                       : 'There are no pending booking requests right now.'}
                 </p>
-                <button type="button" className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setActiveTab('bookings')}>
+                <button type="button" className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => handleTabChange('bookings')}>
                   {locale === 'de' ? 'Zu den Buchungen' : 'Open bookings'}
                 </button>
               </article>
@@ -622,7 +653,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       ? 'Lege eine Filiale an oder wähle eine bestehende aus.'
                       : 'Create a branch or select an existing one.'}
                 </p>
-                <button type="button" className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setActiveTab('branches')}>
+                <button type="button" className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => handleTabChange('branches')}>
                   {locale === 'de' ? 'Filialen verwalten' : 'Manage branches'}
                 </button>
               </article>
@@ -650,7 +681,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       : 'All registered users can book'}
                 </p>
               </article>
-              <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setActiveTab('settings')}>
+              <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => handleTabChange('settings')}>
                 {locale === 'de' ? 'Einstellungen öffnen' : 'Open settings'}
               </button>
             </div>
@@ -659,7 +690,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       ) : null}
 
       {(activeTab === 'branches' || activeTab === 'overview') ? (
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <section ref={branchesSectionRef} className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">My branches</h2>
         <p className="text-sm text-slate-600">
           {activeBusiness
@@ -1096,7 +1127,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       ) : null}
 
       {(activeTab === 'settings' || activeTab === 'overview') ? (
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <section ref={settingsSectionRef} className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Booking mode</h2>
         <p className="mb-2 text-xs text-slate-600">
           Visible only in business dashboard. Instant = customer books visible slots directly. Request = customer sends preferred time, merchant confirms or sends counter proposal.
@@ -1142,7 +1173,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       ) : null}
 
       {activeTab === 'marketing' ? (
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <section ref={customersSectionRef} className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Publish ad</h2>
         <div className="grid gap-2">
           <label className="grid gap-1 text-xs font-medium text-slate-600">
@@ -1201,7 +1232,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       ) : null}
 
       {activeTab === 'customers' ? (
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <section ref={bookingsSectionRef} className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">
           {locale === 'de' ? 'Kundenliste (Whitelist/Blacklist)' : 'Customer whitelist / blacklist'}
         </h2>
@@ -1339,7 +1370,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
       ) : null}
 
       {(activeTab === 'bookings' || activeTab === 'overview') ? (
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <section ref={marketingSectionRef} className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Booking requests</h2>
         <p className="mb-2 text-xs text-slate-600">
           Select a branch above. In request mode, customers send preferred time and you can confirm, reject, or send a counter proposal.
