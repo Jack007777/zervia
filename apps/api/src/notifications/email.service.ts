@@ -7,6 +7,7 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private readonly transporter;
   private readonly fromAddress: string;
+  private readonly deliveryTimeoutMs: number;
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('SMTP_HOST') ?? 'smtp.zoho.eu';
@@ -15,12 +16,27 @@ export class EmailService {
     const user = this.configService.get<string>('SMTP_USER') ?? '';
     const pass = this.configService.get<string>('SMTP_PASS') ?? '';
     this.fromAddress = this.configService.get<string>('SMTP_FROM') ?? user;
+    this.deliveryTimeoutMs = Number(
+      this.configService.get<string>('SMTP_DELIVERY_TIMEOUT_MS') ?? '12000'
+    );
+    const connectionTimeout = Number(
+      this.configService.get<string>('SMTP_CONNECTION_TIMEOUT_MS') ?? '8000'
+    );
+    const greetingTimeout = Number(
+      this.configService.get<string>('SMTP_GREETING_TIMEOUT_MS') ?? '8000'
+    );
+    const socketTimeout = Number(
+      this.configService.get<string>('SMTP_SOCKET_TIMEOUT_MS') ?? '12000'
+    );
 
     this.transporter = nodemailer.createTransport({
       host,
       port,
       secure,
-      auth: user && pass ? { user, pass } : undefined
+      auth: user && pass ? { user, pass } : undefined,
+      connectionTimeout,
+      greetingTimeout,
+      socketTimeout
     });
   }
 
@@ -38,12 +54,17 @@ export class EmailService {
     }
 
     try {
-      await this.transporter.sendMail({
-        from: this.fromAddress,
-        to: input.toEmail,
-        subject,
-        text
-      });
+      await Promise.race([
+        this.transporter.sendMail({
+          from: this.fromAddress,
+          to: input.toEmail,
+          subject,
+          text
+        }),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('SMTP_DELIVERY_TIMEOUT')), this.deliveryTimeoutMs);
+        })
+      ]);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to send verification code to ${input.toEmail}: ${reason}`);
