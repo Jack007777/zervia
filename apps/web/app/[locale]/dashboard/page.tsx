@@ -472,7 +472,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   return (
     <div className="space-y-4">
       <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-4">
           <div className="min-w-0 flex-1 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
               {locale === 'de' ? 'Arbeitsbereich' : 'Workspace'}
@@ -492,7 +492,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
               </span>
             </div>
           </div>
-          <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 md:max-w-[320px] md:flex-none">
+          <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <DashboardIcon name="branch" className="h-4 w-4" />
               {locale === 'de' ? 'Aktive Filiale' : 'Active branch'}
