@@ -64,11 +64,16 @@ function parseGalleryImages(value: string) {
 }
 
 function getBranchSummaryLabel(branch: { name?: string; city?: string; addressLine?: string }) {
-  const fallback = branch.name?.trim() || branch.addressLine?.trim() || 'Branch';
-  if (branch.city?.trim()) {
-    return `${fallback} · ${branch.city.trim()}`;
+  return branch.name?.trim() || branch.city?.trim() || branch.addressLine?.trim() || 'Branch';
+}
+
+function getBranchMetaLabel(branch: { city?: string; country?: string; postalCode?: string; addressLine?: string }) {
+  const parts = [branch.city?.trim(), branch.postalCode?.trim(), branch.country?.trim()].filter(Boolean);
+  if (parts.length > 0) {
+    return parts.join(' \u00b7 ');
   }
-  return fallback;
+
+  return branch.addressLine?.trim() || '';
 }
 
 export default function DashboardPage() {
@@ -126,7 +131,7 @@ function AdminDashboard() {
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 font-medium">Account management</h2>
         {usersQuery.isLoading ? <p className="text-sm text-slate-600">Loading users...</p> : null}
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2">
           {(usersQuery.data ?? []).map((user) => (
             <article key={user._id} className="rounded-xl border p-3 text-sm">
               <div className="mb-2 flex items-center justify-between gap-2">
@@ -212,7 +217,7 @@ function AdminDashboard() {
           </select>
         </div>
         {businessesQuery.isLoading ? <p className="text-sm text-slate-600">Loading businesses...</p> : null}
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2">
           {businessRows.map((biz) => (
             <article key={biz._id} className="rounded-xl border p-3 text-sm">
               <div className="mb-2 flex items-center justify-between gap-2">
@@ -463,7 +468,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
     <div className="space-y-4">
       <section className="overflow-hidden rounded-[28px] bg-slate-900 p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-2">
+          <div className="min-w-0 flex-1 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Merchant workspace</p>
             <h1 className="text-2xl font-semibold">{locale === 'de' ? 'Gesch\u00e4fts\u00fcbersicht' : 'Business overview'}</h1>
             <p className="max-w-2xl text-sm text-slate-300">
@@ -472,7 +477,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                 : 'Run your day from one place: manage branches, review bookings, label repeat customers and launch campaigns.'}
             </p>
           </div>
-          <div ref={branchMenuRef} className="relative rounded-2xl bg-white/10 p-3 text-sm text-slate-100 md:min-w-[320px] md:max-w-[360px]">
+          <div ref={branchMenuRef} className="relative min-w-0 w-full rounded-2xl bg-white/10 p-3 text-sm text-slate-100 md:max-w-[320px] md:flex-none">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
               <DashboardIcon name="branch" className="h-4 w-4" />
               {locale === 'de' ? 'Aktive Filiale' : 'Active branch'}
@@ -484,10 +489,10 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/15 bg-slate-950/30 px-3 py-2 text-left text-sm text-white outline-none transition hover:bg-slate-950/40"
                   onClick={() => setIsBranchMenuOpen((prev) => !prev)}
                 >
-                  <span className="truncate">
+                  <span className="min-w-0 truncate">
                     {activeBusiness ? getBranchSummaryLabel(activeBusiness) : locale === 'de' ? 'Filiale ausw\u00e4hlen' : 'Select branch'}
                   </span>
-                  <span className={`shrink-0 text-slate-300 transition ${isBranchMenuOpen ? 'rotate-180' : ''}`}>⌄</span>
+                  <span className={`shrink-0 text-slate-300 transition ${isBranchMenuOpen ? 'rotate-180' : ''}`}>{"\u25be"}</span>
                 </button>
                 {isBranchMenuOpen ? (
                   <div className="absolute left-3 right-3 top-[72px] z-20 max-h-72 overflow-auto rounded-2xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl backdrop-blur">
@@ -507,7 +512,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                           }}
                         >
                           <p className="truncate font-medium">{getBranchSummaryLabel(item)}</p>
-                          <p className="mt-1 line-clamp-2 text-xs text-slate-300">{item.addressLine}</p>
+                          <p className="mt-1 truncate text-xs text-slate-300">{getBranchMetaLabel(item)}</p>
                         </button>
                       );
                     })}
@@ -517,10 +522,10 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
             ) : (
               <p className="mt-2 text-slate-300">{locale === 'de' ? 'Noch keine Filiale vorhanden.' : 'No branch assigned yet.'}</p>
             )}
-            <p className="mt-3 break-words font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gew\u00e4hlt' : 'No branch selected')}</p>
-            <p className="break-words text-slate-300">
+            <p className="mt-3 truncate font-medium">{activeBusiness?.name ?? (locale === 'de' ? 'Keine Filiale gew\u00e4hlt' : 'No branch selected')}</p>
+            <p className="truncate text-slate-300">
               {activeBusiness
-                ? `${activeBusiness.addressLine}, ${activeBusiness.city}, ${activeBusiness.country}`
+                ? getBranchMetaLabel(activeBusiness) || activeBusiness.addressLine
                 : locale === 'de'
                   ? 'W\u00e4hle hier oben eine Filiale aus.'
                   : 'Select a branch above.'}
