@@ -22,6 +22,9 @@ export class BusinessEntity {
   @Prop({ trim: true })
   description?: string;
 
+  @Prop({ type: [String], default: [] })
+  galleryImages!: string[];
+
   @Prop({ trim: true })
   category?: string;
 

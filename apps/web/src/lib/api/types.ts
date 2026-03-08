@@ -24,6 +24,7 @@ export type Business = {
   slug?: string;
   name: string;
   description?: string;
+  galleryImages?: string[];
   category?: string;
   tags?: string[];
   addressLine?: string;
@@ -139,6 +140,8 @@ export type AdminBusiness = {
   _id: string;
   ownerUserId: string;
   name: string;
+  description?: string;
+  galleryImages?: string[];
   category?: string;
   country: string;
   city: string;
@@ -158,6 +161,8 @@ export type MyBusiness = {
   _id: string;
   ownerUserId: string;
   name: string;
+  description?: string;
+  galleryImages?: string[];
   category?: string;
   country: string;
   city: string;

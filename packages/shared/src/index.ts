@@ -36,6 +36,7 @@ export interface BusinessProfile extends BaseEntity {
   ownerUserId: string;
   name: string;
   description?: string;
+  galleryImages?: string[];
   city: string;
   addressLine: string;
   timezone: typeof TIMEZONE;

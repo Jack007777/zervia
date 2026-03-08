@@ -84,6 +84,7 @@ export function useCreateBusiness() {
     mutationFn: (payload: {
       name: string;
       description?: string;
+      galleryImages?: string[];
       category: string;
       location: {
         lat: number;
@@ -358,6 +359,7 @@ export function useUpdateBusiness() {
       name?: string;
       category?: string;
       description?: string;
+      galleryImages?: string[];
       priceMin?: number;
       priceMax?: number;
       rating?: number;
@@ -371,6 +373,7 @@ export function useUpdateBusiness() {
           name: payload.name,
           category: payload.category,
           description: payload.description,
+          galleryImages: payload.galleryImages,
           priceMin: payload.priceMin,
           priceMax: payload.priceMax,
           rating: payload.rating,

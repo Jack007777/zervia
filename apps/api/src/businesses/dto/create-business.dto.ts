@@ -43,6 +43,15 @@ export class CreateBusinessDto {
   @IsString()
   description?: string;
 
+  @ApiPropertyOptional({
+    example: ['https://images.example.com/branch-1.jpg', 'https://images.example.com/branch-2.jpg'],
+    isArray: true
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImages?: string[];
+
   @ApiProperty({ example: 'beauty' })
   @IsString()
   category!: string;

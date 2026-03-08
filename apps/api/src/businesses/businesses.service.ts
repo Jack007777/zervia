@@ -76,7 +76,7 @@ export class BusinessesService implements OnModuleInit, OnModuleDestroy {
       .find({ ownerUserId, country, isActive: true })
       .sort({ createdAt: -1 })
       .select(
-        'name category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt'
+        'name description galleryImages category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt'
       )
       .lean()
       .exec();
@@ -269,7 +269,7 @@ export class BusinessesService implements OnModuleInit, OnModuleDestroy {
       .find()
       .sort({ createdAt: -1 })
       .limit(limit)
-      .select('name category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt')
+      .select('name description galleryImages category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
   }
@@ -302,7 +302,7 @@ export class BusinessesService implements OnModuleInit, OnModuleDestroy {
         },
         { new: true }
       )
-      .select('name category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt')
+      .select('name description galleryImages category country city addressLine rating priceMin priceMax bookingMode requireVerifiedPhoneForBooking isActive isVirtual virtualSeedBatch ownerUserId createdAt')
       .lean()
       .exec();
   }

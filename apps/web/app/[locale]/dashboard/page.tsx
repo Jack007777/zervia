@@ -49,11 +49,19 @@ type DashboardIconName =
   | 'location'
   | 'branch-plus'
   | 'link'
+  | 'gallery'
   | 'phone'
   | 'note'
   | 'confirm'
   | 'reject'
   | 'counter';
+
+function parseGalleryImages(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 export default function DashboardPage() {
   const { locale } = useParams<{ locale: 'de' | 'en' }>();
@@ -299,6 +307,8 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
   const [branchName, setBranchName] = useState('');
   const [branchCategory, setBranchCategory] = useState('massage');
+  const [branchDescription, setBranchDescription] = useState('');
+  const [branchGalleryImagesText, setBranchGalleryImagesText] = useState('');
   const [branchAddressLine, setBranchAddressLine] = useState('');
   const [branchLat, setBranchLat] = useState('52.520008');
   const [branchLng, setBranchLng] = useState('13.404954');
@@ -310,6 +320,8 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
   const [branchCreateMessage, setBranchCreateMessage] = useState('');
   const [branchEditName, setBranchEditName] = useState('');
   const [branchEditCategory, setBranchEditCategory] = useState('massage');
+  const [branchEditDescription, setBranchEditDescription] = useState('');
+  const [branchEditGalleryImagesText, setBranchEditGalleryImagesText] = useState('');
   const [branchEditPriceMin, setBranchEditPriceMin] = useState('');
   const [branchEditPriceMax, setBranchEditPriceMax] = useState('');
   const [branchEditMessage, setBranchEditMessage] = useState('');
@@ -410,12 +422,16 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
     if (!activeBusiness) {
       setBranchEditName('');
       setBranchEditCategory('massage');
+      setBranchEditDescription('');
+      setBranchEditGalleryImagesText('');
       setBranchEditPriceMin('');
       setBranchEditPriceMax('');
       return;
     }
     setBranchEditName(activeBusiness.name ?? '');
     setBranchEditCategory(activeBusiness.category ?? 'massage');
+    setBranchEditDescription(activeBusiness.description ?? '');
+    setBranchEditGalleryImagesText((activeBusiness.galleryImages ?? []).join('\n'));
     setBranchEditPriceMin(activeBusiness.priceMin !== undefined ? String(activeBusiness.priceMin) : '');
     setBranchEditPriceMax(activeBusiness.priceMax !== undefined ? String(activeBusiness.priceMax) : '');
   }, [activeBusiness]);
@@ -647,6 +663,30 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
               </label>
               <label className="grid gap-1 text-xs font-medium text-slate-600">
                 <span className="flex items-center gap-2">
+                  <DashboardIcon name="note" className="h-4 w-4" />
+                  {locale === 'de' ? '店铺介绍 / Beschreibung' : 'Shop introduction'}
+                </span>
+                <textarea
+                  className="min-h-24 rounded-xl border p-2"
+                  placeholder={locale === 'de' ? 'Kurz vorstellen, was diese Filiale anbietet' : 'Describe this branch and its specialties'}
+                  value={branchDescription}
+                  onChange={(e) => setBranchDescription(e.target.value)}
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-medium text-slate-600">
+                <span className="flex items-center gap-2">
+                  <DashboardIcon name="gallery" className="h-4 w-4" />
+                  {locale === 'de' ? 'Bilder (1 URL pro Zeile)' : 'Image gallery (1 URL per line)'}
+                </span>
+                <textarea
+                  className="min-h-24 rounded-xl border p-2"
+                  placeholder="https://..."
+                  value={branchGalleryImagesText}
+                  onChange={(e) => setBranchGalleryImagesText(e.target.value)}
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-medium text-slate-600">
+                <span className="flex items-center gap-2">
                   <DashboardIcon name="address" className="h-4 w-4" />
                   {locale === 'de' ? 'Adresse / Straße' : 'Address / street'}
                 </span>
@@ -755,6 +795,8 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   try {
                     const created = await createBusiness.mutateAsync({
                       name: branchName.trim(),
+                      description: branchDescription.trim() || undefined,
+                      galleryImages: parseGalleryImages(branchGalleryImagesText),
                       category: branchCategory.trim(),
                       location: {
                         addressLine: branchAddressLine.trim(),
@@ -769,6 +811,8 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                     setSelectedBusinessId(created._id);
                     setManualBusinessId('');
                     setBranchName('');
+                    setBranchDescription('');
+                    setBranchGalleryImagesText('');
                     setBranchAddressLine('');
                     setBranchPriceMin('');
                     setBranchPriceMax('');
@@ -822,6 +866,30 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   ))}
                 </select>
               </label>
+              <label className="grid gap-1 text-xs font-medium text-slate-600">
+                <span className="flex items-center gap-2">
+                  <DashboardIcon name="note" className="h-4 w-4" />
+                  {locale === 'de' ? '店铺介绍 / Beschreibung' : 'Shop introduction'}
+                </span>
+                <textarea
+                  className="min-h-24 rounded-xl border p-2"
+                  placeholder={locale === 'de' ? 'Kurz vorstellen, was diese Filiale anbietet' : 'Describe this branch and its specialties'}
+                  value={branchEditDescription}
+                  onChange={(e) => setBranchEditDescription(e.target.value)}
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-medium text-slate-600">
+                <span className="flex items-center gap-2">
+                  <DashboardIcon name="gallery" className="h-4 w-4" />
+                  {locale === 'de' ? 'Bilder (1 URL pro Zeile)' : 'Image gallery (1 URL per line)'}
+                </span>
+                <textarea
+                  className="min-h-24 rounded-xl border p-2"
+                  placeholder="https://..."
+                  value={branchEditGalleryImagesText}
+                  onChange={(e) => setBranchEditGalleryImagesText(e.target.value)}
+                />
+              </label>
               <div className="grid grid-cols-2 gap-2">
                 <label className="grid gap-1 text-xs font-medium text-slate-600">
                   <span className="flex items-center gap-2">
@@ -863,6 +931,8 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                       businessId: activeBusinessId,
                       name: branchEditName.trim(),
                       category: branchEditCategory.trim(),
+                      description: branchEditDescription.trim() || undefined,
+                      galleryImages: parseGalleryImages(branchEditGalleryImagesText),
                       priceMin: branchEditPriceMin ? Number(branchEditPriceMin) : undefined,
                       priceMax: branchEditPriceMax ? Number(branchEditPriceMax) : undefined
                     });
@@ -1351,6 +1421,8 @@ function DashboardIcon({ name, className = 'h-4 w-4' }: { name: DashboardIconNam
       return <svg {...shared}><path d="M4 19h16" /><rect x="5" y="10" width="3" height="6" rx="1" /><rect x="10.5" y="7" width="3" height="9" rx="1" /><rect x="16" y="4" width="3" height="12" rx="1" /></svg>;
     case 'link':
       return <svg {...shared}><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg>;
+    case 'gallery':
+      return <svg {...shared}><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m21 16-4.5-4.5L11 17l-2.5-2.5L3 20" /></svg>;
     case 'phone':
       return <svg {...shared}><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 11.2 19a19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.6a2 2 0 0 1-.6 1.7L7.2 9.8a16 16 0 0 0 7 7l1.8-1.7a2 2 0 0 1 1.7-.6l2.6.4A2 2 0 0 1 22 16.9Z" /></svg>;
     case 'note':
