@@ -505,7 +505,7 @@ function BusinessDashboard({ locale }: { locale: 'de' | 'en' }) {
                   <span className={`shrink-0 text-slate-500 transition ${isBranchMenuOpen ? 'rotate-180' : ''}`}>{"\u25be"}</span>
                 </button>
                 {isBranchMenuOpen ? (
-                  <div className="absolute left-3 right-3 top-[72px] z-20 max-h-72 overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+                  <div className="mt-2 max-h-72 overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
                     {(myBusinesses.data ?? []).map((item) => {
                       const isActiveBranch = item._id === selectedBusinessId;
                       return (
