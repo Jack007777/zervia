@@ -31,7 +31,9 @@ jobs:
           script: |
             set -e
             cd /opt/zervia
-            git pull --ff-only
-            docker compose build api
-            docker compose up -d api
+            git pull --ff-only origin main
+            docker compose stop api || true
+            docker compose rm -f api || true
+            docker rm -f zervia-api || true
+            docker compose up -d --build --force-recreate api
             docker compose ps api
