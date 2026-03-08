@@ -10,6 +10,7 @@ type ApiBusiness = {
   _id: string;
   name: string;
   description?: string;
+  galleryImages?: string[];
   addressLine?: string;
   city?: string;
   country?: string;
@@ -98,6 +99,7 @@ export default async function BusinessSlugPage({ params }: { params: Promise<Par
   const bookId = apiBusiness?._id ?? mockBusiness?._id ?? slug;
   const today = WEEK_DAYS_SHORT[new Date().getDay()];
   const todayHours = (business.openingHours ?? []).find((row) => row.day === today);
+  const galleryImages = business.galleryImages?.length ? business.galleryImages : mockBusiness?.galleryImages ?? [];
 
   return (
     <div className="space-y-4">
@@ -109,6 +111,20 @@ export default async function BusinessSlugPage({ params }: { params: Promise<Par
           {(locale === 'de' ? 'Bewertung' : 'Rating')}: {rating.toFixed(1)} ({reviewCount})
         </p>
       </section>
+
+
+      {galleryImages.length ? (
+        <section className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="font-medium">{locale === 'de' ? 'Bilder' : 'Gallery'}</h2>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {galleryImages.slice(0, 6).map((image, index) => (
+              <div key={`${image}-${index}`} className="overflow-hidden rounded-xl border bg-slate-50">
+                <img src={image} alt={`${business.name} ${index + 1}`} className="h-32 w-full object-cover" loading="lazy" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="font-medium">{locale === 'de' ? 'Öffnungszeiten' : 'Opening hours'}</h2>
