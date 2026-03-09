@@ -17,16 +17,16 @@ export class EmailService {
     const pass = this.configService.get<string>('SMTP_PASS') ?? '';
     this.fromAddress = this.configService.get<string>('SMTP_FROM') ?? user;
     this.deliveryTimeoutMs = Number(
-      this.configService.get<string>('SMTP_DELIVERY_TIMEOUT_MS') ?? '12000'
+      this.configService.get<string>('SMTP_DELIVERY_TIMEOUT_MS') ?? '5000'
     );
     const connectionTimeout = Number(
-      this.configService.get<string>('SMTP_CONNECTION_TIMEOUT_MS') ?? '8000'
+      this.configService.get<string>('SMTP_CONNECTION_TIMEOUT_MS') ?? '3000'
     );
     const greetingTimeout = Number(
-      this.configService.get<string>('SMTP_GREETING_TIMEOUT_MS') ?? '8000'
+      this.configService.get<string>('SMTP_GREETING_TIMEOUT_MS') ?? '3000'
     );
     const socketTimeout = Number(
-      this.configService.get<string>('SMTP_SOCKET_TIMEOUT_MS') ?? '12000'
+      this.configService.get<string>('SMTP_SOCKET_TIMEOUT_MS') ?? '5000'
     );
 
     this.transporter = nodemailer.createTransport({
