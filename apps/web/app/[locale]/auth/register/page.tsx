@@ -3,7 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -33,6 +34,27 @@ const maskEmail = (email: string) => {
   return `${localPart.slice(0, 2)}***@${domain}`;
 };
 
+type RegisterDialogState = {
+  open: boolean;
+  status: 'sending' | 'success' | 'error';
+  title: string;
+  message: string;
+};
+
+const DEFAULT_DIALOG_STATE: RegisterDialogState = {
+  open: false,
+  status: 'sending',
+  title: '',
+  message: ''
+};
+
+const paintNextFrame = async () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+};
+
 export default function RegisterPage() {
   const { locale } = useParams<{ locale: string }>();
   const searchParams = useSearchParams();
@@ -46,6 +68,9 @@ export default function RegisterPage() {
   const [verificationCode, setVerificationCode] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const [submitError, setSubmitError] = useState('');
+  const [submitStatus, setSubmitStatus] = useState('');
+  const [isImmediateSubmit, setIsImmediateSubmit] = useState(false);
+  const [dialogState, setDialogState] = useState<RegisterDialogState>(DEFAULT_DIALOG_STATE);
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: { email: '', password: '', confirmPassword: '', accountType: 'customer' }
@@ -80,23 +105,77 @@ export default function RegisterPage() {
   }, [form]);
 
   async function onSubmit(values: RegisterInput) {
-    setSubmitError('');
-    const response = await mutation.mutateAsync({
-      email: values.email,
-      password: values.password,
-      roles: [values.accountType]
+    flushSync(() => {
+      setIsImmediateSubmit(true);
+      setSubmitError('');
+      setInfoMessage('');
+      setSubmitStatus('Email format looks correct. Sending your verification email now. Please do not click again.');
+      setDialogState({
+        open: true,
+        status: 'sending',
+        title: 'Preparing verification email',
+        message: `The address ${maskEmail(values.email)} looks valid. We are now sending your verification email. Please do not click again.`
+      });
     });
-    if (response.verificationRequired && response.channel === 'email' && response.identifier) {
-      setPendingEmail(response.identifier);
-      setPendingRegisterInput(values);
-      setInfoMessage('Verification code sent. Please check your inbox and spam folder, then enter the code below.');
-      return;
+    await paintNextFrame();
+    try {
+      const response = await mutation.mutateAsync({
+        email: values.email,
+        password: values.password,
+        roles: [values.accountType]
+      });
+      if (response.verificationRequired && response.channel === 'email' && response.identifier) {
+        setPendingEmail(response.identifier);
+        setPendingRegisterInput(values);
+        setSubmitStatus('Verification email sent.');
+        setInfoMessage('Verification code sent. Please check your inbox and spam folder, then enter the code below.');
+        setDialogState({
+          open: true,
+          status: 'success',
+          title: 'Verification email sent',
+          message: `The code was sent to ${maskEmail(response.identifier)}. Please check your inbox and spam folder.`
+        });
+        return;
+      }
+      setSubmitStatus('Registration complete. Redirecting...');
+      setDialogState({
+        open: true,
+        status: 'success',
+        title: 'Account created',
+        message: 'Your account is ready. We are redirecting you now.'
+      });
+      router.push(`/${locale}/search`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Registration failed.';
+      const mappedMessage =
+        message === 'EMAIL_DELIVERY_FAILED'
+          ? 'We could not send the verification email. The mail server timed out. Please try again in a moment.'
+          : message === 'EMAIL_SERVICE_NOT_CONFIGURED'
+            ? 'Email verification is not configured yet. Please contact support.'
+            : message;
+      setSubmitStatus('');
+      setSubmitError(mappedMessage);
+      setDialogState({
+        open: true,
+        status: 'error',
+        title: 'Registration could not continue',
+        message: mappedMessage
+      });
+    } finally {
+      setIsImmediateSubmit(false);
     }
-    router.push(`/${locale}/search`);
   }
 
   function onInvalid() {
-    setSubmitError('Please check the highlighted fields before continuing. Both passwords must match and contain at least 8 characters.');
+    const message = 'Please check the highlighted fields before continuing. Both passwords must match and contain at least 8 characters.';
+    setSubmitStatus('');
+    setSubmitError(message);
+    setDialogState({
+      open: true,
+      status: 'error',
+      title: 'Please review your input',
+      message
+    });
   }
 
   async function onVerifyEmailCode() {
@@ -107,18 +186,39 @@ export default function RegisterPage() {
     router.push(`/${locale}/search`);
   }
 
+  const isSubmitting = isImmediateSubmit || mutation.isPending || verifyMutation.isPending;
+  const primaryButtonLabel = useMemo(() => {
+    if (isImmediateSubmit || mutation.isPending) {
+      return pendingEmail ? 'Sending verification email...' : 'Checking email and sending code...';
+    }
+    return 'Register';
+  }, [isImmediateSubmit, mutation.isPending, pendingEmail]);
+
   async function onResendEmailCode() {
     if (!pendingRegisterInput) {
       return;
     }
-    const response = await mutation.mutateAsync({
-      email: pendingRegisterInput.email,
-      password: pendingRegisterInput.password,
-      roles: [pendingRegisterInput.accountType]
-    });
-    if (response.verificationRequired && response.identifier) {
-      setPendingEmail(response.identifier);
-      setInfoMessage('A new verification code has been sent. Please check your inbox and spam folder.');
+    setSubmitError('');
+    setSubmitStatus('Resending verification email...');
+    try {
+      const response = await mutation.mutateAsync({
+        email: pendingRegisterInput.email,
+        password: pendingRegisterInput.password,
+        roles: [pendingRegisterInput.accountType]
+      });
+      if (response.verificationRequired && response.identifier) {
+        setPendingEmail(response.identifier);
+        setSubmitStatus('Verification email sent.');
+        setInfoMessage('A new verification code has been sent. Please check your inbox and spam folder.');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Resending failed.';
+      setSubmitStatus('');
+      setSubmitError(
+        message === 'EMAIL_DELIVERY_FAILED'
+          ? 'We could not send the verification email. The mail server timed out. Please try again in a moment.'
+          : message
+      );
     }
   }
 
@@ -182,9 +282,27 @@ export default function RegisterPage() {
           <option value="customer">Customer</option>
           <option value="business">Business</option>
         </select>
-        <button className="rounded-xl bg-brand-500 p-3 font-medium text-white" type="submit" disabled={mutation.isPending}>
-          Register
+        <button
+          className="flex items-center justify-center gap-2 rounded-xl bg-brand-500 p-3 font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-70"
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isImmediateSubmit || mutation.isPending ? (
+            <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
+              <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          ) : null}
+          <span>{primaryButtonLabel}</span>
         </button>
+        {submitStatus ? (
+          <p
+            className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-xs font-medium text-brand-700"
+            aria-live="polite"
+          >
+            {submitStatus}
+          </p>
+        ) : null}
         {mutation.error ? <p className="text-xs text-rose-600">{mutation.error.message}</p> : null}
         {infoMessage ? <p className="text-xs text-emerald-700">{infoMessage}</p> : null}
       </form>
@@ -203,7 +321,7 @@ export default function RegisterPage() {
           <button
             type="button"
             className="rounded-xl bg-slate-900 p-3 font-medium text-white disabled:opacity-50"
-            disabled={verifyMutation.isPending || !verificationCode.trim()}
+            disabled={isSubmitting || !verificationCode.trim()}
             onClick={onVerifyEmailCode}
           >
             {verifyMutation.isPending ? 'Verifying...' : 'Verify and complete registration'}
@@ -211,13 +329,41 @@ export default function RegisterPage() {
           <button
             type="button"
             className="rounded-xl border border-slate-300 p-3 text-sm font-medium text-slate-700 disabled:opacity-50"
-            disabled={mutation.isPending || !pendingRegisterInput}
+            disabled={isSubmitting || !pendingRegisterInput}
             onClick={onResendEmailCode}
           >
             {mutation.isPending ? 'Sending...' : 'Resend verification code'}
           </button>
           {verifyMutation.error ? <p className="text-xs text-rose-600">{verifyMutation.error.message}</p> : null}
         </section>
+      ) : null}
+      {dialogState.open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-base font-semibold text-slate-900">{dialogState.title}</p>
+                <p className="mt-2 text-sm text-slate-600">{dialogState.message}</p>
+              </div>
+              {dialogState.status === 'sending' ? (
+                <svg viewBox="0 0 24 24" className="mt-1 h-5 w-5 animate-spin text-brand-600" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
+                  <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              ) : null}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => setDialogState(DEFAULT_DIALOG_STATE)}
+                disabled={dialogState.status === 'sending'}
+              >
+                {dialogState.status === 'sending' ? 'Sending...' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
       <p className="text-xs text-slate-500">Manual phone verification contact: {manualApprovalPhone}</p>
       <Link href={`/${locale}/auth/login`} className="text-sm text-brand-700">
