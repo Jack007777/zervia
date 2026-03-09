@@ -32,6 +32,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(input.password, 12);
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const verificationUrl = this.buildEmailVerificationUrl(email, code, input.locale);
     const created = await this.usersService.createOrRefreshEmailVerificationChallenge({
       email,
       passwordHash,
@@ -46,9 +47,9 @@ export class AuthService {
       throw new UnauthorizedException('Email already exists');
     }
 
-    await this.emailService.sendRegisterVerificationCode({
+    await this.emailService.sendRegisterVerificationLink({
       toEmail: email,
-      code,
+      verificationUrl,
       locale: input.locale
     });
 
@@ -166,6 +167,19 @@ export class AuthService {
       status: 'pending_manual_review',
       message: 'Send SMS "verify" from this phone number to your admin number, then wait for manual approval.'
     };
+  }
+
+  private buildEmailVerificationUrl(email: string, code: string, locale: 'de' | 'en') {
+    const configuredBaseUrl =
+      this.configService.get<string>('PUBLIC_WEB_URL') ??
+      this.configService.get<string>('WEB_ORIGIN') ??
+      this.configService.get<string>('CORS_ORIGINS')?.split(',')[0];
+    const baseUrl = (configuredBaseUrl ?? 'http://localhost:3000').trim().replace(/\/+$/, '');
+    const params = new URLSearchParams({
+      email,
+      code
+    });
+    return `${baseUrl}/${locale}/auth/verify-email?${params.toString()}`;
   }
 
   private async issueTokens(userId: string, email: string, roles: Role[], country: 'DE') {

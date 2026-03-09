@@ -40,16 +40,28 @@ export class EmailService {
     });
   }
 
-  async sendRegisterVerificationCode(input: { toEmail: string; code: string; locale: 'de' | 'en' }) {
+  async sendRegisterVerificationLink(input: {
+    toEmail: string;
+    verificationUrl: string;
+    locale: 'de' | 'en';
+  }) {
     const subject =
-      input.locale === 'de' ? 'Zervia Verifizierungscode' : 'Zervia verification code';
+      input.locale === 'de' ? 'Bestaetige deine Zervia E-Mail-Adresse' : 'Verify your Zervia email address';
     const text =
       input.locale === 'de'
-        ? `Dein Zervia Verifizierungscode ist: ${input.code}. Gueltig fuer 10 Minuten.`
-        : `Your Zervia verification code is: ${input.code}. Valid for 10 minutes.`;
+        ? `Klicke auf diesen Link, um deine Zervia Registrierung abzuschliessen: ${input.verificationUrl}
+
+Dieser Link ist 10 Minuten gueltig.
+
+Falls diese E-Mail an die falsche Person gesendet wurde, ignoriere sie bitte.`
+        : `Click this link to complete your Zervia registration: ${input.verificationUrl}
+
+This link is valid for 10 minutes.
+
+If this email reached the wrong person, please ignore it.`;
 
     if (!this.fromAddress) {
-      this.logger.error(`SMTP_FROM missing. Cannot send verification code to ${input.toEmail}.`);
+      this.logger.error(`SMTP_FROM missing. Cannot send verification email to ${input.toEmail}.`);
       throw new ServiceUnavailableException('EMAIL_SERVICE_NOT_CONFIGURED');
     }
 
@@ -67,11 +79,11 @@ export class EmailService {
       ]);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to send verification code to ${input.toEmail}: ${reason}`);
+      this.logger.error(`Failed to send verification email to ${input.toEmail}: ${reason}`);
       throw new ServiceUnavailableException('EMAIL_DELIVERY_FAILED');
     }
 
-    this.logger.log(`Email verification sent to ${input.toEmail}`);
+    this.logger.log(`Email verification link sent to ${input.toEmail}`);
     return { ok: true };
   }
 }

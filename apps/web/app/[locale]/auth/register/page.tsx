@@ -8,7 +8,7 @@ import { flushSync } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { useRegister, useVerifyEmailRegister } from '../../../../src/lib/api/hooks';
+import { useRegister } from '../../../../src/lib/api/hooks';
 
 const registerSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
@@ -61,11 +61,9 @@ export default function RegisterPage() {
   const router = useRouter();
   const manualApprovalPhone = process.env.NEXT_PUBLIC_MANUAL_REGISTRATION_PHONE ?? '+49XXXXXXXXXX';
   const mutation = useRegister();
-  const verifyMutation = useVerifyEmailRegister();
   const [showPassword, setShowPassword] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
   const [pendingRegisterInput, setPendingRegisterInput] = useState<RegisterInput | null>(null);
-  const [verificationCode, setVerificationCode] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitStatus, setSubmitStatus] = useState('');
@@ -128,12 +126,12 @@ export default function RegisterPage() {
         setPendingEmail(response.identifier);
         setPendingRegisterInput(values);
         setSubmitStatus('Verification email sent.');
-        setInfoMessage('Verification code sent. Please check your inbox and spam folder, then enter the code below.');
+        setInfoMessage('Verification link sent. Please check your inbox and spam folder, then click the link in the email.');
         setDialogState({
           open: true,
           status: 'success',
           title: 'Verification email sent',
-          message: `The code was sent to ${maskEmail(response.identifier)}. Please check your inbox and spam folder.`
+          message: `The link was sent to ${maskEmail(response.identifier)}. Please open the email, click the link, and ignore the email if it reached the wrong person.`
         });
         return;
       }
@@ -178,18 +176,10 @@ export default function RegisterPage() {
     });
   }
 
-  async function onVerifyEmailCode() {
-    if (!pendingEmail || !verificationCode.trim()) {
-      return;
-    }
-    await verifyMutation.mutateAsync({ email: pendingEmail, code: verificationCode.trim() });
-    router.push(`/${locale}/search`);
-  }
-
-  const isSubmitting = isImmediateSubmit || mutation.isPending || verifyMutation.isPending;
+  const isSubmitting = isImmediateSubmit || mutation.isPending;
   const primaryButtonLabel = useMemo(() => {
     if (isImmediateSubmit || mutation.isPending) {
-      return pendingEmail ? 'Sending verification email...' : 'Checking email and sending code...';
+      return pendingEmail ? 'Sending verification email...' : 'Checking email and sending link...';
     }
     return 'Register';
   }, [isImmediateSubmit, mutation.isPending, pendingEmail]);
@@ -209,7 +199,7 @@ export default function RegisterPage() {
       if (response.verificationRequired && response.identifier) {
         setPendingEmail(response.identifier);
         setSubmitStatus('Verification email sent.');
-        setInfoMessage('A new verification code has been sent. Please check your inbox and spam folder.');
+        setInfoMessage('A new verification link has been sent. Please check your inbox and spam folder.');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Resending failed.';
@@ -310,31 +300,16 @@ export default function RegisterPage() {
         <section className="grid gap-2 rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-sm">Email verification for: {maskEmail(pendingEmail)}</p>
           <p className="text-xs text-slate-500">
-            If you do not see the email, please check your spam folder or request a new code.
+            Open the email and click the verification link. If you do not see it, check spam or request a new link.
           </p>
-          <input
-            className="rounded-xl border p-3"
-            placeholder="Verification code"
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-          />
-          <button
-            type="button"
-            className="rounded-xl bg-slate-900 p-3 font-medium text-white disabled:opacity-50"
-            disabled={isSubmitting || !verificationCode.trim()}
-            onClick={onVerifyEmailCode}
-          >
-            {verifyMutation.isPending ? 'Verifying...' : 'Verify and complete registration'}
-          </button>
           <button
             type="button"
             className="rounded-xl border border-slate-300 p-3 text-sm font-medium text-slate-700 disabled:opacity-50"
             disabled={isSubmitting || !pendingRegisterInput}
             onClick={onResendEmailCode}
           >
-            {mutation.isPending ? 'Sending...' : 'Resend verification code'}
+            {mutation.isPending ? 'Sending...' : 'Resend verification link'}
           </button>
-          {verifyMutation.error ? <p className="text-xs text-rose-600">{verifyMutation.error.message}</p> : null}
         </section>
       ) : null}
       {dialogState.open ? (
