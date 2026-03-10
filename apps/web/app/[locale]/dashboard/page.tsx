@@ -150,7 +150,7 @@ function AdminDashboard() {
                 <div className="flex items-center gap-1">
                   {user.manualPhoneApprovalPending ? (
                     <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">
-                      Pending SMS review
+                      Awaiting manual SMS review
                     </span>
                   ) : null}
                   <span className={`rounded-full px-2 py-1 text-xs ${user.isActive ? 'bg-emerald-100' : 'bg-rose-100'}`}>
@@ -159,7 +159,7 @@ function AdminDashboard() {
                 </div>
               </div>
               <p className="mb-2 text-slate-600">
-                Roles: {user.roles.join(', ')} | Phone verified: {user.phoneVerified ? 'Yes' : 'No'}
+                Roles: {user.roles.join(', ')} | Phone status: {user.phoneVerified ? 'Phone-verified user' : 'Not verified'}
               </p>
               <div className="flex flex-wrap gap-2">
                 {user.manualPhoneApprovalPending ? (
@@ -176,7 +176,7 @@ function AdminDashboard() {
                       await usersQuery.refetch();
                     }}
                   >
-                    Approve SMS registration
+                    Mark as phone-verified user
                   </button>
                 ) : null}
                 <button

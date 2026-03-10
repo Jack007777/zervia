@@ -25,7 +25,11 @@ export default function MyBookingsPage() {
         <section className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="mb-2 font-medium">Phone verification</h2>
           <p className="mb-2 text-sm text-slate-600">
-            Status: {meQuery.data?.phoneVerified ? 'Verified' : 'Not verified'}
+            Status: {meQuery.data?.phoneVerified ? 'Phone-verified user' : 'Not verified yet'}
+          </p>
+          <p className="mb-3 text-sm text-slate-600">
+            Enter your phone number, then send SMS "verify" from that number to {manualVerifyPhone}. After you review the
+            SMS manually, the account can be marked as a phone-verified user.
           </p>
           <div className="grid gap-2">
             <input
@@ -41,7 +45,7 @@ export default function MyBookingsPage() {
                 try {
                   await sendCode.mutateAsync({ phone: phone.trim() });
                   setMessage(
-                    `Request submitted. Send SMS "verify" from ${phone.trim()} to ${manualVerifyPhone}. Admin will approve manually.`
+                    `Request submitted. Send SMS "verify" from ${phone.trim()} to ${manualVerifyPhone}. After manual review, this account can be marked as a phone-verified user.`
                   );
                   await meQuery.refetch();
                 } catch (error) {
@@ -49,7 +53,7 @@ export default function MyBookingsPage() {
                 }
               }}
             >
-              Submit manual verification request
+              Submit phone verification request
             </button>
             {message ? <p className="text-xs text-emerald-700">{message}</p> : null}
           </div>

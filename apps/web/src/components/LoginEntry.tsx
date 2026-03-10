@@ -65,23 +65,19 @@ export function LoginEntry({ locale }: Props) {
 
   return (
     <div className="relative">
-      {!session ? (
-        <button
-          type="button"
-          onClick={() => setOpen((prev) => !prev)}
-          className="rounded-lg border px-2 py-1 text-xs text-slate-700"
-        >
-          Login
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setOpen((prev) => !prev)}
-          className="rounded-lg border px-2 py-1 text-xs text-slate-700"
-        >
-          {session.email}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex items-center justify-center rounded-lg border px-2.5 py-2 text-slate-700"
+        aria-label={session ? 'Open account menu' : 'Open login menu'}
+      >
+        <span className="relative inline-flex h-4 w-5 flex-col justify-between">
+          <span className="block h-0.5 w-5 rounded-full bg-current" />
+          <span className="block h-0.5 w-5 rounded-full bg-current" />
+          <span className="block h-0.5 w-5 rounded-full bg-current" />
+          {session ? <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-500" /> : null}
+        </span>
+      </button>
 
       {open ? (
         <div className="absolute right-0 top-9 z-20 min-w-[240px] rounded-xl border bg-white p-2 shadow-lg">
@@ -140,8 +136,26 @@ export function LoginEntry({ locale }: Props) {
               <div className="rounded-lg bg-slate-50 p-2 text-xs">
                 <p className="truncate font-medium text-slate-800">{session.email}</p>
                 <p className="text-slate-600">Role: {session.roles.join(', ') || 'customer'}</p>
-                <p className="text-emerald-700">Status: Logged in</p>
+                <p className={session.phoneVerified ? 'text-emerald-700' : 'text-amber-700'}>
+                  Status: {session.phoneVerified ? 'Phone-verified user' : 'Phone verification pending'}
+                </p>
               </div>
+              <Link
+                href={`/${locale}/me/bookings`}
+                className="block w-full rounded-lg border px-2 py-1 text-center text-xs text-slate-700"
+                onClick={() => setOpen(false)}
+              >
+                My bookings and phone verification
+              </Link>
+              {(session.roles.includes('business') || session.roles.includes('admin')) ? (
+                <Link
+                  href={`/${locale}/dashboard`}
+                  className="block w-full rounded-lg border px-2 py-1 text-center text-xs text-slate-700"
+                  onClick={() => setOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              ) : null}
               <button
                 type="button"
                 className="w-full rounded-lg border border-rose-200 px-2 py-1 text-xs text-rose-700"
